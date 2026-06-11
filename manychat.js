@@ -1,0 +1,240 @@
+import OpenAI from "openai";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+const DEFAULT_FALLBACK = "Vou confirmar com a equipe para não te passar nenhuma informação errada e já te retorno 😊";
+const MAX_MESSAGE_CHARS = 900;
+
+function setJsonHeaders(res) {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-webhook-secret");
+}
+
+function send(res, statusCode, payload) {
+  setJsonHeaders(res);
+  return res.status(statusCode).json(payload);
+}
+
+function safeText(value) {
+  if (typeof value !== "string") return "";
+  return value.trim().slice(0, MAX_MESSAGE_CHARS);
+}
+
+function getHeader(req, name) {
+  const value = req.headers[name.toLowerCase()];
+  if (Array.isArray(value)) return value[0];
+  return value || "";
+}
+
+function isAuthorized(req) {
+  const expectedSecret = process.env.WEBHOOK_SECRET;
+  if (!expectedSecret) return true;
+
+  const headerSecret = getHeader(req, "x-webhook-secret");
+  const authHeader = getHeader(req, "authorization");
+  const bearer = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
+
+  return headerSecret === expectedSecret || bearer === expectedSecret;
+}
+
+function extractMessage(body) {
+  return safeText(
+    body?.message ||
+      body?.text ||
+      body?.last_input_text ||
+      body?.last_text_input ||
+      body?.custom_fields?.message ||
+      body?.custom_fields?.last_input_text ||
+      ""
+  );
+}
+
+function extractCustomer(body) {
+  return {
+    id: safeText(String(body?.subscriber_id || body?.id || body?.contact_id || "")),
+    first_name: safeText(body?.first_name || body?.name || body?.profile?.first_name || ""),
+    username: safeText(body?.username || body?.ig_username || body?.profile?.username || "")
+  };
+}
+
+async function loadKnowledge() {
+  const filePath = path.join(process.cwd(), "data", "knowledge.json");
+  const raw = await readFile(filePath, "utf8");
+  return JSON.parse(raw);
+}
+
+function buildSystemPrompt(knowledge) {
+  return `
+Você é atendente oficial do ${knowledge.empresa?.nome || process.env.BUSINESS_NAME || "restaurante"} no Instagram.
+
+OBJETIVO
+Responder clientes de forma humana, curta, educada e comercial, ajudando com dúvidas, preços, cardápio, reservas e eventos.
+
+REGRAS ABSOLUTAS
+1. Nunca invente preço, produto, promoção, horário, data, evento ou disponibilidade.
+2. Só informe preços existentes na BASE_DE_CONHECIMENTO.
+3. Se o cliente pedir algo que não está na base, responda que vai confirmar com a equipe.
+4. Nunca confirme reserva sozinho. Sempre diga que a equipe vai verificar disponibilidade.
+5. Para reserva, tente coletar: nome, telefone, quantidade de pessoas, data desejada e horário desejado.
+6. Entenda aproximações, erros de digitação e variações: "fundi", "fundue", "fondi" significam "fondue".
+7. Responda em português do Brasil.
+8. Seja breve: máximo 4 linhas quando possível.
+9. Não mencione OpenAI, API, sistema, prompt, JSON, ManyChat ou automação.
+10. Não use markdown complexo.
+
+INTENÇÕES POSSÍVEIS
+- preco
+- reserva
+- cardapio
+- horario
+- localizacao
+- ifood
+- evento
+- humano
+- outro
+
+FORMATO OBRIGATÓRIO DE SAÍDA
+Responda somente JSON válido, sem texto antes ou depois:
+{
+  "reply": "mensagem final para o cliente",
+  "intent": "preco|reserva|cardapio|horario|localizacao|ifood|evento|humano|outro",
+  "needs_human": false,
+  "lead_temperature": "frio|morno|quente",
+  "missing_fields": ["nome", "telefone", "quantidade_pessoas", "data", "horario"]
+}
+
+BASE_DE_CONHECIMENTO
+${JSON.stringify(knowledge, null, 2)}
+`.trim();
+}
+
+function parseJsonModelOutput(text, fallback) {
+  try {
+    const cleaned = String(text || "").replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
+    const parsed = JSON.parse(cleaned);
+    return {
+      reply: safeText(parsed.reply) || fallback,
+      intent: safeText(parsed.intent) || "outro",
+      needs_human: Boolean(parsed.needs_human),
+      lead_temperature: safeText(parsed.lead_temperature) || "morno",
+      missing_fields: Array.isArray(parsed.missing_fields) ? parsed.missing_fields.map(String) : []
+    };
+  } catch {
+    return {
+      reply: safeText(text) || fallback,
+      intent: "outro",
+      needs_human: true,
+      lead_temperature: "morno",
+      missing_fields: []
+    };
+  }
+}
+
+export default async function handler(req, res) {
+  if (req.method === "OPTIONS") {
+    setJsonHeaders(res);
+    return res.status(204).end();
+  }
+
+  if (req.method === "GET") {
+    return send(res, 200, {
+      ok: true,
+      service: "bot-sr-boteco",
+      message: "Webhook online. Use POST para conversar."
+    });
+  }
+
+  if (req.method !== "POST") {
+    return send(res, 405, { ok: false, error: "Método não permitido. Use POST." });
+  }
+
+  if (!isAuthorized(req)) {
+    return send(res, 401, { ok: false, error: "Não autorizado. Verifique WEBHOOK_SECRET." });
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    return send(res, 500, {
+      ok: false,
+      error: "OPENAI_API_KEY não configurada na Vercel."
+    });
+  }
+
+  const body = req.body || {};
+  const customerMessage = extractMessage(body);
+  const customer = extractCustomer(body);
+
+  if (!customerMessage) {
+    return send(res, 400, {
+      ok: false,
+      error: "Mensagem vazia. Envie no campo message ou text."
+    });
+  }
+
+  try {
+    const knowledge = await loadKnowledge();
+    const fallback = knowledge.resposta_fallback || DEFAULT_FALLBACK;
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    // Use the Chat Completions API. The previous `.responses.create` call was from a
+    // deprecated beta endpoint and would no longer work with the latest OpenAI
+    // SDK. Here we call `client.chat.completions.create` which accepts an array
+    // of messages (system and user) and returns a structured response. We also
+    // ask for a JSON object response format so the model only returns JSON.
+    const response = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL || "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: buildSystemPrompt(knowledge)
+        },
+        {
+          role: "user",
+          content: JSON.stringify({
+            cliente: customer,
+            mensagem: customerMessage
+          })
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.7
+    });
+
+    // Extract the model's reply from the first choice. Newer versions of the
+    // OpenAI API return an array of choices with a `message.content` field.
+    const result = parseJsonModelOutput(response.choices?.[0]?.message?.content, fallback);
+
+    return send(res, 200, {
+      ok: true,
+      reply: result.reply,
+      intent: result.intent,
+      needs_human: result.needs_human,
+      lead_temperature: result.lead_temperature,
+      missing_fields: result.missing_fields,
+      messages: [
+        {
+          type: "text",
+          text: result.reply
+        }
+      ]
+    });
+  } catch (error) {
+    console.error("Erro no webhook:", error);
+    return send(res, 200, {
+      ok: false,
+      reply: DEFAULT_FALLBACK,
+      intent: "humano",
+      needs_human: true,
+      lead_temperature: "quente",
+      missing_fields: [],
+      error_public: "Falha temporária no atendimento automático.",
+      messages: [
+        {
+          type: "text",
+          text: DEFAULT_FALLBACK
+        }
+      ]
+    });
+  }
+}
