@@ -1,20 +1,12 @@
 {
-  "name": "bot-sr-boteco",
+  "name": "sdr-boteco",
   "version": "1.0.0",
-  "description": "Webhook ManyChat + OpenAI para atendimento Instagram do Sr. Boteco Limeira",
+  "private": true,
   "type": "module",
-  "scripts": {
-    "dev": "vercel dev",
-    "check": "node --check api/manychat.js",
-    "test:local": "node scripts/test-local.js"
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
-    "openai": "^6.9.1"
-  },
-  "devDependencies": {
-    "vercel": "latest"
-  },
-  "engines": {
-    "node": ">=20.0.0"
+    "openai": "^6.42.0"
   }
 }
