@@ -1,1 +1,1576 @@
-
+{
+  "empresa": {
+    "nome": "Sr. Boteco Limeira",
+    "instagram": "@srbotecolimeira",
+    "whatsapp": "5519997858351",
+    "endereco": "Pátio Limeira Shopping",
+    "observacoes": [
+      "Nunca confirmar reserva automaticamente.",
+      "Sempre informar que a disponibilidade será verificada pela equipe.",
+      "Responder de forma curta, humana e simpática.",
+      "Não inventar preços, datas, horários ou promoções."
+    ]
+  },
+  "horarios": {
+    "funcionamento": "A confirmar com a equipe.",
+    "reserva": "Reservas sujeitas à disponibilidade."
+  },
+  "produtos_precos": [
+    {
+      "nome": "Batata Frita (Meia)",
+      "aliases": [
+        "batata frita (meia)",
+        "batatafrita(meia)",
+        "batata",
+        "frita",
+        "(meia)"
+      ],
+      "valor": "R$ 43,90",
+      "descricao": "300g de batata palito frita com muçarela, catupiry ou cheddar, bacon e molho rosé"
+    },
+    {
+      "nome": "Batata Frita (Inteira)",
+      "aliases": [
+        "batata frita (inteira)",
+        "batatafrita(inteira)",
+        "batata",
+        "frita",
+        "(inteira)"
+      ],
+      "valor": "R$ 91,90",
+      "descricao": "600g de batata palito frita com muçarela, catupiry ou cheddar, bacon e molho rosé"
+    },
+    {
+      "nome": "Brusqueta",
+      "aliases": [
+        "brusqueta"
+      ],
+      "valor": "R$ 31,90",
+      "descricao": "12 torradas com muçarela, pepperoni, azeitona e orégano"
+    },
+    {
+      "nome": "Calabresa Acebolada",
+      "aliases": [
+        "calabresa acebolada",
+        "calabresaacebolada",
+        "calabresa",
+        "acebolada"
+      ],
+      "valor": "R$ 61,90",
+      "descricao": "500g de calabresa com cebola, pão com muçarela, molho de alho e limão (serve até 3 pessoas)"
+    },
+    {
+      "nome": "Combo de Boteco",
+      "aliases": [
+        "combo de boteco",
+        "combodeboteco",
+        "combo",
+        "de",
+        "boteco"
+      ],
+      "valor": "R$ 187,90",
+      "descricao": "12 quibes fritos, 400g de mandioca frita, 360g de contrafilé, 430g de isca de tilápia, molho rosé, molho de alho e limão (serve até 5 pessoas)"
+    },
+    {
+      "nome": "Contrafilé Acebolado",
+      "aliases": [
+        "contrafilé acebolado",
+        "contrafile acebolado",
+        "contrafileacebolado",
+        "contrafilé",
+        "contrafile",
+        "acebolado"
+      ],
+      "valor": "R$ 35,90",
+      "descricao": "150g de contrafilé acebolado, fritas, arroz, feijão, salada e farofa"
+    },
+    {
+      "nome": "Costelinha Barbecue",
+      "aliases": [
+        "costelinha barbecue",
+        "costelinhabarbecue",
+        "costelinha",
+        "barbecue"
+      ],
+      "valor": "R$ 109,90",
+      "descricao": "900g de costelinha com molho barbecue, fritas e farofa, molho de alho e vinagre (serve até 3 pessoas)"
+    },
+    {
+      "nome": "Especial da Casa",
+      "aliases": [
+        "especial da casa",
+        "especialdacasa",
+        "especial",
+        "da",
+        "casa"
+      ],
+      "valor": "R$ 163,90",
+      "descricao": "360g de contrafilé, 400g de calabresa, 430g de isca de frango, 300g de batata frita, cebola, molho rosé, molho de alho e limão (serve até 5 pessoas)"
+    },
+    {
+      "nome": "Frango à Passarinho (Meia)",
+      "aliases": [
+        "frango à passarinho (meia)",
+        "frango a passarinho (meia)",
+        "frangoapassarinho(meia)",
+        "frango",
+        "à",
+        "a",
+        "passarinho",
+        "(meia)"
+      ],
+      "valor": "R$ 38,90",
+      "descricao": "580g de pedaços de frango frito com molho de alho e limão"
+    },
+    {
+      "nome": "Frango à Passarinho (Inteira)",
+      "aliases": [
+        "frango à passarinho (inteira)",
+        "frango a passarinho (inteira)",
+        "frangoapassarinho(inteira)",
+        "frango",
+        "à",
+        "a",
+        "passarinho",
+        "(inteira)"
+      ],
+      "valor": "R$ 69,90",
+      "descricao": "1.200g de pedaços de frango frito com molho de alho e limão"
+    },
+    {
+      "nome": "Isca de Frango (Meia)",
+      "aliases": [
+        "isca de frango (meia)",
+        "iscadefrango(meia)",
+        "isca",
+        "de",
+        "frango",
+        "(meia)"
+      ],
+      "valor": "R$ 39,90",
+      "descricao": "430g de isca de frango com molho de alho e limão"
+    },
+    {
+      "nome": "Isca de Frango (Inteira)",
+      "aliases": [
+        "isca de frango (inteira)",
+        "iscadefrango(inteira)",
+        "isca",
+        "de",
+        "frango",
+        "(inteira)"
+      ],
+      "valor": "R$ 58,90",
+      "descricao": "850g de isca de frango com molho de alho e limão"
+    },
+    {
+      "nome": "Isca de Peixe (Meia)",
+      "aliases": [
+        "isca de peixe (meia)",
+        "iscadepeixe(meia)",
+        "isca",
+        "de",
+        "peixe",
+        "(meia)"
+      ],
+      "valor": "R$ 64,90",
+      "descricao": "400g de isca de peixe com molho de alho e limão"
+    },
+    {
+      "nome": "Isca de Peixe (Inteira)",
+      "aliases": [
+        "isca de peixe (inteira)",
+        "iscadepeixe(inteira)",
+        "isca",
+        "de",
+        "peixe",
+        "(inteira)"
+      ],
+      "valor": "R$ 125,90",
+      "descricao": "790g de isca de peixe com molho de alho e limão"
+    },
+    {
+      "nome": "Picanha Estância 92 (Porção)",
+      "aliases": [
+        "picanha estância 92 (porção)",
+        "picanha estancia 92 (porcao)",
+        "picanhaestancia92(porcao)",
+        "picanha",
+        "estância",
+        "estancia",
+        "92",
+        "(porção)",
+        "(porcao)"
+      ],
+      "valor": "R$ 209,90",
+      "descricao": "600g de picanha Estância 92 com arroz biro biro, feijão, batata rústica e salada"
+    },
+    {
+      "nome": "Mandioca",
+      "aliases": [
+        "mandioca"
+      ],
+      "valor": "R$ 49,90",
+      "descricao": "400g de mandioca frita com muçarela, bacon e molho rosé"
+    },
+    {
+      "nome": "Meia-Meia",
+      "aliases": [
+        "meia-meia"
+      ],
+      "valor": "R$ 78,90",
+      "descricao": "430g de isca de frango e 300g de batata frita com molho rosé, molho de alho e limão (serve até 3 pessoas)"
+    },
+    {
+      "nome": "Moda da Casa",
+      "aliases": [
+        "moda da casa",
+        "modadacasa",
+        "moda",
+        "da",
+        "casa"
+      ],
+      "valor": "R$ 110,00",
+      "descricao": "400g de calabresa, 430g de isca de frango, 300g de batata frita, cebola, molho rosé, molho de alho e limão (serve até 4 pessoas)"
+    },
+    {
+      "nome": "Picanha Aperitivo",
+      "aliases": [
+        "picanha aperitivo",
+        "picanhaaperitivo",
+        "picanha",
+        "aperitivo"
+      ],
+      "valor": "R$ 162,50",
+      "descricao": "470g de picanha fatiada na tábua, torradas com muçarela, molho de alho, vinagrete e farofa (serve até 3 pessoas)"
+    },
+    {
+      "nome": "Quibe Frito",
+      "aliases": [
+        "quibe frito",
+        "quibefrito",
+        "quibe",
+        "frito"
+      ],
+      "valor": "R$ 40,90",
+      "descricao": "12 unidades de quibe frito com molho de alho e limão"
+    },
+    {
+      "nome": "Tábua de Frios (Meia)",
+      "aliases": [
+        "tábua de frios (meia)",
+        "tabua de frios (meia)",
+        "tabuadefrios(meia)",
+        "tábua",
+        "tabua",
+        "de",
+        "frios",
+        "(meia)"
+      ],
+      "valor": "R$ 59,90",
+      "descricao": "Azeitonas verdes e pretas, muçarela, ovo de codorna, palmito, presunto, provolone, lombo, salame e limão"
+    },
+    {
+      "nome": "Tábua de Frios (Inteira)",
+      "aliases": [
+        "tábua de frios (inteira)",
+        "tabua de frios (inteira)",
+        "tabuadefrios(inteira)",
+        "tábua",
+        "tabua",
+        "de",
+        "frios",
+        "(inteira)"
+      ],
+      "valor": "R$ 99,90",
+      "descricao": "Azeitonas verdes e pretas, muçarela, ovo de codorna, palmito, presunto, provolone, lombo, salame e limão"
+    },
+    {
+      "nome": "Trio do Boteco",
+      "aliases": [
+        "trio do boteco",
+        "triodoboteco",
+        "trio",
+        "do",
+        "boteco"
+      ],
+      "valor": "R$ 119,90",
+      "descricao": "400g de torresmo frito, 400g de mandioca frita, 400g de carne seca, molho rosé, molho de alho e limão (serve até 3 pessoas)"
+    },
+    {
+      "nome": "Amendoim com Alho",
+      "aliases": [
+        "amendoim com alho",
+        "amendoimcomalho",
+        "amendoim",
+        "com",
+        "alho"
+      ],
+      "valor": "R$ 20,90",
+      "descricao": "100g de amendoim temperado com alho"
+    },
+    {
+      "nome": "Amendoim com Sal",
+      "aliases": [
+        "amendoim com sal",
+        "amendoimcomsal",
+        "amendoim",
+        "com",
+        "sal"
+      ],
+      "valor": "R$ 13,50",
+      "descricao": "100g de amendoim salgado"
+    },
+    {
+      "nome": "Salame",
+      "aliases": [
+        "salame"
+      ],
+      "valor": "R$ 32,90",
+      "descricao": "100g de salame fatiado"
+    },
+    {
+      "nome": "Salame com Azeitona",
+      "aliases": [
+        "salame com azeitona",
+        "salamecomazeitona",
+        "salame",
+        "com",
+        "azeitona"
+      ],
+      "valor": "R$ 37,30",
+      "descricao": "100g de salame fatiado com azeitonas"
+    },
+    {
+      "nome": "Salame com Palmito",
+      "aliases": [
+        "salame com palmito",
+        "salamecompalmito",
+        "salame",
+        "com",
+        "palmito"
+      ],
+      "valor": "R$ 41,90",
+      "descricao": "100g de salame fatiado com palmito"
+    },
+    {
+      "nome": "Torresmo",
+      "aliases": [
+        "torresmo"
+      ],
+      "valor": "R$ 38,40",
+      "descricao": "290g de torresmo frito acompanhado de limão"
+    },
+    {
+      "nome": "Tiras Calabresa",
+      "aliases": [
+        "tiras calabresa",
+        "tirascalabresa",
+        "tiras",
+        "calabresa"
+      ],
+      "valor": "R$ 30,90",
+      "descricao": "200g de calabresa com cebola, torradas com muçarela, molho de alho e limão"
+    },
+    {
+      "nome": "Tiras Contrafilé",
+      "aliases": [
+        "tiras contrafilé",
+        "tiras contrafile",
+        "tirascontrafile",
+        "tiras",
+        "contrafilé",
+        "contrafile"
+      ],
+      "valor": "R$ 34,90",
+      "descricao": "160g de contrafilé com cebola, torradas com muçarela, molho de alho e limão"
+    },
+    {
+      "nome": "Tiras Filé Mignon com Catupiry",
+      "aliases": [
+        "tiras filé mignon com catupiry",
+        "tiras file mignon com catupiry",
+        "tirasfilemignoncomcatupiry",
+        "tiras",
+        "filé",
+        "file",
+        "mignon",
+        "com",
+        "catupiry"
+      ],
+      "valor": "R$ 54,90",
+      "descricao": "160g de filé mignon com catupiry, torradas com muçarela, molho de alho e limão"
+    },
+    {
+      "nome": "Tiras Isca de Frango",
+      "aliases": [
+        "tiras isca de frango",
+        "tirasiscadefrango",
+        "tiras",
+        "isca",
+        "de",
+        "frango"
+      ],
+      "valor": "R$ 28,50",
+      "descricao": "180g de isca de frango, torradas com muçarela, molho de alho e limão"
+    },
+    {
+      "nome": "Tiras Isca de Peixe",
+      "aliases": [
+        "tiras isca de peixe",
+        "tirasiscadepeixe",
+        "tiras",
+        "isca",
+        "de",
+        "peixe"
+      ],
+      "valor": "R$ 33,90",
+      "descricao": "150g de isca de tilápia, torradas com muçarela, molho de alho e limão"
+    },
+    {
+      "nome": "Tiras de Picanha",
+      "aliases": [
+        "tiras de picanha",
+        "tirasdepicanha",
+        "tiras",
+        "de",
+        "picanha"
+      ],
+      "valor": "R$ 53,40",
+      "descricao": "180g de tiras de picanha, torradas com muçarela, molho de alho e limão"
+    },
+    {
+      "nome": "Kids Contrafilé",
+      "aliases": [
+        "kids contrafilé",
+        "kids contrafile",
+        "kidscontrafile",
+        "kids",
+        "contrafilé",
+        "contrafile"
+      ],
+      "valor": "R$ 22,90",
+      "descricao": "80g de contrafilé, fritas, arroz, feijão e farofa"
+    },
+    {
+      "nome": "Kids Isca",
+      "aliases": [
+        "kids isca",
+        "kidsisca",
+        "kids",
+        "isca"
+      ],
+      "valor": "R$ 19,90",
+      "descricao": "90g de isca de frango, fritas, arroz, feijão e farofa"
+    },
+    {
+      "nome": "Burguer Salada",
+      "aliases": [
+        "burguer salada",
+        "burguersalada",
+        "burguer",
+        "salada"
+      ],
+      "valor": "R$ 29,90",
+      "descricao": "Pão brioche, molho especial, hambúrguer 160g, queijo cheddar, alface, tomate e cebola roxa"
+    },
+    {
+      "nome": "Burguer Bacon",
+      "aliases": [
+        "burguer bacon",
+        "burguerbacon",
+        "burguer",
+        "bacon"
+      ],
+      "valor": "R$ 33,90",
+      "descricao": "Pão brioche, molho especial, hambúrguer 160g, queijo cheddar, bacon, alface e tomate"
+    },
+    {
+      "nome": "Burguer Duplo Bacon",
+      "aliases": [
+        "burguer duplo bacon",
+        "burguerduplobacon",
+        "burguer",
+        "duplo",
+        "bacon"
+      ],
+      "valor": "R$ 39,90",
+      "descricao": "Pão brioche, molho especial, 2 hambúrgueres de 160g, queijo cheddar, bacon, alface e tomate"
+    },
+    {
+      "nome": "Brownie",
+      "aliases": [
+        "brownie"
+      ],
+      "valor": "R$ 22,90",
+      "descricao": "Brownie com cereja e sorvete de leite Ninho"
+    },
+    {
+      "nome": "Petit Gateau",
+      "aliases": [
+        "petit gateau",
+        "petitgateau",
+        "petit",
+        "gateau"
+      ],
+      "valor": "R$ 25,90",
+      "descricao": "Petit gateau com cereja e sorvete de leite Ninho"
+    },
+    {
+      "nome": "Taça de Sorvete",
+      "aliases": [
+        "taça de sorvete",
+        "taca de sorvete",
+        "tacadesorvete",
+        "taça",
+        "taca",
+        "de",
+        "sorvete"
+      ],
+      "valor": "R$ 14,90",
+      "descricao": "Taça de sorvete de leite Ninho com calda de chocolate"
+    },
+    {
+      "nome": "Contrafilé",
+      "aliases": [
+        "contrafilé",
+        "contrafile"
+      ],
+      "valor": "R$ 43,90",
+      "descricao": "150g de contrafilé com fritas, arroz, feijão, salada e farofa"
+    },
+    {
+      "nome": "Contrafilé à Cavalo",
+      "aliases": [
+        "contrafilé à cavalo",
+        "contrafile a cavalo",
+        "contrafileacavalo",
+        "contrafilé",
+        "contrafile",
+        "à",
+        "a",
+        "cavalo"
+      ],
+      "valor": "R$ 35,90",
+      "descricao": "150g de contrafilé com ovo, fritas, arroz, feijão, salada e farofa"
+    },
+    {
+      "nome": "Contrafilé à Parmegiana",
+      "aliases": [
+        "contrafilé à parmegiana",
+        "contrafile a parmegiana",
+        "contrafileaparmegiana",
+        "contrafilé",
+        "contrafile",
+        "à",
+        "a",
+        "parmegiana"
+      ],
+      "valor": "R$ 120,99",
+      "descricao": "420g de contrafilé, molho de tomate e muçarela, fritas, arroz, feijão, salada, farofa, molho de alho e vinagrete"
+    },
+    {
+      "nome": "Contrafilé Picadinho com Catupiry",
+      "aliases": [
+        "contrafilé picadinho com catupiry",
+        "contrafile picadinho com catupiry",
+        "contrafilepicadinhocomcatupiry",
+        "contrafilé",
+        "contrafile",
+        "picadinho",
+        "com",
+        "catupiry"
+      ],
+      "valor": "R$ 47,90",
+      "descricao": "150g de contrafilé picadinho com catupiry e muçarela, fritas, arroz, feijão, salada e farofa"
+    },
+    {
+      "nome": "Costelinha Barbecue (Executivo)",
+      "aliases": [
+        "costelinha barbecue (executivo)",
+        "costelinhabarbecue(executivo)",
+        "costelinha",
+        "barbecue",
+        "(executivo)"
+      ],
+      "valor": "R$ 48,90",
+      "descricao": "150g de costelinha barbecue, fritas, arroz, feijão, salada e farofa"
+    },
+    {
+      "nome": "Escondidinho",
+      "aliases": [
+        "escondidinho"
+      ],
+      "valor": "R$ 30,90",
+      "descricao": "Escondidinho de calabresa, frango ou presunto com muçarela, purê, catupiry ou cheddar e muçarela gratinada"
+    },
+    {
+      "nome": "Escondidinho de Carne Seca",
+      "aliases": [
+        "escondidinho de carne seca",
+        "escondidinhodecarneseca",
+        "escondidinho",
+        "de",
+        "carne",
+        "seca"
+      ],
+      "valor": "R$ 32,90",
+      "descricao": "Escondidinho de carne seca com purê, catupiry ou cheddar e muçarela gratinada"
+    },
+    {
+      "nome": "Estrogonofe de Frango",
+      "aliases": [
+        "estrogonofe de frango",
+        "estrogonofedefrango",
+        "estrogonofe",
+        "de",
+        "frango"
+      ],
+      "valor": "R$ 36,90",
+      "descricao": "250g de estrogonofe de frango, batata palha, arroz, salada e farofa"
+    },
+    {
+      "nome": "Filé de Frango Grelhado",
+      "aliases": [
+        "filé de frango grelhado",
+        "file de frango grelhado",
+        "filedefrangogrelhado",
+        "filé",
+        "file",
+        "de",
+        "frango",
+        "grelhado"
+      ],
+      "valor": "R$ 30,90",
+      "descricao": "150g de filé de frango grelhado, fritas, arroz, feijão, salada e farofa"
+    },
+    {
+      "nome": "Filé de Frango à Milanesa",
+      "aliases": [
+        "filé de frango à milanesa",
+        "file de frango a milanesa",
+        "filedefrangoamilanesa",
+        "filé",
+        "file",
+        "de",
+        "frango",
+        "à",
+        "a",
+        "milanesa"
+      ],
+      "valor": "R$ 39,90",
+      "descricao": "170g de filé de frango à milanesa, fritas, arroz, feijão, salada e farofa"
+    },
+    {
+      "nome": "Filé de Frango à Parmegiana",
+      "aliases": [
+        "filé de frango à parmegiana",
+        "file de frango a parmegiana",
+        "filedefrangoaparmegiana",
+        "filé",
+        "file",
+        "de",
+        "frango",
+        "à",
+        "a",
+        "parmegiana"
+      ],
+      "valor": "R$ 36,90",
+      "descricao": "170g de filé de frango com molho de tomate, muçarela, fritas, arroz, salada e farofa"
+    },
+    {
+      "nome": "Filé de Tilápia à Milanesa",
+      "aliases": [
+        "filé de tilápia à milanesa",
+        "file de tilapia a milanesa",
+        "filedetilapiaamilanesa",
+        "filé",
+        "file",
+        "de",
+        "tilápia",
+        "tilapia",
+        "à",
+        "a",
+        "milanesa"
+      ],
+      "valor": "R$ 48,90",
+      "descricao": "170g de filé de tilápia à milanesa, fritas, arroz, feijão, salada e farofa"
+    },
+    {
+      "nome": "Filé de Tilápia à Parmegiana",
+      "aliases": [
+        "filé de tilápia à parmegiana",
+        "file de tilapia a parmegiana",
+        "filedetilapiaaparmegiana",
+        "filé",
+        "file",
+        "de",
+        "tilápia",
+        "tilapia",
+        "à",
+        "a",
+        "parmegiana"
+      ],
+      "valor": "R$ 48,90",
+      "descricao": "170g de filé de tilápia com molho de tomate e muçarela, fritas, arroz, salada e farofa"
+    },
+    {
+      "nome": "Filé de Tilápia Grelhado",
+      "aliases": [
+        "filé de tilápia grelhado",
+        "file de tilapia grelhado",
+        "filedetilapiagrelhado",
+        "filé",
+        "file",
+        "de",
+        "tilápia",
+        "tilapia",
+        "grelhado"
+      ],
+      "valor": "R$ 42,90",
+      "descricao": "170g de filé de tilápia grelhado, fritas, arroz, feijão, salada e farofa"
+    },
+    {
+      "nome": "Filé Mignon à Parmegiana",
+      "aliases": [
+        "filé mignon à parmegiana",
+        "file mignon a parmegiana",
+        "filemignonaparmegiana",
+        "filé",
+        "file",
+        "mignon",
+        "à",
+        "a",
+        "parmegiana"
+      ],
+      "valor": "R$ 75,90",
+      "descricao": "190g de filé mignon com molho de tomate e muçarela, fritas, arroz, salada e farofa"
+    },
+    {
+      "nome": "Filé Mignon com Catupiry",
+      "aliases": [
+        "filé mignon com catupiry",
+        "file mignon com catupiry",
+        "filemignoncomcatupiry",
+        "filé",
+        "file",
+        "mignon",
+        "com",
+        "catupiry"
+      ],
+      "valor": "R$ 72,90",
+      "descricao": "180g de filé mignon com catupiry e muçarela, fritas, arroz, feijão, salada e farofa"
+    },
+    {
+      "nome": "Linguiça Toscana",
+      "aliases": [
+        "linguiça toscana",
+        "linguica toscana",
+        "linguicatoscana",
+        "linguiça",
+        "linguica",
+        "toscana"
+      ],
+      "valor": "R$ 33,90",
+      "descricao": "180g de linguiça toscana (02 gomos), fritas, arroz, feijão, salada e farofa"
+    },
+    {
+      "nome": "Picanha (Executivo)",
+      "aliases": [
+        "picanha (executivo)",
+        "picanha(executivo)",
+        "picanha",
+        "(executivo)"
+      ],
+      "valor": "R$ 62,90",
+      "descricao": "160g de picanha fatiada, fritas, arroz, feijão, salada e farofa"
+    },
+    {
+      "nome": "Caneca Pequena (340ml)",
+      "aliases": [
+        "caneca pequena (340ml)",
+        "canecapequena(340ml)",
+        "caneca",
+        "pequena",
+        "(340ml)"
+      ],
+      "valor": "R$ 13,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Caneca Pequena com Vinho (340ml)",
+      "aliases": [
+        "caneca pequena com vinho (340ml)",
+        "canecapequenacomvinho(340ml)",
+        "caneca",
+        "pequena",
+        "com",
+        "vinho",
+        "(340ml)"
+      ],
+      "valor": "R$ 15,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Caneca Grande com Vinho (630ml)",
+      "aliases": [
+        "caneca grande com vinho (630ml)",
+        "canecagrandecomvinho(630ml)",
+        "caneca",
+        "grande",
+        "com",
+        "vinho",
+        "(630ml)"
+      ],
+      "valor": "R$ 22,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Caneca Grande com Groselha (630ml)",
+      "aliases": [
+        "caneca grande com groselha (630ml)",
+        "canecagrandecomgroselha(630ml)",
+        "caneca",
+        "grande",
+        "com",
+        "groselha",
+        "(630ml)"
+      ],
+      "valor": "R$ 22,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Canecão (1200ml)",
+      "aliases": [
+        "canecão (1200ml)",
+        "canecao (1200ml)",
+        "canecao(1200ml)",
+        "canecão",
+        "canecao",
+        "(1200ml)"
+      ],
+      "valor": "R$ 39,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Heineken Long Neck",
+      "aliases": [
+        "heineken long neck",
+        "heinekenlongneck",
+        "heineken",
+        "long",
+        "neck"
+      ],
+      "valor": "R$ 18,60",
+      "descricao": ""
+    },
+    {
+      "nome": "Heineken Zero Long Neck",
+      "aliases": [
+        "heineken zero long neck",
+        "heinekenzerolongneck",
+        "heineken",
+        "zero",
+        "long",
+        "neck"
+      ],
+      "valor": "R$ 18,60",
+      "descricao": ""
+    },
+    {
+      "nome": "Caipirinha de Cachaça",
+      "aliases": [
+        "caipirinha de cachaça",
+        "caipirinha de cachaca",
+        "caipirinhadecachaca",
+        "caipirinha",
+        "de",
+        "cachaça",
+        "cachaca"
+      ],
+      "valor": "R$ 20,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Caipirinha de Saquê",
+      "aliases": [
+        "caipirinha de saquê",
+        "caipirinha de saque",
+        "caipirinhadesaque",
+        "caipirinha",
+        "de",
+        "saquê",
+        "saque"
+      ],
+      "valor": "R$ 23,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Caipirinha de Vinho Branco",
+      "aliases": [
+        "caipirinha de vinho branco",
+        "caipirinhadevinhobranco",
+        "caipirinha",
+        "de",
+        "vinho",
+        "branco"
+      ],
+      "valor": "R$ 23,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Caipirinha de Vodka",
+      "aliases": [
+        "caipirinha de vodka",
+        "caipirinhadevodka",
+        "caipirinha",
+        "de",
+        "vodka"
+      ],
+      "valor": "R$ 23,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Campari (50ml)",
+      "aliases": [
+        "campari (50ml)",
+        "campari(50ml)",
+        "campari",
+        "(50ml)"
+      ],
+      "valor": "R$ 13,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Tequila (50ml)",
+      "aliases": [
+        "tequila (50ml)",
+        "tequila(50ml)",
+        "tequila",
+        "(50ml)"
+      ],
+      "valor": "R$ 26,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Velho Barreiro (50ml)",
+      "aliases": [
+        "velho barreiro (50ml)",
+        "velhobarreiro(50ml)",
+        "velho",
+        "barreiro",
+        "(50ml)"
+      ],
+      "valor": "R$ 7,70",
+      "descricao": ""
+    },
+    {
+      "nome": "Whisky Black Label (50ml)",
+      "aliases": [
+        "whisky black label (50ml)",
+        "whiskyblacklabel(50ml)",
+        "whisky",
+        "black",
+        "label",
+        "(50ml)"
+      ],
+      "valor": "R$ 22,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Whisky Jack Daniel's (50ml)",
+      "aliases": [
+        "whisky jack daniel's (50ml)",
+        "whiskyjackdaniel's(50ml)",
+        "whisky",
+        "jack",
+        "daniel's",
+        "(50ml)"
+      ],
+      "valor": "R$ 29,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Whisky Red Label (50ml)",
+      "aliases": [
+        "whisky red label (50ml)",
+        "whiskyredlabel(50ml)",
+        "whisky",
+        "red",
+        "label",
+        "(50ml)"
+      ],
+      "valor": "R$ 28,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Contrafilé com Catupiry",
+      "aliases": [
+        "contrafilé com catupiry",
+        "contrafile com catupiry",
+        "contrafilecomcatupiry",
+        "contrafilé",
+        "contrafile",
+        "com",
+        "catupiry"
+      ],
+      "valor": "R$ 123,90",
+      "descricao": "360g de contrafilé com catupiry e muçarela, fritas, arroz, feijão, salada, farofa, molho de alho e vinagrete"
+    },
+    {
+      "nome": "Contrafilé Botequim",
+      "aliases": [
+        "contrafilé botequim",
+        "contrafile botequim",
+        "contrafilebotequim",
+        "contrafilé",
+        "contrafile",
+        "botequim"
+      ],
+      "valor": "R$ 107,90",
+      "descricao": "360g de contrafilé com fritas, arroz, feijão, salada, farofa, molho de alho e vinagrete"
+    },
+    {
+      "nome": "Costelinha Barbecue (À la carte)",
+      "aliases": [
+        "costelinha barbecue (à la carte)",
+        "costelinha barbecue (a la carte)",
+        "costelinhabarbecue(alacarte)",
+        "costelinha",
+        "barbecue",
+        "(à",
+        "(a",
+        "la",
+        "carte)"
+      ],
+      "valor": "R$ 119,90",
+      "descricao": "900g de costelinha de porco com molho barbecue, fritas, arroz, feijão, salada, farofa, molho de alho e vinagrete"
+    },
+    {
+      "nome": "Escondidinho (À la carte)",
+      "aliases": [
+        "escondidinho (à la carte)",
+        "escondidinho (a la carte)",
+        "escondidinho(alacarte)",
+        "escondidinho",
+        "(à",
+        "(a",
+        "la",
+        "carte)"
+      ],
+      "valor": "R$ 66,90",
+      "descricao": "Calabresa, carne seca ou frango ou presunto com muçarela, purê, catupiry ou cheddar, muçarela gratinada, salada e farofa"
+    },
+    {
+      "nome": "Filé Mignon com Catupiry e Queijo",
+      "aliases": [
+        "filé mignon com catupiry e queijo",
+        "file mignon com catupiry e queijo",
+        "filemignoncomcatupiryequeijo",
+        "filé",
+        "file",
+        "mignon",
+        "com",
+        "catupiry",
+        "e",
+        "queijo"
+      ],
+      "valor": "R$ 191,90",
+      "descricao": "280g de filé mignon com catupiry e muçarela, fritas, arroz, feijão, salada, farofa, molho de alho e vinagrete"
+    },
+    {
+      "nome": "Filé Mignon à Parmegiana (À la carte)",
+      "aliases": [
+        "filé mignon à parmegiana (à la carte)",
+        "file mignon a parmegiana (a la carte)",
+        "filemignonaparmegiana(alacarte)",
+        "filé",
+        "file",
+        "mignon",
+        "à",
+        "a",
+        "parmegiana",
+        "(à",
+        "(a",
+        "la",
+        "carte)"
+      ],
+      "valor": "R$ 175,90",
+      "descricao": "450g de filé mignon, molho de tomate e muçarela, fritas, arroz, feijão, salada, farofa, molho de alho e vinagrete"
+    },
+    {
+      "nome": "Filé de Tilápia com Legumes",
+      "aliases": [
+        "filé de tilápia com legumes",
+        "file de tilapia com legumes",
+        "filedetilapiacomlegumes",
+        "filé",
+        "file",
+        "de",
+        "tilápia",
+        "tilapia",
+        "com",
+        "legumes"
+      ],
+      "valor": "R$ 110,90",
+      "descricao": "420g de tilápia com legumes, fritas, arroz, feijão, salada, farofa, molho de alho e vinagrete"
+    },
+    {
+      "nome": "Picanha Botequim (À la carte)",
+      "aliases": [
+        "picanha botequim (à la carte)",
+        "picanha botequim (a la carte)",
+        "picanhabotequim(alacarte)",
+        "picanha",
+        "botequim",
+        "(à",
+        "(a",
+        "la",
+        "carte)"
+      ],
+      "valor": "R$ 160,90",
+      "descricao": "360g de picanha fatiada, fritas, arroz, feijão, salada, farofa, molho de alho e vinagrete"
+    },
+    {
+      "nome": "Picanha com Catupiry e Alho",
+      "aliases": [
+        "picanha com catupiry e alho",
+        "picanhacomcatupiryealho",
+        "picanha",
+        "com",
+        "catupiry",
+        "e",
+        "alho"
+      ],
+      "valor": "R$ 179,90",
+      "descricao": "360g de picanha fatiada com catupiry, muçarela e alho, fritas, arroz, feijão, salada, farofa, molho de alho e vinagrete"
+    },
+    {
+      "nome": "Tábua Mista",
+      "aliases": [
+        "tábua mista",
+        "tabua mista",
+        "tabuamista",
+        "tábua",
+        "tabua",
+        "mista"
+      ],
+      "valor": "R$ 104,90",
+      "descricao": "2 gomos de linguiça toscana, 150g de frango grelhado, 150g de contrafilé, fritas, arroz, feijão, salada, farofa, molho de alho e vinagrete"
+    },
+    {
+      "nome": "Picanha Estância 92 (À la carte)",
+      "aliases": [
+        "picanha estância 92 (à la carte)",
+        "picanha estancia 92 (a la carte)",
+        "picanhaestancia92(alacarte)",
+        "picanha",
+        "estância",
+        "estancia",
+        "92",
+        "(à",
+        "(a",
+        "la",
+        "carte)"
+      ],
+      "valor": "R$ 209,00",
+      "descricao": "Picanha Estância 92 servida com feijão, arroz biro biro, salada especial com azeitona e palmito, batata rústica e vinagrete"
+    },
+    {
+      "nome": "Suco de Abacaxi (500ml)",
+      "aliases": [
+        "suco de abacaxi (500ml)",
+        "sucodeabacaxi(500ml)",
+        "suco",
+        "de",
+        "abacaxi",
+        "(500ml)"
+      ],
+      "valor": "R$ 12,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Suco de Abacaxi com Hortelã (500ml)",
+      "aliases": [
+        "suco de abacaxi com hortelã (500ml)",
+        "suco de abacaxi com hortela (500ml)",
+        "sucodeabacaxicomhortela(500ml)",
+        "suco",
+        "de",
+        "abacaxi",
+        "com",
+        "hortelã",
+        "hortela",
+        "(500ml)"
+      ],
+      "valor": "R$ 14,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Suco de Kiwi (500ml)",
+      "aliases": [
+        "suco de kiwi (500ml)",
+        "sucodekiwi(500ml)",
+        "suco",
+        "de",
+        "kiwi",
+        "(500ml)"
+      ],
+      "valor": "R$ 26,00",
+      "descricao": ""
+    },
+    {
+      "nome": "Suco de Laranja (500ml)",
+      "aliases": [
+        "suco de laranja (500ml)",
+        "sucodelaranja(500ml)",
+        "suco",
+        "de",
+        "laranja",
+        "(500ml)"
+      ],
+      "valor": "R$ 11,30",
+      "descricao": ""
+    },
+    {
+      "nome": "Suco de Limão (500ml)",
+      "aliases": [
+        "suco de limão (500ml)",
+        "suco de limao (500ml)",
+        "sucodelimao(500ml)",
+        "suco",
+        "de",
+        "limão",
+        "limao",
+        "(500ml)"
+      ],
+      "valor": "R$ 11,20",
+      "descricao": ""
+    },
+    {
+      "nome": "Suco de Maracujá (500ml)",
+      "aliases": [
+        "suco de maracujá (500ml)",
+        "suco de maracuja (500ml)",
+        "sucodemaracuja(500ml)",
+        "suco",
+        "de",
+        "maracujá",
+        "maracuja",
+        "(500ml)"
+      ],
+      "valor": "R$ 16,50",
+      "descricao": ""
+    },
+    {
+      "nome": "Suco de Morango (500ml)",
+      "aliases": [
+        "suco de morango (500ml)",
+        "sucodemorango(500ml)",
+        "suco",
+        "de",
+        "morango",
+        "(500ml)"
+      ],
+      "valor": "R$ 24,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Adicional Deleite (Copo 500ml)",
+      "aliases": [
+        "adicional deleite (copo 500ml)",
+        "adicionaldeleite(copo500ml)",
+        "adicional",
+        "deleite",
+        "(copo",
+        "500ml)"
+      ],
+      "valor": "R$ 4,00",
+      "descricao": ""
+    },
+    {
+      "nome": "Suco Dois Sabores (500ml)",
+      "aliases": [
+        "suco dois sabores (500ml)",
+        "sucodoissabores(500ml)",
+        "suco",
+        "dois",
+        "sabores",
+        "(500ml)"
+      ],
+      "valor": "R$ 15,90",
+      "descricao": "Mistura de duas frutas (opções: abacaxi, laranja, limão, maracujá ou morango)"
+    },
+    {
+      "nome": "Água com gás",
+      "aliases": [
+        "água com gás",
+        "agua com gas",
+        "aguacomgas",
+        "água",
+        "agua",
+        "com",
+        "gás",
+        "gas"
+      ],
+      "valor": "R$ 5,50",
+      "descricao": ""
+    },
+    {
+      "nome": "Água sem gás",
+      "aliases": [
+        "água sem gás",
+        "agua sem gas",
+        "aguasemgas",
+        "água",
+        "agua",
+        "sem",
+        "gás",
+        "gas"
+      ],
+      "valor": "R$ 4,40",
+      "descricao": ""
+    },
+    {
+      "nome": "Água tônica",
+      "aliases": [
+        "água tônica",
+        "agua tonica",
+        "aguatonica",
+        "água",
+        "agua",
+        "tônica",
+        "tonica"
+      ],
+      "valor": "R$ 7,50",
+      "descricao": ""
+    },
+    {
+      "nome": "Del Valle (pêssego ou uva)",
+      "aliases": [
+        "del valle (pêssego ou uva)",
+        "del valle (pessego ou uva)",
+        "delvalle(pessegoouuva)",
+        "del",
+        "valle",
+        "(pêssego",
+        "(pessego",
+        "ou",
+        "uva)"
+      ],
+      "valor": "R$ 7,70",
+      "descricao": ""
+    },
+    {
+      "nome": "Energético TNT (269ml)",
+      "aliases": [
+        "energético tnt (269ml)",
+        "energetico tnt (269ml)",
+        "energeticotnt(269ml)",
+        "energético",
+        "energetico",
+        "tnt",
+        "(269ml)"
+      ],
+      "valor": "R$ 13,90",
+      "descricao": ""
+    },
+    {
+      "nome": "Energético Monster (473ml)",
+      "aliases": [
+        "energético monster (473ml)",
+        "energetico monster (473ml)",
+        "energeticomonster(473ml)",
+        "energético",
+        "energetico",
+        "monster",
+        "(473ml)"
+      ],
+      "valor": "R$ 18,90",
+      "descricao": "Tradicional ou Mango Louco"
+    },
+    {
+      "nome": "H2O Limoneto",
+      "aliases": [
+        "h2o limoneto",
+        "h2olimoneto",
+        "h2o",
+        "limoneto"
+      ],
+      "valor": "R$ 7,70",
+      "descricao": ""
+    },
+    {
+      "nome": "Refrigerante KS (290ml)",
+      "aliases": [
+        "refrigerante ks (290ml)",
+        "refrigeranteks(290ml)",
+        "refrigerante",
+        "ks",
+        "(290ml)"
+      ],
+      "valor": "R$ 6,50",
+      "descricao": "Coca-Cola, Coca-Cola Zero, Fanta Laranja, Fanta Uva ou Sprite"
+    },
+    {
+      "nome": "Refresco Botiquim",
+      "aliases": [
+        "refresco botiquim",
+        "refrescobotiquim",
+        "refresco",
+        "botiquim"
+      ],
+      "valor": "R$ 9,90",
+      "descricao": "Sabores de limão, maçã verde, maracujá ou morango"
+    },
+    {
+      "nome": "Molho de Alho",
+      "aliases": [
+        "molho de alho",
+        "molhodealho",
+        "molho",
+        "de",
+        "alho"
+      ],
+      "valor": "R$ 5,00",
+      "descricao": ""
+    },
+    {
+      "nome": "Molho Rosé",
+      "aliases": [
+        "molho rosé",
+        "molho rose",
+        "molhorose",
+        "molho",
+        "rosé",
+        "rose"
+      ],
+      "valor": "R$ 5,00",
+      "descricao": ""
+    },
+    {
+      "nome": "Arroz",
+      "aliases": [
+        "arroz"
+      ],
+      "valor": "R$ 8,00",
+      "descricao": ""
+    },
+    {
+      "nome": "Bacon",
+      "aliases": [
+        "bacon"
+      ],
+      "valor": "R$ 9,00",
+      "descricao": ""
+    },
+    {
+      "nome": "Barbecue",
+      "aliases": [
+        "barbecue"
+      ],
+      "valor": "R$ 8,00",
+      "descricao": ""
+    },
+    {
+      "nome": "Batata Frita (260g)",
+      "aliases": [
+        "batata frita (260g)",
+        "batatafrita(260g)",
+        "batata",
+        "frita",
+        "(260g)"
+      ],
+      "valor": "R$ 15,00",
+      "descricao": ""
+    },
+    {
+      "nome": "Catupiry",
+      "aliases": [
+        "catupiry"
+      ],
+      "valor": "R$ 8,00",
+      "descricao": ""
+    },
+    {
+      "nome": "Cheddar",
+      "aliases": [
+        "cheddar"
+      ],
+      "valor": "R$ 8,00",
+      "descricao": ""
+    },
+    {
+      "nome": "Pão",
+      "aliases": [
+        "pão",
+        "pao"
+      ],
+      "valor": "R$ 3,00",
+      "descricao": ""
+    },
+    {
+      "nome": "Muçarela",
+      "aliases": [
+        "muçarela",
+        "mucarela"
+      ],
+      "valor": "R$ 8,00",
+      "descricao": ""
+    },
+    {
+      "nome": "Ovo",
+      "aliases": [
+        "ovo"
+      ],
+      "valor": "R$ 2,50",
+      "descricao": ""
+    },
+    {
+      "nome": "Salada",
+      "aliases": [
+        "salada"
+      ],
+      "valor": "R$ 7,50",
+      "descricao": ""
+    },
+    {
+      "nome": "Open Chopp",
+      "aliases": [
+        "open chopp",
+        "open chop",
+        "open",
+        "chopp"
+      ],
+      "valor": "R$ 29,90 (dom a qui) / R$ 49,90 (sex e sáb)",
+      "descricao": "Oferta válida das 16h às 21h. Chopp à vontade: de domingo a quinta-feira por R$ 29,90 e de sexta-feira e sábado por R$ 49,90."
+    },
+    {
+      "nome": "Rodízio de Boteco",
+      "aliases": [
+        "rodízio de boteco",
+        "rodizio de boteco",
+        "rodizio boteco",
+        "rodízio boteco",
+        "rodizio",
+        "rodízio",
+        "boteco"
+      ],
+      "valor": "R$ 49,90 (dom a qui) / R$ 59,90 (sex e sáb)",
+      "descricao": "Oferta válida das 16h às 21h. Inclui isca de frango, calabresa acebolada, batata frita, mandioca frita e frango a passarinho. Valores: domingo a quinta-feira R$ 49,90; sexta-feira e sábado R$ 59,90."
+    }
+  ],
+  "links": {
+    "whatsapp": "https://wa.me/5519997858351",
+    "ifood": "A confirmar",
+    "cardapio": "A confirmar"
+  },
+  "reserva_campos_obrigatorios": [
+    "nome",
+    "telefone",
+    "quantidade de pessoas",
+    "data desejada",
+    "horário desejado"
+  ],
+  "resposta_fallback": "Vou confirmar com a equipe para não te passar nenhuma informação errada e já te retorno 😊"
+}
