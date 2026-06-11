@@ -1,7 +1,7 @@
 {
-  "version": 2,
   "functions": {
     "api/manychat.js": {
+      "includeFiles": "data/**",
       "maxDuration": 30
     }
   }
