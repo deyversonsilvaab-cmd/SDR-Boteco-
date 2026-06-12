@@ -11,56 +11,19 @@
       "Não inventar preços, datas, horários ou promoções.",
       "Horário de funcionamento confirmado: todos os dias das 11h às 22h.",
       "Horário das ofertas: das 16h às 21h.",
-      "Quando a mensagem mencionar fondue, fundue, fundi, fondi, Dia dos Namorados ou Noite de Fondue, responder com os dados cadastrados do Fondue Salgado e Fondue Doce.",
-      "Usar a resposta de fallback apenas quando não houver informação relacionada na base de conhecimento."
-    ]
+      "Oferta de almoço: válida de segunda a sexta, das 11h às 15h, exclusiva para almoço.",
+      "Se o cliente falar sobre Fondue, Dia dos Namorados ou Noite de Fondue, responder com a oferta completa cadastrada.",
+      "Só usar a resposta de fallback quando realmente não houver informação relacionada na base."
+    ],
+    "telefone_whatsapp": "(19) 99785-8351"
   },
   "horarios": {
     "funcionamento": "Funcionamos todos os dias das 11h às 22h.",
-    "ofertas": "As ofertas são válidas das 16h às 21h.",
-    "reserva": "Reservas sujeitas à disponibilidade."
+    "ofertas_gerais": "Ofertas como Fondue, Open Chopp e Rodízio de Boteco são válidas das 16h às 21h.",
+    "oferta_almoco": "Oferta de almoço válida de segunda a sexta-feira, das 11h às 15h. Exclusiva para o almoço.",
+    "reserva": "Reservas sujeitas à disponibilidade da equipe."
   },
   "produtos_precos": [
-    {
-      "nome": "Fondue Salgado",
-      "aliases": [
-        "fondue salgado",
-        "fundue salgado",
-        "fundi salgado",
-        "fondi salgado",
-        "fondue",
-        "fundue",
-        "fundi",
-        "fondi",
-        "noite de fondue",
-        "fondue dia dos namorados",
-        "dia dos namorados",
-        "noite dos namorados",
-        "namorados"
-      ],
-      "valor": "R$ 99,90",
-      "descricao": "Oferta válida das 16h às 21h. Acompanha torradas, iscas de frango empanado, contrafilé, calabresa e batata frita."
-    },
-    {
-      "nome": "Fondue Doce",
-      "aliases": [
-        "fondue doce",
-        "fundue doce",
-        "fundi doce",
-        "fondi doce",
-        "fondue",
-        "fundue",
-        "fundi",
-        "fondi",
-        "noite de fondue",
-        "fondue dia dos namorados",
-        "dia dos namorados",
-        "noite dos namorados",
-        "namorados"
-      ],
-      "valor": "R$ 89,90",
-      "descricao": "Oferta válida das 16h às 21h. Acompanha morango, uva, banana, brownie e marshmallow."
-    },
     {
       "nome": "Batata Frita (Meia)",
       "aliases": [
@@ -1581,17 +1544,22 @@
     },
     {
       "nome": "Open Chopp",
+      "categoria": "Oferta especial",
       "aliases": [
         "open chopp",
         "open chop",
         "open",
-        "chopp"
+        "chopp",
+        "chopp a vontade",
+        "chopp à vontade"
       ],
-      "valor": "R$ 29,90 (dom a qui) / R$ 49,90 (sex e sáb)",
-      "descricao": "Oferta válida das 16h às 21h. Chopp à vontade: de domingo a quinta-feira por R$ 29,90 e de sexta-feira e sábado por R$ 49,90."
+      "valor": "R$ 29,90 (domingo a quinta) / R$ 49,90 (sexta e sábado)",
+      "validade": "Das 16h às 21h",
+      "descricao": "Oferta válida das 16h às 21h. Chopp à vontade: domingo a quinta-feira por R$ 29,90; sexta-feira e sábado por R$ 49,90."
     },
     {
       "nome": "Rodízio de Boteco",
+      "categoria": "Oferta especial",
       "aliases": [
         "rodízio de boteco",
         "rodizio de boteco",
@@ -1599,10 +1567,70 @@
         "rodízio boteco",
         "rodizio",
         "rodízio",
-        "boteco"
+        "boteco",
+        "rodizio de porções",
+        "rodízio de porções"
       ],
-      "valor": "R$ 49,90 (dom a qui) / R$ 59,90 (sex e sáb)",
-      "descricao": "Oferta válida das 16h às 21h. Inclui isca de frango, calabresa acebolada, batata frita, mandioca frita e frango a passarinho. Valores: domingo a quinta-feira R$ 49,90; sexta-feira e sábado R$ 59,90."
+      "valor": "R$ 49,90 (domingo a quinta) / R$ 59,90 (sexta e sábado)",
+      "validade": "Das 16h às 21h",
+      "descricao": "Oferta válida das 16h às 21h. Inclui isca de frango, calabresa acebolada, batata frita, mandioca frita e frango à passarinho. Valores: domingo a quinta-feira R$ 49,90; sexta-feira e sábado R$ 59,90."
+    },
+    {
+      "nome": "Fondue Salgado",
+      "categoria": "Oferta especial",
+      "aliases": [
+        "fondue salgado",
+        "fundi salgado",
+        "fundue salgado",
+        "fondi salgado",
+        "noite de fondue",
+        "fondue dia dos namorados",
+        "dia dos namorados",
+        "fondue",
+        "namorados"
+      ],
+      "valor": "R$ 99,90",
+      "validade": "Das 16h às 21h",
+      "descricao": "Oferta válida das 16h às 21h. Acompanha torradas, iscas de frango empanado, contrafilé, calabresa e batata frita."
+    },
+    {
+      "nome": "Fondue Doce",
+      "categoria": "Oferta especial",
+      "aliases": [
+        "fondue doce",
+        "fundi doce",
+        "fundue doce",
+        "fondi doce",
+        "noite de fondue",
+        "fondue dia dos namorados",
+        "dia dos namorados",
+        "fondue",
+        "namorados"
+      ],
+      "valor": "R$ 89,90",
+      "validade": "Das 16h às 21h",
+      "descricao": "Oferta válida das 16h às 21h. Acompanha morango, uva, banana, brownie e marshmallow."
+    },
+    {
+      "nome": "Oferta de Almoço / Pratos Executivos",
+      "categoria": "Oferta de almoço",
+      "aliases": [
+        "almoço",
+        "almoco",
+        "oferta de almoço",
+        "oferta de almoco",
+        "prato executivo",
+        "pratos executivos",
+        "executivo",
+        "executivos",
+        "almoço executivo",
+        "almoco executivo",
+        "prato feito",
+        "pf"
+      ],
+      "valor": "Pratos executivos do cardápio a partir de R$ 30,90",
+      "validade": "Segunda a sexta-feira, das 11h às 15h. Exclusiva para almoço.",
+      "descricao": "Oferta exclusiva para almoço, válida somente de segunda a sexta-feira, das 11h às 15h. Consulte as opções de pratos executivos do cardápio, como filé de frango grelhado, escondidinho, contrafilé, tilápia, linguiça toscana, picanha e outras opções cadastradas."
     }
   ],
   "links": {
@@ -1618,57 +1646,10 @@
     "horário desejado"
   ],
   "resposta_fallback": "Vou confirmar com a equipe para não te passar nenhuma informação errada e já te retorno 😊",
-  "ofertas_ativas": {
-    "horario_das_ofertas": "Das 16h às 21h.",
-    "fondue_dia_dos_namorados": {
-      "mensagem_gatilho": "Oi. Gostaria de saber mais sobre a noite de Fondue do Dia dos Namorados.",
-      "regra_de_resposta": "Quando o cliente enviar essa mensagem ou algo parecido mencionando fondue, fundue, fundi, fondi, noite de fondue ou Dia dos Namorados, responder com as duas opções de fondue, valores, acompanhamentos, horário da oferta, localização e convite para reserva.",
-      "opcoes": [
-        {
-          "nome": "Fondue Salgado",
-          "valor": "R$ 99,90",
-          "acompanha": [
-            "Torradas",
-            "Iscas de frango empanado",
-            "Contrafilé",
-            "Calabresa",
-            "Batata frita"
-          ]
-        },
-        {
-          "nome": "Fondue Doce",
-          "valor": "R$ 89,90",
-          "acompanha": [
-            "Morango",
-            "Uva",
-            "Banana",
-            "Brownie",
-            "Marshmallow"
-          ]
-        }
-      ]
-    },
-    "open_chopp": {
-      "nome": "Open Chopp",
-      "horario": "Das 16h às 21h.",
-      "valores": "R$ 29,90 de domingo a quinta-feira e R$ 49,90 de sexta-feira e sábado."
-    },
-    "rodizio_de_boteco": {
-      "nome": "Rodízio de Boteco",
-      "horario": "Das 16h às 21h.",
-      "itens": [
-        "Isca de frango",
-        "Calabresa acebolada",
-        "Batata frita",
-        "Mandioca frita",
-        "Frango à passarinho"
-      ],
-      "valores": "R$ 49,90 de domingo a quinta-feira e R$ 59,90 de sexta-feira e sábado."
-    }
-  },
-  "respostas_prontas": {
-    "fondue_dia_dos_namorados": "Que bom receber seu contato e seu interesse na nossa experiência especial de Fondue para o Dia dos Namorados no Sr. Boteco. ❤️\n\nPreparamos duas opções para compartilhar:\n\n🧀 Fondue Salgado – R$ 99,90\nAcompanha: torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.\n\n🍫 Fondue Doce – R$ 89,90\nAcompanha: morango, uva, banana, brownie e marshmallow.\n\n🕓 As ofertas são válidas das 16h às 21h.\n📍 Estamos no Sr. Boteco – Pátio Limeira Shopping.\n\nVocês estão pensando em vir em casal ou em um grupo maior?",
-    "reserva": "Perfeito! 😊 Para verificar a disponibilidade da reserva, preciso de: nome completo, telefone para contato, quantidade de pessoas, data e horário desejado. Nosso WhatsApp para contato é (19) 99785-8351.",
-    "horario": "Funcionamos todos os dias das 11h às 22h. As ofertas são válidas das 16h às 21h."
+  "regras_atendimento": {
+    "continuidade": "Toda nova mensagem do cliente deve ser tratada como continuação da conversa. Se faltar contexto, responda o que for possível e faça uma pergunta objetiva para avançar.",
+    "quando_usar_fallback": "Use o fallback somente quando a pergunta não tiver relação com restaurante, cardápio, ofertas, reservas, localização, horários, iFood ou atendimento.",
+    "reserva": "Nunca confirme reserva automaticamente. Colete nome, telefone, quantidade de pessoas, data e horário, e informe que a equipe verificará disponibilidade.",
+    "whatsapp": "O WhatsApp (19) 99785-8351 pode ser oferecido como opção de contato e confirmação de reserva, sem obrigar o cliente a chamar por lá."
   }
 }
