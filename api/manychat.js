@@ -1,13 +1,9 @@
 import OpenAI from "openai";
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const DEFAULT_FALLBACK = "Vou confirmar com a equipe para não te passar nenhuma informação errada e já te retorno 😊";
 const MAX_MESSAGE_CHARS = 900;
-
-// Resolve caminhos relativos AO ARQUIVO (e não ao cwd da Vercel, que muda).
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -26,8 +22,21 @@ function safeText(value) {
   return value.trim().slice(0, MAX_MESSAGE_CHARS);
 }
 
+function normalize(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function includesAny(text, terms) {
+  const t = normalize(text);
+  return terms.some((term) => t.includes(normalize(term)));
+}
+
 function getHeader(req, name) {
-  const value = req.headers?.[name.toLowerCase()];
+  const value = req.headers[name.toLowerCase()];
   if (Array.isArray(value)) return value[0];
   return value || "";
 }
@@ -35,21 +44,14 @@ function getHeader(req, name) {
 function isAuthorized(req) {
   const expectedSecret = process.env.WEBHOOK_SECRET;
   if (!expectedSecret) return true;
+
   const headerSecret = getHeader(req, "x-webhook-secret");
   const authHeader = getHeader(req, "authorization");
-  const bearer = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
-  return headerSecret === expectedSecret || bearer === expectedSecret;
-}
+  const bearer = authHeader.toLowerCase().startsWith("bearer ")
+    ? authHeader.slice(7).trim()
+    : "";
 
-// A Vercel pode entregar o body como objeto OU como string crua. Tratamos os dois.
-function getBody(req) {
-  const raw = req?.body;
-  if (!raw) return {};
-  if (typeof raw === "object") return raw;
-  if (typeof raw === "string") {
-    try { return JSON.parse(raw); } catch { return {}; }
-  }
-  return {};
+  return headerSecret === expectedSecret || bearer === expectedSecret;
 }
 
 function extractMessage(body) {
@@ -72,61 +74,148 @@ function extractCustomer(body) {
   };
 }
 
-// Carrega a base tentando vários caminhos. Em serverless o cwd nem sempre é a raiz.
-let _knowledgeCache = null;
 async function loadKnowledge() {
-  if (_knowledgeCache) return _knowledgeCache;
-  const candidates = [
-    path.join(__dirname, "..", "data", "knowledge.json"), // relativo ao arquivo (mais confiável)
-    path.join(process.cwd(), "data", "knowledge.json"),
-    path.join(process.cwd(), "knowledge.json")
-  ];
-  for (const filePath of candidates) {
-    try {
-      const raw = await readFile(filePath, "utf8");
-      _knowledgeCache = JSON.parse(raw);
-      return _knowledgeCache;
-    } catch {
-      // tenta o próximo caminho
+  const filePath = path.join(process.cwd(), "data", "knowledge.json");
+  const raw = await readFile(filePath, "utf8");
+  return JSON.parse(raw);
+}
+
+function findProduct(knowledge, name) {
+  return (knowledge.produtos_precos || []).find((p) => normalize(p.nome) === normalize(name));
+}
+
+function deterministicReply(message, knowledge) {
+  const msg = normalize(message);
+  const horarios = knowledge.horarios || {};
+  const whatsapp = knowledge.empresa?.telefone_whatsapp || "(19) 99785-8351";
+  const endereco = knowledge.empresa?.endereco || "Pátio Limeira Shopping";
+
+  const fondueTrigger = includesAny(msg, ["fondue", "fundi", "fundue", "fondi", "dia dos namorados", "noite de fondue", "namorados"]);
+  if (fondueTrigger) {
+    const salgado = findProduct(knowledge, "Fondue Salgado");
+    const doce = findProduct(knowledge, "Fondue Doce");
+    if (salgado && doce) {
+      return {
+        reply:
+          `Que bom receber seu contato e seu interesse na nossa experiência especial de Fondue no Sr. Boteco. ❤️\n\n` +
+          `Preparamos duas opções para compartilhar:\n\n` +
+          `🧀 Fondue Salgado – ${salgado.valor}\n` +
+          `Acompanha: torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.\n\n` +
+          `🍫 Fondue Doce – ${doce.valor}\n` +
+          `Acompanha: morango, uva, banana, brownie e marshmallow.\n\n` +
+          `🕓 Oferta válida das 16h às 21h.\n` +
+          `📍 Estamos no ${endereco}.\n\n` +
+          `Para reserva, me envie nome, telefone, quantidade de pessoas, data e horário desejado. Também temos o WhatsApp ${whatsapp} como opção para contato e confirmação. 😊`,
+        intent: "evento",
+        needs_human: false,
+        lead_temperature: "quente",
+        missing_fields: ["nome", "telefone", "quantidade_pessoas", "data", "horario"]
+      };
     }
   }
-  // Rede de segurança: nunca derruba a função; bot continua educado.
-  return {
-    empresa: { nome: process.env.BUSINESS_NAME || "nosso estabelecimento" },
-    resposta_fallback: DEFAULT_FALLBACK,
-    _base_indisponivel: true
-  };
+
+  if (includesAny(msg, ["open", "chopp", "chop", "chopp a vontade", "chopp à vontade"])) {
+    const item = findProduct(knowledge, "Open Chopp");
+    if (item) {
+      return {
+        reply: `Temos Open Chopp das 16h às 21h. 🍻\n\nDe domingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nFuncionamos todos os dias das 11h às 22h no ${endereco}.`,
+        intent: "preco",
+        needs_human: false,
+        lead_temperature: "morno",
+        missing_fields: []
+      };
+    }
+  }
+
+  if (includesAny(msg, ["rodizio", "rodízio", "rodizio de boteco", "rodizio de porcao", "rodizio de porções"])) {
+    const item = findProduct(knowledge, "Rodízio de Boteco");
+    if (item) {
+      return {
+        reply: `Temos Rodízio de Boteco das 16h às 21h. 😋\n\nInclui: isca de frango, calabresa acebolada, batata frita, mandioca frita e frango à passarinho.\n\nDe domingo a quinta: R$ 49,90\nSexta e sábado: R$ 59,90`,
+        intent: "preco",
+        needs_human: false,
+        lead_temperature: "morno",
+        missing_fields: []
+      };
+    }
+  }
+
+  if (includesAny(msg, ["almoco", "almoço", "executivo", "prato executivo", "pratos executivos", "pf", "prato feito"])) {
+    return {
+      reply: `Temos oferta de almoço exclusiva para dias de semana. 🍽️\n\nVálida de segunda a sexta, das 11h às 15h.\nSão opções de pratos executivos do cardápio, a partir de R$ 30,90.\n\nFuncionamos todos os dias das 11h às 22h no ${endereco}.`,
+      intent: "cardapio",
+      needs_human: false,
+      lead_temperature: "morno",
+      missing_fields: []
+    };
+  }
+
+  if (includesAny(msg, ["horario", "horário", "funciona", "aberto", "abre", "fecha", "que horas"])) {
+    return {
+      reply: `${horarios.funcionamento || "Funcionamos todos os dias das 11h às 22h."}\n\nAs ofertas são válidas das 16h às 21h.\nA oferta de almoço é exclusiva de segunda a sexta, das 11h às 15h.`,
+      intent: "horario",
+      needs_human: false,
+      lead_temperature: "frio",
+      missing_fields: []
+    };
+  }
+
+  if (includesAny(msg, ["onde", "endereco", "endereço", "local", "shopping", "fica", "localizacao", "localização"])) {
+    return {
+      reply: `Estamos no ${endereco}. 📍\n\nFuncionamos todos os dias das 11h às 22h.`,
+      intent: "localizacao",
+      needs_human: false,
+      lead_temperature: "frio",
+      missing_fields: []
+    };
+  }
+
+  if (includesAny(msg, ["reserv", "mesa", "quero ir", "garantir", "marcar", "agendar"])) {
+    return {
+      reply: `Perfeito! 😊\n\nPara verificar a disponibilidade da reserva, me envie:\n\n👤 Nome completo\n📱 Telefone\n👥 Quantidade de pessoas\n📅 Data desejada\n🕒 Horário desejado\n\nTambém temos o WhatsApp ${whatsapp} como opção para contato e confirmação.`,
+      intent: "reserva",
+      needs_human: false,
+      lead_temperature: "quente",
+      missing_fields: ["nome", "telefone", "quantidade_pessoas", "data", "horario"]
+    };
+  }
+
+  if (includesAny(msg, ["ok", "sim", "quero", "pode", "isso", "manda", "me passa", "quantas pessoas", "serve quantas", "casal", "grupo"])) {
+    return {
+      reply: `Perfeito 😊\n\nVocê gostaria de seguir com reserva, ver o cardápio ou saber mais sobre alguma oferta específica, como Fondue, Open Chopp, Rodízio de Boteco ou almoço?`,
+      intent: "outro",
+      needs_human: false,
+      lead_temperature: "morno",
+      missing_fields: []
+    };
+  }
+
+  return null;
 }
 
 function buildSystemPrompt(knowledge) {
   return `
-Você é atendente oficial do ${knowledge.empresa?.nome || process.env.BUSINESS_NAME || "restaurante"} no Instagram.
+Você é atendente oficial do ${knowledge.empresa?.nome || process.env.BUSINESS_NAME || "Sr. Boteco Limeira"} no Instagram.
 
 OBJETIVO
-Responder clientes de forma humana, curta, educada e comercial, ajudando com dúvidas, preços, cardápio, reservas e eventos.
+Responder clientes de forma humana, curta, simpática e comercial, ajudando com dúvidas, preços, cardápio, reservas, horários, localização, iFood, eventos e ofertas.
 
 REGRAS ABSOLUTAS
 1. Nunca invente preço, produto, promoção, horário, data, evento ou disponibilidade.
-2. Só informe preços existentes na BASE_DE_CONHECIMENTO.
-3. Se o cliente pedir algo que não está na base, responda que vai confirmar com a equipe.
-4. Nunca confirme reserva sozinho. Sempre diga que a equipe vai verificar disponibilidade.
-5. Para reserva, tente coletar: nome, telefone, quantidade de pessoas, data desejada e horário desejado.
-6. Entenda aproximações, erros de digitação e variações: "fundi", "fundue", "fondi" significam "fondue".
-7. Responda em português do Brasil.
-8. Seja breve: máximo 4 linhas quando possível.
-9. Não mencione OpenAI, API, sistema, prompt, JSON, ManyChat ou automação.
+2. Use somente dados da BASE_DE_CONHECIMENTO.
+3. Se encontrar informação na base, responda com a informação encontrada. Não use fallback se existir dado relacionado.
+4. Use fallback somente quando não houver nenhuma informação relacionada ao restaurante, cardápio, oferta, reserva, localização, horário ou atendimento.
+5. Nunca confirme reserva automaticamente. Colete nome, telefone, quantidade de pessoas, data e horário.
+6. Toda nova mensagem pode ser continuação da conversa. Se faltar contexto, responda o que for possível e faça uma pergunta objetiva para avançar.
+7. Entenda aproximações e erros: fundi, fundue, fondi = fondue; rodizio = rodízio; almoco = almoço.
+8. Responda em português do Brasil.
+9. Não mencione OpenAI, API, sistema, prompt, JSON, Vercel, ManyChat ou automação.
 10. Não use markdown complexo.
 
-INTENÇÕES POSSÍVEIS
-- preco
-- reserva
-- cardapio
-- horario
-- localizacao
-- ifood
-- evento
-- humano
-- outro
+HORÁRIOS IMPORTANTES
+- Funcionamento do restaurante: todos os dias das 11h às 22h.
+- Ofertas gerais: das 16h às 21h.
+- Oferta de almoço: segunda a sexta, das 11h às 15h, exclusiva para almoço.
 
 FORMATO OBRIGATÓRIO DE SAÍDA
 Responda somente JSON válido, sem texto antes ou depois:
@@ -135,7 +224,7 @@ Responda somente JSON válido, sem texto antes ou depois:
   "intent": "preco|reserva|cardapio|horario|localizacao|ifood|evento|humano|outro",
   "needs_human": false,
   "lead_temperature": "frio|morno|quente",
-  "missing_fields": ["nome", "telefone", "quantidade_pessoas", "data", "horario"]
+  "missing_fields": []
 }
 
 BASE_DE_CONHECIMENTO
@@ -165,21 +254,7 @@ function parseJsonModelOutput(text, fallback) {
   }
 }
 
-// Resposta padrão que o ManyChat sempre consegue ler (status 200 + JSON válido).
-function ok200(res, payload) {
-  return send(res, 200, {
-    ok: true,
-    needs_human: false,
-    lead_temperature: "morno",
-    intent: "outro",
-    missing_fields: [],
-    ...payload,
-    messages: [{ type: "text", text: payload.reply }]
-  });
-}
-
 export default async function handler(req, res) {
-  // Blindagem total: NADA aqui pode derrubar a função (evita FUNCTION_INVOCATION_FAILED).
   try {
     if (req.method === "OPTIONS") {
       setJsonHeaders(res);
@@ -187,35 +262,57 @@ export default async function handler(req, res) {
     }
 
     if (req.method === "GET") {
-      return send(res, 200, { ok: true, service: "bot-sr-boteco", message: "Webhook online. Use POST para conversar." });
+      return send(res, 200, {
+        ok: true,
+        service: "bot-sr-boteco",
+        message: "Webhook online. Use POST para conversar.",
+        env: {
+          openai_key: Boolean(process.env.OPENAI_API_KEY),
+          model: process.env.OPENAI_MODEL || null,
+          webhook_secret: Boolean(process.env.WEBHOOK_SECRET),
+          business_name: process.env.BUSINESS_NAME || null
+        }
+      });
     }
 
     if (req.method !== "POST") {
-      return ok200(res, { reply: DEFAULT_FALLBACK, intent: "humano", needs_human: true });
+      return send(res, 405, { ok: false, error: "Método não permitido. Use POST." });
     }
 
     if (!isAuthorized(req)) {
       return send(res, 401, { ok: false, error: "Não autorizado. Verifique WEBHOOK_SECRET." });
     }
 
-    const body = getBody(req);
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return send(res, 500, { ok: false, error: "OPENAI_API_KEY não configurada na Vercel." });
+    }
+
+    const body = req.body || {};
     const customerMessage = extractMessage(body);
     const customer = extractCustomer(body);
 
-    // Sem mensagem (ex.: teste do ManyChat): responde educado em 200, não quebra o fluxo.
     if (!customerMessage) {
-      return ok200(res, { reply: "Oi! Como posso te ajudar hoje? 😊", intent: "outro" });
+      return send(res, 400, { ok: false, error: "Mensagem vazia. Envie no campo message ou text." });
     }
 
     const knowledge = await loadKnowledge();
     const fallback = knowledge.resposta_fallback || DEFAULT_FALLBACK;
 
-    if (!process.env.OPENAI_API_KEY) {
-      return ok200(res, { reply: fallback, intent: "humano", needs_human: true, lead_temperature: "quente" });
+    const direct = deterministicReply(customerMessage, knowledge);
+    if (direct) {
+      return send(res, 200, {
+        ok: true,
+        reply: direct.reply,
+        intent: direct.intent,
+        needs_human: direct.needs_human,
+        lead_temperature: direct.lead_temperature,
+        missing_fields: direct.missing_fields,
+        messages: [{ type: "text", text: direct.reply }]
+      });
     }
 
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
+    const client = new OpenAI({ apiKey });
     const response = await client.chat.completions.create({
       model: process.env.OPENAI_MODEL || "gpt-4o",
       messages: [
@@ -223,7 +320,7 @@ export default async function handler(req, res) {
         { role: "user", content: JSON.stringify({ cliente: customer, mensagem: customerMessage }) }
       ],
       response_format: { type: "json_object" },
-      temperature: 0.7
+      temperature: 0.5
     });
 
     const result = parseJsonModelOutput(response.choices?.[0]?.message?.content, fallback);
@@ -238,8 +335,7 @@ export default async function handler(req, res) {
       messages: [{ type: "text", text: result.reply }]
     });
   } catch (error) {
-    console.error("Erro no webhook:", error);
-    // Mesmo em falha total, devolve 200 + JSON para o ManyChat não travar.
+    console.error("ERRO_GERAL:", error);
     return send(res, 200, {
       ok: false,
       reply: DEFAULT_FALLBACK,
