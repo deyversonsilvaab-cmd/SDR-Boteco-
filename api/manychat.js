@@ -32,7 +32,7 @@ function normalize(value) {
 
 function includesAny(text, terms) {
   const t = normalize(text);
-  return terms.some((term) => t.includes(normalize(term)));
+  return (terms || []).some((term) => t.includes(normalize(term)));
 }
 
 function getHeader(req, name) {
@@ -84,13 +84,53 @@ function findProduct(knowledge, name) {
   return (knowledge.produtos_precos || []).find((p) => normalize(p.nome) === normalize(name));
 }
 
+function getWhatsApp(knowledge) {
+  return knowledge.empresa?.telefone_whatsapp || "(19) 99785-8351";
+}
+
+function getIfoodLink(knowledge) {
+  return knowledge.links?.ifood || "https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72";
+}
+
 function deterministicReply(message, knowledge) {
   const msg = normalize(message);
   const horarios = knowledge.horarios || {};
-  const whatsapp = knowledge.empresa?.telefone_whatsapp || "(19) 99785-8351";
+  const whatsapp = getWhatsApp(knowledge);
   const endereco = knowledge.empresa?.endereco || "Pátio Limeira Shopping";
+  const ifoodLink = getIfoodLink(knowledge);
 
-  const fondueTrigger = includesAny(msg, ["fondue", "fundi", "fundue", "fondi", "dia dos namorados", "noite de fondue", "namorados"]);
+  // DELIVERY / IFOOD — resposta fixa para pedidos de entrega.
+  if (includesAny(msg, ["entrega", "delivery", "ifood", "i food", "pedido", "pedir", "pedidos", "entregam", "faz entrega", "fazem entrega", "tem entrega"])) {
+    return {
+      reply:
+        `Sim 😊\n\n` +
+        `Fazemos entregas através do iFood.\n\n` +
+        `📲 Faça seu pedido pelo link:\n${ifoodLink}\n\n` +
+        `Caso prefira, também pode conferir nosso cardápio completo pelo aplicativo do iFood.`,
+      intent: "ifood",
+      needs_human: false,
+      lead_temperature: "quente",
+      missing_fields: []
+    };
+  }
+
+  // VAGAS / CURRÍCULO — resposta fixa para pessoas procurando emprego.
+  if (includesAny(msg, ["vaga", "vagas", "emprego", "trabalho", "curriculo", "currículo", "contratacao", "contratação", "contratando", "processo seletivo", "trabalhar", "vim pela vaga", "vaga de emprego", "vaga de trabalho"])) {
+    return {
+      reply:
+        `Olá 😊\n\n` +
+        `Obrigado pelo seu interesse em trabalhar conosco.\n\n` +
+        `Você pode enviar seu currículo diretamente para nosso WhatsApp:\n\n` +
+        `📲 ${whatsapp}\n\n` +
+        `Nossa equipe irá analisar seu perfil e entrará em contato caso exista uma oportunidade compatível.`,
+      intent: "humano",
+      needs_human: true,
+      lead_temperature: "morno",
+      missing_fields: []
+    };
+  }
+
+  const fondueTrigger = includesAny(msg, ["fondue", "fundi", "fundue", "fondi", "dia dos namorados", "noite de fondue", "namorados", "valores fondue", "valor fondue", "preco fondue", "preço fondue"]);
   if (fondueTrigger) {
     const salgado = findProduct(knowledge, "Fondue Salgado");
     const doce = findProduct(knowledge, "Fondue Doce");
@@ -180,9 +220,9 @@ function deterministicReply(message, knowledge) {
     };
   }
 
-  if (includesAny(msg, ["ok", "sim", "quero", "pode", "isso", "manda", "me passa", "quantas pessoas", "serve quantas", "casal", "grupo"])) {
+  if (includesAny(msg, ["ok", "sim", "quero", "pode", "isso", "manda", "me passa", "quantas pessoas", "serve quantas", "casal", "grupo", "valores", "valor", "preco", "preço"])) {
     return {
-      reply: `Perfeito 😊\n\nVocê gostaria de seguir com reserva, ver o cardápio ou saber mais sobre alguma oferta específica, como Fondue, Open Chopp, Rodízio de Boteco ou almoço?`,
+      reply: `Perfeito 😊\n\nVocê quer saber sobre qual opção? Temos Fondue, Open Chopp, Rodízio de Boteco, almoço executivo, cardápio ou reserva.`,
       intent: "outro",
       needs_human: false,
       lead_temperature: "morno",
@@ -198,16 +238,16 @@ function buildSystemPrompt(knowledge) {
 Você é atendente oficial do ${knowledge.empresa?.nome || process.env.BUSINESS_NAME || "Sr. Boteco Limeira"} no Instagram.
 
 OBJETIVO
-Responder clientes de forma humana, curta, simpática e comercial, ajudando com dúvidas, preços, cardápio, reservas, horários, localização, iFood, eventos e ofertas.
+Responder clientes de forma humana, curta, simpática e comercial, ajudando com dúvidas, preços, cardápio, reservas, horários, localização, iFood, delivery, vagas de emprego, eventos e ofertas.
 
 REGRAS ABSOLUTAS
 1. Nunca invente preço, produto, promoção, horário, data, evento ou disponibilidade.
 2. Use somente dados da BASE_DE_CONHECIMENTO.
 3. Se encontrar informação na base, responda com a informação encontrada. Não use fallback se existir dado relacionado.
-4. Use fallback somente quando não houver nenhuma informação relacionada ao restaurante, cardápio, oferta, reserva, localização, horário ou atendimento.
+4. Use fallback somente quando não houver nenhuma informação relacionada ao restaurante, cardápio, oferta, reserva, localização, horário, iFood, vaga de emprego ou atendimento.
 5. Nunca confirme reserva automaticamente. Colete nome, telefone, quantidade de pessoas, data e horário.
 6. Toda nova mensagem pode ser continuação da conversa. Se faltar contexto, responda o que for possível e faça uma pergunta objetiva para avançar.
-7. Entenda aproximações e erros: fundi, fundue, fondi = fondue; rodizio = rodízio; almoco = almoço.
+7. Entenda aproximações e erros: fundi, fundue, fondi = fondue; rodizio = rodízio; almoco = almoço; entrega = iFood/delivery; vaga/trabalho/currículo = envio de currículo.
 8. Responda em português do Brasil.
 9. Não mencione OpenAI, API, sistema, prompt, JSON, Vercel, ManyChat ou automação.
 10. Não use markdown complexo.
