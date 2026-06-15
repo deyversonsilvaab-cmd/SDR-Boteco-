@@ -1631,11 +1631,48 @@
       "valor": "Pratos executivos do cardápio a partir de R$ 30,90",
       "validade": "Segunda a sexta-feira, das 11h às 15h. Exclusiva para almoço.",
       "descricao": "Oferta exclusiva para almoço, válida somente de segunda a sexta-feira, das 11h às 15h. Consulte as opções de pratos executivos do cardápio, como filé de frango grelhado, escondidinho, contrafilé, tilápia, linguiça toscana, picanha e outras opções cadastradas."
+    },
+    {
+      "nome": "Delivery / iFood",
+      "categoria": "Atendimento",
+      "aliases": [
+        "entrega",
+        "delivery",
+        "ifood",
+        "i food",
+        "pedido",
+        "pedir",
+        "pedidos",
+        "entregam",
+        "faz entrega",
+        "tem entrega"
+      ],
+      "valor": "Pedidos pelo iFood",
+      "descricao": "Fazemos entregas através do iFood. Link para pedido: https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72"
+    },
+    {
+      "nome": "Vagas de Emprego",
+      "categoria": "Atendimento",
+      "aliases": [
+        "vaga",
+        "vagas",
+        "emprego",
+        "trabalho",
+        "curriculo",
+        "currículo",
+        "contratação",
+        "contratando",
+        "processo seletivo",
+        "trabalhar",
+        "vim pela vaga"
+      ],
+      "valor": "Envio de currículo pelo WhatsApp",
+      "descricao": "Interessados em vagas podem enviar currículo pelo WhatsApp (19) 99785-8351."
     }
   ],
   "links": {
     "whatsapp": "https://wa.me/5519997858351",
-    "ifood": "A confirmar",
+    "ifood": "https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72",
     "cardapio": "A confirmar"
   },
   "reserva_campos_obrigatorios": [
@@ -1651,5 +1688,44 @@
     "quando_usar_fallback": "Use o fallback somente quando a pergunta não tiver relação com restaurante, cardápio, ofertas, reservas, localização, horários, iFood ou atendimento.",
     "reserva": "Nunca confirme reserva automaticamente. Colete nome, telefone, quantidade de pessoas, data e horário, e informe que a equipe verificará disponibilidade.",
     "whatsapp": "O WhatsApp (19) 99785-8351 pode ser oferecido como opção de contato e confirmação de reserva, sem obrigar o cliente a chamar por lá."
+  },
+  "respostas_prontas": {
+    "delivery_ifood": {
+      "gatilhos": [
+        "entrega",
+        "delivery",
+        "ifood",
+        "i food",
+        "pedido",
+        "pedir",
+        "pedidos",
+        "entregam",
+        "faz entrega",
+        "fazem entrega",
+        "tem entrega",
+        "delivery?"
+      ],
+      "resposta": "Sim 😊\n\nFazemos entregas através do iFood.\n\n📲 Faça seu pedido pelo link:\nhttps://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72\n\nCaso prefira, também pode conferir nosso cardápio completo pelo aplicativo do iFood."
+    },
+    "vaga_emprego": {
+      "gatilhos": [
+        "vaga",
+        "vagas",
+        "emprego",
+        "trabalho",
+        "curriculo",
+        "currículo",
+        "contratacao",
+        "contratação",
+        "contratando",
+        "processo seletivo",
+        "vaga de emprego",
+        "vaga de trabalho",
+        "trabalhar",
+        "trabalha com vocês",
+        "vim pela vaga"
+      ],
+      "resposta": "Olá 😊\n\nObrigado pelo seu interesse em trabalhar conosco.\n\nVocê pode enviar seu currículo diretamente para nosso WhatsApp:\n\n📲 (19) 99785-8351\n\nNossa equipe irá analisar seu perfil e entrará em contato caso exista uma oportunidade compatível."
+    }
   }
 }
