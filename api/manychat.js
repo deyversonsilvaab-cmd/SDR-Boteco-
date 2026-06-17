@@ -180,9 +180,32 @@ function deterministicReply(message, knowledge) {
     }
   }
 
-  if (includesAny(msg, ["almoco", "almoço", "executivo", "prato executivo", "pratos executivos", "pf", "prato feito"])) {
+  if (includesAny(msg, ["almoco", "almoço", "executivo", "prato executivo", "pratos executivos", "pf", "prato feito", "prato do dia", "pratos do dia", "qual o prato do dia", "cardapio almoco", "cardápio almoço", "valores almoco", "valores almoço", "preco almoco", "preço almoço"])) {
+    const pratoDia = findProduct(knowledge, "Pratos do Dia - Almoço");
+    const opcoes = Array.isArray(pratoDia?.opcoes) ? pratoDia.opcoes : [];
+    const lista = opcoes.length
+      ? opcoes.map((item) => `• ${item.prato} — ${item.valor}`).join("
+")
+      : "• Consulte nossas opções do almoço do dia.";
+
     return {
-      reply: `Temos oferta de almoço exclusiva para dias de semana. 🍽️\n\nVálida de segunda a sexta, das 11h às 15h.\nSão opções de pratos executivos do cardápio, a partir de R$ 30,90.\n\nFuncionamos todos os dias das 11h às 22h no ${endereco}.`,
+      reply:
+        `Temos oferta de almoço exclusiva para dias de semana. 🍽️
+
+` +
+        `Válida de segunda a sexta, das 11h às 15h.
+` +
+        `São opções de Pratos do Dia, a partir de R$ 21,90.
+
+` +
+        `Opções disponíveis:
+${lista}
+
+` +
+        `Por +R$ 5,00, você acompanha com bebida: suco de limão ou laranja 300ml ou Coca KS 290ml.
+
+` +
+        `Funcionamos todos os dias das 11h às 22h no ${endereco}.`,
       intent: "cardapio",
       needs_human: false,
       lead_temperature: "morno",
@@ -222,7 +245,7 @@ function deterministicReply(message, knowledge) {
 
   if (includesAny(msg, ["ok", "sim", "quero", "pode", "isso", "manda", "me passa", "quantas pessoas", "serve quantas", "casal", "grupo", "valores", "valor", "preco", "preço"])) {
     return {
-      reply: `Perfeito 😊\n\nVocê quer saber sobre qual opção? Temos Fondue, Open Chopp, Rodízio de Boteco, almoço executivo, cardápio ou reserva.`,
+      reply: `Perfeito 😊\n\nVocê quer saber sobre qual opção? Temos Fondue, Open Chopp, Rodízio de Boteco, Pratos do Dia no almoço, cardápio ou reserva.`,
       intent: "outro",
       needs_human: false,
       lead_temperature: "morno",
@@ -255,7 +278,7 @@ REGRAS ABSOLUTAS
 HORÁRIOS IMPORTANTES
 - Funcionamento do restaurante: todos os dias das 11h às 22h.
 - Ofertas gerais: das 16h às 21h.
-- Oferta de almoço: segunda a sexta, das 11h às 15h, exclusiva para almoço.
+- Oferta de almoço/Pratos do Dia: segunda a sexta, das 11h às 15h, exclusiva para almoço, com opções a partir de R$ 21,90.
 
 FORMATO OBRIGATÓRIO DE SAÍDA
 Responda somente JSON válido, sem texto antes ou depois:
