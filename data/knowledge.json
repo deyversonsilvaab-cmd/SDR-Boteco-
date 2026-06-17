@@ -13,14 +13,17 @@
       "Horário das ofertas: das 16h às 21h.",
       "Oferta de almoço: válida de segunda a sexta, das 11h às 15h, exclusiva para almoço.",
       "Se o cliente falar sobre Fondue, Dia dos Namorados ou Noite de Fondue, responder com a oferta completa cadastrada.",
-      "Só usar a resposta de fallback quando realmente não houver informação relacionada na base."
+      "Só usar a resposta de fallback quando realmente não houver informação relacionada na base.",
+      "Campanha Pratos do Dia: válida de segunda a sexta-feira, das 11h às 15h, exclusiva para almoço.",
+      "Pratos do Dia com opções a partir de R$ 21,90. Pode informar preço e composição de cada prato cadastrado.",
+      "Quando o cliente perguntar sobre almoço, prato do dia, valores do almoço ou opções do dia, responder com a lista de Pratos do Dia."
     ],
     "telefone_whatsapp": "(19) 99785-8351"
   },
   "horarios": {
     "funcionamento": "Funcionamos todos os dias das 11h às 22h.",
     "ofertas_gerais": "Ofertas como Fondue, Open Chopp e Rodízio de Boteco são válidas das 16h às 21h.",
-    "oferta_almoco": "Oferta de almoço válida de segunda a sexta-feira, das 11h às 15h. Exclusiva para o almoço.",
+    "oferta_almoco": "Oferta de almoço válida de segunda a sexta-feira, das 11h às 15h. Exclusiva para almoço. Pratos do dia a partir de R$ 21,90.",
     "reserva": "Reservas sujeitas à disponibilidade da equipe."
   },
   "produtos_precos": [
@@ -1612,27 +1615,6 @@
       "descricao": "Oferta válida das 16h às 21h. Acompanha morango, uva, banana, brownie e marshmallow."
     },
     {
-      "nome": "Oferta de Almoço / Pratos Executivos",
-      "categoria": "Oferta de almoço",
-      "aliases": [
-        "almoço",
-        "almoco",
-        "oferta de almoço",
-        "oferta de almoco",
-        "prato executivo",
-        "pratos executivos",
-        "executivo",
-        "executivos",
-        "almoço executivo",
-        "almoco executivo",
-        "prato feito",
-        "pf"
-      ],
-      "valor": "Pratos executivos do cardápio a partir de R$ 30,90",
-      "validade": "Segunda a sexta-feira, das 11h às 15h. Exclusiva para almoço.",
-      "descricao": "Oferta exclusiva para almoço, válida somente de segunda a sexta-feira, das 11h às 15h. Consulte as opções de pratos executivos do cardápio, como filé de frango grelhado, escondidinho, contrafilé, tilápia, linguiça toscana, picanha e outras opções cadastradas."
-    },
-    {
       "nome": "Delivery / iFood",
       "categoria": "Atendimento",
       "aliases": [
@@ -1668,6 +1650,81 @@
       ],
       "valor": "Envio de currículo pelo WhatsApp",
       "descricao": "Interessados em vagas podem enviar currículo pelo WhatsApp (19) 99785-8351."
+    },
+    {
+      "nome": "Pratos do Dia - Almoço",
+      "categoria": "Oferta de almoço",
+      "aliases": [
+        "almoço",
+        "almoco",
+        "oferta de almoço",
+        "oferta de almoco",
+        "prato do dia",
+        "pratos do dia",
+        "qual o prato do dia",
+        "prato executivo",
+        "pratos executivos",
+        "executivo",
+        "pf",
+        "prato feito",
+        "cardápio almoço",
+        "cardapio almoco",
+        "valores almoço",
+        "valor almoço",
+        "preço almoço",
+        "preco almoco"
+      ],
+      "valor": "A partir de R$ 21,90",
+      "validade": "Segunda a sexta-feira, das 11h às 15h. Exclusiva para almoço.",
+      "descricao": "Campanha Pratos do Dia, exclusiva para almoço, válida somente de segunda a sexta-feira das 11h às 15h. Opções a partir de R$ 21,90.",
+      "observacao": "Pesos das carnes aproximados após preparo. Por +R$ 5,00 acompanha bebida: suco de limão ou laranja 300ml ou Coca KS 290ml.",
+      "opcoes": [
+        {
+          "prato": "Filé de Frango com Toscana",
+          "valor": "R$ 22,90",
+          "descricao": "100g de frango, 1 gomo de toscana, fritas ou purê, arroz, feijão, salada e farofa."
+        },
+        {
+          "prato": "Bisteca",
+          "valor": "R$ 21,90",
+          "descricao": "Bisteca suína, fritas ou purê, arroz, feijão, salada e farofa."
+        },
+        {
+          "prato": "Bife Acebolado",
+          "valor": "R$ 27,90",
+          "descricao": "Bife bovino acebolado, fritas ou purê, arroz, feijão, salada e farofa."
+        },
+        {
+          "prato": "Strogonoff de Frango",
+          "valor": "R$ 21,90",
+          "descricao": "250g de strogonoff de frango, batata palha, arroz e farofa. Não acompanha salada."
+        },
+        {
+          "prato": "Filé de Frango Grelhado",
+          "valor": "R$ 22,90",
+          "descricao": "150g de frango, fritas ou purê, arroz, feijão, salada e farofa."
+        },
+        {
+          "prato": "Filé de Frango à Parmegiana",
+          "valor": "R$ 26,90",
+          "descricao": "150g de frango, molho de tomate, muçarela, fritas, arroz e farofa. Não acompanha salada."
+        },
+        {
+          "prato": "Linguiça Toscana",
+          "valor": "R$ 21,90",
+          "descricao": "180g de linguiça toscana (2 gomos), fritas ou purê, arroz, feijão, salada e farofa."
+        },
+        {
+          "prato": "Omelete de Calabresa",
+          "valor": "R$ 21,90",
+          "descricao": "Omelete com calabresa, muçarela e cebola, fritas ou purê, arroz, feijão, salada e farofa."
+        },
+        {
+          "prato": "Prato Fitness Frango",
+          "valor": "R$ 21,90",
+          "descricao": "Filé de frango grelhado, legumes, purê de batata e salada."
+        }
+      ]
     }
   ],
   "links": {
@@ -1726,6 +1783,23 @@
         "vim pela vaga"
       ],
       "resposta": "Olá 😊\n\nObrigado pelo seu interesse em trabalhar conosco.\n\nVocê pode enviar seu currículo diretamente para nosso WhatsApp:\n\n📲 (19) 99785-8351\n\nNossa equipe irá analisar seu perfil e entrará em contato caso exista uma oportunidade compatível."
+    },
+    "pratos_do_dia_almoco": {
+      "gatilhos": [
+        "almoço",
+        "almoco",
+        "prato do dia",
+        "pratos do dia",
+        "qual o prato do dia",
+        "executivo",
+        "prato executivo",
+        "pf",
+        "prato feito",
+        "valores almoço",
+        "preço almoço",
+        "preco almoço"
+      ],
+      "resposta": "Temos oferta de almoço exclusiva para dias de semana. 🍽️\n\nVálida de segunda a sexta, das 11h às 15h.\nSão opções de Pratos do Dia a partir de R$ 21,90.\n\nOpções:\n• Filé de Frango com Toscana — R$ 22,90\n• Bisteca — R$ 21,90\n• Bife Acebolado — R$ 27,90\n• Strogonoff de Frango — R$ 21,90\n• Filé de Frango Grelhado — R$ 22,90\n• Filé de Frango à Parmegiana — R$ 26,90\n• Linguiça Toscana — R$ 21,90\n• Omelete de Calabresa — R$ 21,90\n• Prato Fitness Frango — R$ 21,90\n\nFuncionamos todos os dias das 11h às 22h no Pátio Limeira Shopping."
     }
   }
 }
