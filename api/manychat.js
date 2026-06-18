@@ -3,7 +3,6 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 const DEFAULT_FALLBACK = "Vou confirmar com a equipe para não te passar nenhuma informação errada e já te retorno 😊";
-const MAX_MESSAGE_CHARS = 900;
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -19,20 +18,21 @@ function send(res, statusCode, payload) {
 
 function safeText(value) {
   if (typeof value !== "string") return "";
-  return value.trim().slice(0, MAX_MESSAGE_CHARS);
+  return value.trim().slice(0, 1200);
 }
 
-function normalize(value) {
-  return String(value || "")
+function normalizeText(value) {
+  return safeText(value)
+    .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
 function includesAny(text, terms) {
-  const t = normalize(text);
-  return (terms || []).some((term) => t.includes(normalize(term)));
+  return terms.some((term) => text.includes(normalizeText(term)));
 }
 
 function getHeader(req, name) {
@@ -47,9 +47,7 @@ function isAuthorized(req) {
 
   const headerSecret = getHeader(req, "x-webhook-secret");
   const authHeader = getHeader(req, "authorization");
-  const bearer = authHeader.toLowerCase().startsWith("bearer ")
-    ? authHeader.slice(7).trim()
-    : "";
+  const bearer = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
 
   return headerSecret === expectedSecret || bearer === expectedSecret;
 }
@@ -70,187 +68,67 @@ function extractCustomer(body) {
   return {
     id: safeText(String(body?.subscriber_id || body?.id || body?.contact_id || "")),
     first_name: safeText(body?.first_name || body?.name || body?.profile?.first_name || ""),
-    username: safeText(body?.username || body?.ig_username || body?.profile?.username || "")
+    username: safeText(body?.username || body?.ig_username || body?.profile?.username || ""),
+    channel: safeText(body?.channel || "instagram")
   };
 }
 
 async function loadKnowledge() {
-  const filePath = path.join(process.cwd(), "data", "knowledge.json");
-  const raw = await readFile(filePath, "utf8");
-  return JSON.parse(raw);
+  try {
+    const filePath = path.join(process.cwd(), "data", "knowledge.json");
+    const raw = await readFile(filePath, "utf8");
+    return JSON.parse(raw);
+  } catch {
+    return {
+      empresa: {
+        nome: process.env.BUSINESS_NAME || "Sr. Boteco Limeira",
+        whatsapp: "5519997858351",
+        whatsapp_link: "https://wa.me/5519997858351",
+        endereco: "Pátio Limeira Shopping"
+      },
+      resposta_fallback: DEFAULT_FALLBACK
+    };
+  }
 }
 
-function findProduct(knowledge, name) {
-  return (knowledge.produtos_precos || []).find((p) => normalize(p.nome) === normalize(name));
-}
+function buildDirectReply(message, knowledge) {
+  const text = normalizeText(message);
+  const respostas = knowledge.respostas_rapidas || {};
 
-function getWhatsApp(knowledge) {
-  return knowledge.empresa?.telefone_whatsapp || "(19) 99785-8351";
-}
-
-function getIfoodLink(knowledge) {
-  return knowledge.links?.ifood || "https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72";
-}
-
-function deterministicReply(message, knowledge) {
-  const msg = normalize(message);
-  const horarios = knowledge.horarios || {};
-  const whatsapp = getWhatsApp(knowledge);
-  const endereco = knowledge.empresa?.endereco || "Pátio Limeira Shopping";
-  const ifoodLink = getIfoodLink(knowledge);
-
-  // DELIVERY / IFOOD — resposta fixa para pedidos de entrega.
-  if (includesAny(msg, ["entrega", "delivery", "ifood", "i food", "pedido", "pedir", "pedidos", "entregam", "faz entrega", "fazem entrega", "tem entrega"])) {
-    return {
-      reply:
-        `Sim 😊\n\n` +
-        `Fazemos entregas através do iFood.\n\n` +
-        `📲 Faça seu pedido pelo link:\n${ifoodLink}\n\n` +
-        `Caso prefira, também pode conferir nosso cardápio completo pelo aplicativo do iFood.`,
-      intent: "ifood",
-      needs_human: false,
-      lead_temperature: "quente",
-      missing_fields: []
-    };
+  if (includesAny(text, ["cardapio", "menu", "opcoes", "comidas", "pratos", "tem o que", "o que tem", "cardapio completo"])) {
+    return { reply: respostas.cardapio || DEFAULT_FALLBACK, intent: "cardapio", needs_human: false, lead_temperature: "morno", missing_fields: [] };
   }
 
-  // VAGAS / CURRÍCULO — resposta fixa para pessoas procurando emprego.
-  if (includesAny(msg, ["vaga", "vagas", "emprego", "trabalho", "curriculo", "currículo", "contratacao", "contratação", "contratando", "processo seletivo", "trabalhar", "vim pela vaga", "vaga de emprego", "vaga de trabalho"])) {
-    return {
-      reply:
-        `Olá 😊\n\n` +
-        `Obrigado pelo seu interesse em trabalhar conosco.\n\n` +
-        `Você pode enviar seu currículo diretamente para nosso WhatsApp:\n\n` +
-        `📲 ${whatsapp}\n\n` +
-        `Nossa equipe irá analisar seu perfil e entrará em contato caso exista uma oportunidade compatível.`,
-      intent: "humano",
-      needs_human: true,
-      lead_temperature: "morno",
-      missing_fields: []
-    };
+  if (includesAny(text, ["onde fica", "aonde fica", "endereco", "localizacao", "qual endereco", "local", "shopping", "patio limeira"])) {
+    return { reply: respostas.localizacao || DEFAULT_FALLBACK, intent: "localizacao", needs_human: false, lead_temperature: "morno", missing_fields: [] };
   }
 
-  const fondueTrigger = includesAny(msg, ["fondue", "fundi", "fundue", "fondi", "dia dos namorados", "noite de fondue", "namorados", "valores fondue", "valor fondue", "preco fondue", "preço fondue"]);
-  if (fondueTrigger) {
-    const salgado = findProduct(knowledge, "Fondue Salgado");
-    const doce = findProduct(knowledge, "Fondue Doce");
-    if (salgado && doce) {
-      return {
-        reply:
-          `Que bom receber seu contato e seu interesse na nossa experiência especial de Fondue no Sr. Boteco. ❤️\n\n` +
-          `Preparamos duas opções para compartilhar:\n\n` +
-          `🧀 Fondue Salgado – ${salgado.valor}\n` +
-          `Acompanha: torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.\n\n` +
-          `🍫 Fondue Doce – ${doce.valor}\n` +
-          `Acompanha: morango, uva, banana, brownie e marshmallow.\n\n` +
-          `🕓 Oferta válida das 16h às 21h.\n` +
-          `📍 Estamos no ${endereco}.\n\n` +
-          `Para reserva, me envie nome, telefone, quantidade de pessoas, data e horário desejado. Também temos o WhatsApp ${whatsapp} como opção para contato e confirmação. 😊`,
-        intent: "evento",
-        needs_human: false,
-        lead_temperature: "quente",
-        missing_fields: ["nome", "telefone", "quantidade_pessoas", "data", "horario"]
-      };
-    }
+  if (includesAny(text, ["almoco", "prato do dia", "pratos do dia", "executivo", "executivos", "pf", "refeicao", "comida", "almoco hoje"])) {
+    return { reply: respostas.almoco || DEFAULT_FALLBACK, intent: "almoco", needs_human: false, lead_temperature: "quente", missing_fields: [] };
   }
 
-  if (includesAny(msg, ["open", "chopp", "chop", "chopp a vontade", "chopp à vontade"])) {
-    const item = findProduct(knowledge, "Open Chopp");
-    if (item) {
-      return {
-        reply: `Temos Open Chopp das 16h às 21h. 🍻\n\nDe domingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nFuncionamos todos os dias das 11h às 22h no ${endereco}.`,
-        intent: "preco",
-        needs_human: false,
-        lead_temperature: "morno",
-        missing_fields: []
-      };
-    }
+  if (includesAny(text, ["entrega", "delivery", "ifood", "i food", "pedido", "pedir", "entregam", "faz entrega"])) {
+    return { reply: respostas.delivery || DEFAULT_FALLBACK, intent: "ifood", needs_human: false, lead_temperature: "quente", missing_fields: [] };
   }
 
-  if (includesAny(msg, ["rodizio", "rodízio", "rodizio de boteco", "rodizio de porcao", "rodizio de porções"])) {
-    const item = findProduct(knowledge, "Rodízio de Boteco");
-    if (item) {
-      return {
-        reply: `Temos Rodízio de Boteco das 16h às 21h. 😋\n\nInclui: isca de frango, calabresa acebolada, batata frita, mandioca frita e frango à passarinho.\n\nDe domingo a quinta: R$ 49,90\nSexta e sábado: R$ 59,90`,
-        intent: "preco",
-        needs_human: false,
-        lead_temperature: "morno",
-        missing_fields: []
-      };
-    }
+  if (includesAny(text, ["vaga", "vagas", "emprego", "trabalho", "curriculo", "contratacao", "contratando", "processo seletivo"])) {
+    return { reply: respostas.vaga || DEFAULT_FALLBACK, intent: "vaga", needs_human: false, lead_temperature: "morno", missing_fields: [] };
   }
 
-  if (includesAny(msg, ["almoco", "almoço", "executivo", "prato executivo", "pratos executivos", "pf", "prato feito", "prato do dia", "pratos do dia", "qual o prato do dia", "cardapio almoco", "cardápio almoço", "valores almoco", "valores almoço", "preco almoco", "preço almoço"])) {
-    const pratoDia = findProduct(knowledge, "Pratos do Dia - Almoço");
-    const opcoes = Array.isArray(pratoDia?.opcoes) ? pratoDia.opcoes : [];
-    const lista = opcoes.length
-      ? opcoes.map((item) => `• ${item.prato} — ${item.valor}`).join("
-")
-      : "• Consulte nossas opções do almoço do dia.";
-
-    return {
-      reply:
-        `Temos oferta de almoço exclusiva para dias de semana. 🍽️
-
-` +
-        `Válida de segunda a sexta, das 11h às 15h.
-` +
-        `São opções de Pratos do Dia, a partir de R$ 21,90.
-
-` +
-        `Opções disponíveis:
-${lista}
-
-` +
-        `Por +R$ 5,00, você acompanha com bebida: suco de limão ou laranja 300ml ou Coca KS 290ml.
-
-` +
-        `Funcionamos todos os dias das 11h às 22h no ${endereco}.`,
-      intent: "cardapio",
-      needs_human: false,
-      lead_temperature: "morno",
-      missing_fields: []
-    };
+  if (includesAny(text, ["fondue", "fundi", "fundue", "fondi", "dia dos namorados", "namorados", "noite de fondue"])) {
+    return { reply: respostas.fondue || DEFAULT_FALLBACK, intent: "evento", needs_human: false, lead_temperature: "quente", missing_fields: [] };
   }
 
-  if (includesAny(msg, ["horario", "horário", "funciona", "aberto", "abre", "fecha", "que horas"])) {
-    return {
-      reply: `${horarios.funcionamento || "Funcionamos todos os dias das 11h às 22h."}\n\nAs ofertas são válidas das 16h às 21h.\nA oferta de almoço é exclusiva de segunda a sexta, das 11h às 15h.`,
-      intent: "horario",
-      needs_human: false,
-      lead_temperature: "frio",
-      missing_fields: []
-    };
+  if (includesAny(text, ["guarana proteico", "guarana", "pure up", "pureup", "bebida proteica", "refri proteico", "refrigerante proteico", "proteico bebida"])) {
+    return { reply: respostas.guarana_proteico || respostas.proteicos || DEFAULT_FALLBACK, intent: "proteico", needs_human: false, lead_temperature: "quente", missing_fields: [] };
   }
 
-  if (includesAny(msg, ["onde", "endereco", "endereço", "local", "shopping", "fica", "localizacao", "localização"])) {
-    return {
-      reply: `Estamos no ${endereco}. 📍\n\nFuncionamos todos os dias das 11h às 22h.`,
-      intent: "localizacao",
-      needs_human: false,
-      lead_temperature: "frio",
-      missing_fields: []
-    };
+  if (includesAny(text, ["proteico", "proteica", "fitness", "fit", "saudavel", "saudável", "low carb", "frango power", "executivo proteico", "tilapia premium", "tilápia premium", "low carb supreme", "salada proteica", "tilapia fresh", "tilápia fresh", "prato saudavel", "prato saudável", "pratos proteicos", "cardapio fitness", "cardápio fitness"])) {
+    return { reply: respostas.proteicos || DEFAULT_FALLBACK, intent: "proteico", needs_human: false, lead_temperature: "quente", missing_fields: [] };
   }
 
-  if (includesAny(msg, ["reserv", "mesa", "quero ir", "garantir", "marcar", "agendar"])) {
-    return {
-      reply: `Perfeito! 😊\n\nPara verificar a disponibilidade da reserva, me envie:\n\n👤 Nome completo\n📱 Telefone\n👥 Quantidade de pessoas\n📅 Data desejada\n🕒 Horário desejado\n\nTambém temos o WhatsApp ${whatsapp} como opção para contato e confirmação.`,
-      intent: "reserva",
-      needs_human: false,
-      lead_temperature: "quente",
-      missing_fields: ["nome", "telefone", "quantidade_pessoas", "data", "horario"]
-    };
-  }
-
-  if (includesAny(msg, ["ok", "sim", "quero", "pode", "isso", "manda", "me passa", "quantas pessoas", "serve quantas", "casal", "grupo", "valores", "valor", "preco", "preço"])) {
-    return {
-      reply: `Perfeito 😊\n\nVocê quer saber sobre qual opção? Temos Fondue, Open Chopp, Rodízio de Boteco, Pratos do Dia no almoço, cardápio ou reserva.`,
-      intent: "outro",
-      needs_human: false,
-      lead_temperature: "morno",
-      missing_fields: []
-    };
+  if (includesAny(text, ["horario", "funcionamento", "abre", "aberto", "fecha", "que horas"])) {
+    return { reply: respostas.horario || DEFAULT_FALLBACK, intent: "horario", needs_human: false, lead_temperature: "morno", missing_fields: [] };
   }
 
   return null;
@@ -258,33 +136,24 @@ ${lista}
 
 function buildSystemPrompt(knowledge) {
   return `
-Você é atendente oficial do ${knowledge.empresa?.nome || process.env.BUSINESS_NAME || "Sr. Boteco Limeira"} no Instagram.
+Você é atendente oficial do ${knowledge.empresa?.nome || process.env.BUSINESS_NAME || "Sr. Boteco Limeira"} no Instagram/WhatsApp.
 
-OBJETIVO
-Responder clientes de forma humana, curta, simpática e comercial, ajudando com dúvidas, preços, cardápio, reservas, horários, localização, iFood, delivery, vagas de emprego, eventos e ofertas.
-
-REGRAS ABSOLUTAS
+REGRAS:
 1. Nunca invente preço, produto, promoção, horário, data, evento ou disponibilidade.
-2. Use somente dados da BASE_DE_CONHECIMENTO.
-3. Se encontrar informação na base, responda com a informação encontrada. Não use fallback se existir dado relacionado.
-4. Use fallback somente quando não houver nenhuma informação relacionada ao restaurante, cardápio, oferta, reserva, localização, horário, iFood, vaga de emprego ou atendimento.
-5. Nunca confirme reserva automaticamente. Colete nome, telefone, quantidade de pessoas, data e horário.
-6. Toda nova mensagem pode ser continuação da conversa. Se faltar contexto, responda o que for possível e faça uma pergunta objetiva para avançar.
-7. Entenda aproximações e erros: fundi, fundue, fondi = fondue; rodizio = rodízio; almoco = almoço; entrega = iFood/delivery; vaga/trabalho/currículo = envio de currículo.
-8. Responda em português do Brasil.
-9. Não mencione OpenAI, API, sistema, prompt, JSON, Vercel, ManyChat ou automação.
-10. Não use markdown complexo.
+2. Só informe preços existentes na BASE_DE_CONHECIMENTO.
+3. Se o cliente pedir cardápio, responda com categorias sem preços e direcione para o WhatsApp.
+4. Se o cliente pedir almoço/prato do dia, informe a campanha de almoço com pratos e preços.
+5. Se perguntar sobre pratos saudáveis/proteicos, liste as opções sem informar preço.
+6. Se perguntar preço dos novos pratos proteicos ou da bebida Pure Up, não invente valores; informe que os valores serão confirmados pela equipe.
+7. Se perguntar localização/endereço, informe Pátio Limeira Shopping.
+6. Nunca confirme reserva sozinho. Colete nome, telefone, quantidade de pessoas, data e horário.
+7. Não mencione OpenAI, API, sistema, prompt, JSON, ManyChat ou automação.
+8. Responda somente JSON válido.
 
-HORÁRIOS IMPORTANTES
-- Funcionamento do restaurante: todos os dias das 11h às 22h.
-- Ofertas gerais: das 16h às 21h.
-- Oferta de almoço/Pratos do Dia: segunda a sexta, das 11h às 15h, exclusiva para almoço, com opções a partir de R$ 21,90.
-
-FORMATO OBRIGATÓRIO DE SAÍDA
-Responda somente JSON válido, sem texto antes ou depois:
+FORMATO:
 {
   "reply": "mensagem final para o cliente",
-  "intent": "preco|reserva|cardapio|horario|localizacao|ifood|evento|humano|outro",
+  "intent": "preco|reserva|cardapio|horario|localizacao|ifood|evento|vaga|almoco|proteico|humano|outro",
   "needs_human": false,
   "lead_temperature": "frio|morno|quente",
   "missing_fields": []
@@ -307,13 +176,7 @@ function parseJsonModelOutput(text, fallback) {
       missing_fields: Array.isArray(parsed.missing_fields) ? parsed.missing_fields.map(String) : []
     };
   } catch {
-    return {
-      reply: safeText(text) || fallback,
-      intent: "outro",
-      needs_human: true,
-      lead_temperature: "morno",
-      missing_fields: []
-    };
+    return { reply: safeText(text) || fallback, intent: "outro", needs_human: true, lead_temperature: "morno", missing_fields: [] };
   }
 }
 
@@ -338,44 +201,26 @@ export default async function handler(req, res) {
       });
     }
 
-    if (req.method !== "POST") {
-      return send(res, 405, { ok: false, error: "Método não permitido. Use POST." });
-    }
-
-    if (!isAuthorized(req)) {
-      return send(res, 401, { ok: false, error: "Não autorizado. Verifique WEBHOOK_SECRET." });
-    }
-
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return send(res, 500, { ok: false, error: "OPENAI_API_KEY não configurada na Vercel." });
-    }
+    if (req.method !== "POST") return send(res, 405, { ok: false, error: "Método não permitido. Use POST." });
+    if (!isAuthorized(req)) return send(res, 401, { ok: false, error: "Não autorizado. Verifique WEBHOOK_SECRET." });
 
     const body = req.body || {};
     const customerMessage = extractMessage(body);
     const customer = extractCustomer(body);
 
-    if (!customerMessage) {
-      return send(res, 400, { ok: false, error: "Mensagem vazia. Envie no campo message ou text." });
-    }
+    if (!customerMessage) return send(res, 400, { ok: false, error: "Mensagem vazia. Envie no campo message ou text." });
 
     const knowledge = await loadKnowledge();
     const fallback = knowledge.resposta_fallback || DEFAULT_FALLBACK;
 
-    const direct = deterministicReply(customerMessage, knowledge);
+    const direct = buildDirectReply(customerMessage, knowledge);
     if (direct) {
-      return send(res, 200, {
-        ok: true,
-        reply: direct.reply,
-        intent: direct.intent,
-        needs_human: direct.needs_human,
-        lead_temperature: direct.lead_temperature,
-        missing_fields: direct.missing_fields,
-        messages: [{ type: "text", text: direct.reply }]
-      });
+      return send(res, 200, { ok: true, ...direct, messages: [{ type: "text", text: direct.reply }] });
     }
 
-    const client = new OpenAI({ apiKey });
+    if (!process.env.OPENAI_API_KEY) return send(res, 500, { ok: false, error: "OPENAI_API_KEY não configurada na Vercel." });
+
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const response = await client.chat.completions.create({
       model: process.env.OPENAI_MODEL || "gpt-4o",
       messages: [
@@ -383,20 +228,11 @@ export default async function handler(req, res) {
         { role: "user", content: JSON.stringify({ cliente: customer, mensagem: customerMessage }) }
       ],
       response_format: { type: "json_object" },
-      temperature: 0.5
+      temperature: 0.6
     });
 
     const result = parseJsonModelOutput(response.choices?.[0]?.message?.content, fallback);
-
-    return send(res, 200, {
-      ok: true,
-      reply: result.reply,
-      intent: result.intent,
-      needs_human: result.needs_human,
-      lead_temperature: result.lead_temperature,
-      missing_fields: result.missing_fields,
-      messages: [{ type: "text", text: result.reply }]
-    });
+    return send(res, 200, { ok: true, ...result, messages: [{ type: "text", text: result.reply }] });
   } catch (error) {
     console.error("ERRO_GERAL:", error);
     return send(res, 200, {
