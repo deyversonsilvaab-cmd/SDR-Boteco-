@@ -111,7 +111,7 @@ function buildDirectReply(message, knowledge) {
     return { reply: respostas.delivery || DEFAULT_FALLBACK, intent: "ifood", needs_human: false, lead_temperature: "quente", missing_fields: [] };
   }
 
-  if (includesAny(text, ["vaga", "vagas", "emprego", "trabalho", "curriculo", "contratacao", "contratando", "processo seletivo"])) {
+  if (includesAny(text, ["vaga", "vagas", "emprego", "trabalho", "trabalhar", "curriculo", "currículo", "contratacao", "contratação", "contratando", "processo seletivo", "vaga de emprego", "vaga de trabalho", "free lance", "freelance", "free", "garcom", "garçom", "garconete", "garçonete", "cumim", "cumin", "cozinha", "atendente", "servico", "serviço"])) {
     return { reply: respostas.vaga || DEFAULT_FALLBACK, intent: "vaga", needs_human: false, lead_temperature: "morno", missing_fields: [] };
   }
 
@@ -146,6 +146,7 @@ REGRAS:
 5. Se perguntar sobre pratos saudáveis/proteicos, liste as opções sem informar preço.
 6. Se perguntar preço dos novos pratos proteicos ou da bebida Pure Up, não invente valores; informe que os valores serão confirmados pela equipe.
 7. Se perguntar localização/endereço, informe Pátio Limeira Shopping.
+8. Se perguntar sobre vaga, emprego, currículo, freelance, garçom, garçonete, cumim, cozinha, atendente ou trabalho, direcione para a gerente pelo WhatsApp (17) 99103-4703 e informe o link https://wa.me/5517991034703.
 6. Nunca confirme reserva sozinho. Colete nome, telefone, quantidade de pessoas, data e horário.
 7. Não mencione OpenAI, API, sistema, prompt, JSON, ManyChat ou automação.
 8. Responda somente JSON válido.
