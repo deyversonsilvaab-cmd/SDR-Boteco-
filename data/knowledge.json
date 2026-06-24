@@ -27,7 +27,8 @@
     "fondue": "Que bom receber seu contato e seu interesse na nossa experiência especial de Fondue para o Dia dos Namorados no Sr. Boteco. ❤️\n\nPreparamos duas opções para compartilhar:\n\n🧀 Fondue Salgado – R$ 99,90\nAcompanha: torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.\n\n🍫 Fondue Doce – R$ 89,90\nAcompanha: morango, uva, banana, brownie e marshmallow.\n\n🕓 Horário da oferta: das 16h às 21h.\n📍 Sr. Boteco – Pátio Limeira Shopping.\n\nVocês estão pensando em vir em casal ou em um grupo maior?",
     "horario": "Funcionamos todos os dias das 11h às 22h. 😊\n\n🍽️ Almoço: segunda a sexta, das 11h às 15h.\n🧀 Ofertas especiais: das 16h às 21h.",
     "proteicos": "Temos novidades chegando no cardápio saudável/proteico do Sr. Boteco 💪🍽️\n\nOpções:\n• Frango Power: 200g de frango, arroz, feijão, salada e legumes.\n• Executivo Proteico: 200g de frango, 2 ovos, arroz, feijão e salada.\n• Tilápia Premium: 170g de tilápia, arroz, legumes e salada.\n• Low Carb Supreme: 200g de frango ou tilápia, legumes e salada.\n• Salada Proteica de Frango: mix de folhas, tomate, cenoura, cebola roxa e 180g de frango grelhado. Croutons opcionais.\n• Tilápia Fresh: alface americana, 180g de tilápia grelhada, tomate, cenoura ralada, azeitona, palmito e limão.\n\nTambém teremos bebida proteica Pure Up.\n\nOs valores ainda serão confirmados pela equipe, para não passar informação errada. 😊",
-    "guarana_proteico": "Sim 😊\n\nTeremos bebida proteica Pure Up como novidade.\n\nÉ uma opção gaseificada, gelada e refrescante para acompanhar os pratos saudáveis/proteicos.\n\nOs valores ainda serão confirmados pela equipe, para não passar informação errada."
+    "guarana_proteico": "Sim 😊\n\nTeremos bebida proteica Pure Up como novidade.\n\nÉ uma opção gaseificada, gelada e refrescante para acompanhar os pratos saudáveis/proteicos.\n\nOs valores ainda serão confirmados pela equipe, para não passar informação errada.",
+    "rodizio_open_em_campo": "Nosso Rodízio do Boteco inclui:\n\n🍟 Batata frita à vontade\n🍗 Frango empanado\n🍗 Frango frito\n🥔 Mandioca frita\n\nDurante o OPEN EM CAMPO também temos Open Chopp das 16h às 21h e transmissão do jogo. ⚽🍺\n\nQuer que eu veja uma mesa para você?"
   },
   "campanhas": {
     "almoco_pratos_do_dia": {
@@ -72,6 +73,17 @@
           "valor": "R$ 19,90"
         }
       ]
+    },
+    "open_em_campo_rodizio": {
+      "descricao": "Rodízio do Boteco durante o Open em Campo, com transmissão do jogo.",
+      "validade": "Das 16h às 21h.",
+      "itens": [
+        "Batata frita à vontade",
+        "Frango empanado",
+        "Frango frito",
+        "Mandioca frita"
+      ],
+      "observacao": "Também temos Open Chopp das 16h às 21h durante o OPEN EM CAMPO."
     },
     "novos_pratos_proteicos": {
       "descricao": "Novos pratos saudáveis/proteicos do Sr. Boteco. Não informar preços até validação da equipe.",
