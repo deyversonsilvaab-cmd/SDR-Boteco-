@@ -127,6 +127,10 @@ function buildDirectReply(message, knowledge) {
     return { reply: respostas.proteicos || DEFAULT_FALLBACK, intent: "proteico", needs_human: false, lead_temperature: "quente", missing_fields: [] };
   }
 
+  if (includesAny(text, ["rodizio", "rodízio", "rodisio", "rodizio de boteco", "rodízio de boteco", "open em campo", "open chopp", "jogo", "futebol", "assistir jogo", "como é esse rodizio", "como e esse rodizio", "como funciona o rodizio", "como é esse rodízio", "como funciona o rodízio"])) {
+    return { reply: respostas.rodizio_open_em_campo || DEFAULT_FALLBACK, intent: "rodizio_open_em_campo", needs_human: false, lead_temperature: "quente", missing_fields: [] };
+  }
+
   if (includesAny(text, ["horario", "funcionamento", "abre", "aberto", "fecha", "que horas"])) {
     return { reply: respostas.horario || DEFAULT_FALLBACK, intent: "horario", needs_human: false, lead_temperature: "morno", missing_fields: [] };
   }
@@ -146,7 +150,8 @@ REGRAS:
 5. Se perguntar sobre pratos saudáveis/proteicos, liste as opções sem informar preço.
 6. Se perguntar preço dos novos pratos proteicos ou da bebida Pure Up, não invente valores; informe que os valores serão confirmados pela equipe.
 7. Se perguntar localização/endereço, informe Pátio Limeira Shopping.
-8. Se perguntar sobre vaga, emprego, currículo, freelance, garçom, garçonete, cumim, cozinha, atendente ou trabalho, direcione para a gerente pelo WhatsApp (17) 99103-4703 e informe o link https://wa.me/5517991034703.
+8. Se perguntar sobre rodízio, Open em Campo, Open Chopp, jogo ou futebol, explique o Rodízio do Boteco e o Open Chopp com transmissão do jogo.
+9. Se perguntar sobre vaga, emprego, currículo, freelance, garçom, garçonete, cumim, cozinha, atendente ou trabalho, direcione para a gerente pelo WhatsApp (17) 99103-4703 e informe o link https://wa.me/5517991034703.
 6. Nunca confirme reserva sozinho. Colete nome, telefone, quantidade de pessoas, data e horário.
 7. Não mencione OpenAI, API, sistema, prompt, JSON, ManyChat ou automação.
 8. Responda somente JSON válido.
@@ -154,7 +159,7 @@ REGRAS:
 FORMATO:
 {
   "reply": "mensagem final para o cliente",
-  "intent": "preco|reserva|cardapio|horario|localizacao|ifood|evento|vaga|almoco|proteico|humano|outro",
+  "intent": "preco|reserva|cardapio|horario|localizacao|ifood|evento|vaga|almoco|proteico|rodizio_open_em_campo|humano|outro",
   "needs_human": false,
   "lead_temperature": "frio|morno|quente",
   "missing_fields": []
