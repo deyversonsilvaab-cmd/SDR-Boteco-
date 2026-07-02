@@ -146,6 +146,61 @@ function mentionsOpenChopp(text) {
   );
 }
 
+function mentionsFondue(text) {
+  return includesAny(text, [
+    "fondue",
+    "fundi",
+    "fundue",
+    "fondi",
+    "fondue salgado",
+    "fondue doce",
+    "noite de fondue"
+  ]);
+}
+
+function isFonduePortionQuestion(text) {
+  return includesAny(text, [
+    "valor por pessoa ou casal",
+    "valor por pessoa ou o casal",
+    "preco por pessoa ou casal",
+    "preco por pessoa ou o casal",
+    "preço por pessoa ou casal",
+    "preço por pessoa ou o casal",
+    "esse valor e pro casal",
+    "esse valor é pro casal",
+    "valor e pro casal",
+    "valor é pro casal",
+    "valor pro casal",
+    "valor para casal",
+    "e para casal",
+    "é para casal",
+    "e pro casal",
+    "é pro casal",
+    "por pessoa ou casal",
+    "e por pessoa",
+    "é por pessoa",
+    "serve 2 pessoas",
+    "serve duas pessoas",
+    "serve para 2 pessoas",
+    "serve para duas pessoas",
+    "2 pessoas e isso",
+    "2 pessoas é isso",
+    "duas pessoas e isso",
+    "duas pessoas é isso",
+    "para quantas pessoas",
+    "quantas pessoas serve",
+    "serve quantas pessoas",
+    "serve quantos",
+    "serve quantas",
+    "prato para 2",
+    "prato para duas",
+    "individual",
+    "para os dois",
+    "serve os dois",
+    "serve para os dois"
+  ]);
+}
+
 
 function mentionsZeroAlcohol(text) {
   return includesAny(text, [
@@ -187,6 +242,7 @@ function buildDirectReply(message, knowledge, context = {}) {
   const priceQuestion = isPriceQuestion(text);
   const priceOnlyQuestion = isPriceOnlyQuestion(text);
   const openContext = includesAny(lastIntent, ["open_chopp", "open chopp", "anuncio_open_chopp"]) || includesAny(lastTopic, ["open_chopp", "open chopp", "anuncio_open_chopp", "jogo", "placar"]);
+  const fondueContext = mentionsFondue(text) || includesAny(lastIntent, ["fondue", "fondue_valor_porcoes"]) || includesAny(lastTopic, ["fondue", "fondue_valor_porcoes"]);
 
   // Respostas específicas da campanha de tráfego pago: Open Chopp + jogo/desafio.
   // Essas regras ficam antes das respostas genéricas para evitar repetição ou respostas fora do contexto.
@@ -212,6 +268,18 @@ function buildDirectReply(message, knowledge, context = {}) {
 
   if (includesAny(text, ["premio", "prêmio", "ganhador", "ganha o que", "vale para quando", "open gratis", "open grátis", "open chopp gratis", "open chopp grátis"])) {
     return { reply: getAdReply(knowledge, "premio_quando"), intent: "regra_desafio", needs_human: false, lead_temperature: "quente", missing_fields: [] };
+  }
+
+  // Mantém o contexto do Fondue quando o cliente pergunta se o valor é por pessoa/casal
+  // ou para quantas pessoas o prato serve. Essa regra evita puxar respostas de Open Chopp, jogo ou combo.
+  if (isFonduePortionQuestion(text) && (fondueContext || (!openContext && !includesAny(text, ["open", "chopp", "combo", "frango", "calabresa", "jogo", "placar"])))) {
+    return {
+      reply: respostas.fondue_valor_porcoes || DEFAULT_FALLBACK,
+      intent: "fondue_valor_porcoes",
+      needs_human: false,
+      lead_temperature: "quente",
+      missing_fields: []
+    };
   }
 
   if (includesAny(text, ["o que vem no combo", "combo", "frango a passarinho", "calabresa", "frango com calabresa"])) {
@@ -329,7 +397,7 @@ function buildDirectReply(message, knowledge, context = {}) {
     return { reply: respostas.double_burger || DEFAULT_FALLBACK, intent: "double_burger", needs_human: false, lead_temperature: "quente", missing_fields: [] };
   }
 
-  if (includesAny(text, ["fondue", "fundi", "fundue", "fondi", "dia dos namorados", "namorados", "noite de fondue"])) {
+  if (mentionsFondue(text) || includesAny(text, ["dia dos namorados", "namorados"])) {
     return { reply: respostas.fondue || DEFAULT_FALLBACK, intent: "fondue", needs_human: false, lead_temperature: "quente", missing_fields: [] };
   }
 
@@ -411,6 +479,7 @@ REGRAS:
 5.2. Para perguntas do anúncio Open Chopp + jogo/desafio, use as respostas em respostas_anuncio_open_chopp quando houver correspondência.
 6. Se o cliente pedir almoço/prato do dia, use uma resposta humanizada e informe: segunda a sexta, 11h às 15h, pratos executivos a partir de R$ 19,90.
 7. Fondue continua ativo, mas não é mais campanha de Dia dos Namorados. Não mencionar Dia dos Namorados na resposta final.
+   7.1. Se o cliente perguntar se o valor do fondue é por pessoa/casal, individual, se serve 2 pessoas ou para quantas pessoas serve, responda: o valor é do prato feito para servir 2 pessoas. Fondue Salgado R$ 99,90; Fondue Doce R$ 89,90.
 8. Se o cliente marcar o restaurante em story/foto, agradeça de forma curta, humana e natural.
 9. Se perguntar localização/endereço, informe Pátio Limeira Shopping.
 10. Se perguntar sobre vaga, emprego, currículo, freelance, garçom, garçonete, cumim, cozinha, atendente ou trabalho, direcione para a gerente pelo WhatsApp (17) 99103-4703 e informe o link https://wa.me/5517991034703.
@@ -421,7 +490,7 @@ REGRAS:
 FORMATO:
 {
   "reply": "mensagem final para o cliente",
-  "intent": "preco|reserva|cardapio|horario|localizacao|ifood|fondue|vaga|almoco|proteico|rodizio|open_chopp|happy_hour|double_burger|feijoada|marcacao_story|empresa_b2b|estacionamento|bebidas|bebida_sem_alcool|desafio_placar|regra_desafio|combo_jogo|familia|pagamento|grupo|comentario_anuncio|palpite_placar|humano|outro",
+  "intent": "preco|reserva|cardapio|horario|localizacao|ifood|fondue|fondue_valor_porcoes|vaga|almoco|proteico|rodizio|open_chopp|happy_hour|double_burger|feijoada|marcacao_story|empresa_b2b|estacionamento|bebidas|bebida_sem_alcool|desafio_placar|regra_desafio|combo_jogo|familia|pagamento|grupo|comentario_anuncio|palpite_placar|humano|outro",
   "needs_human": false,
   "lead_temperature": "frio|morno|quente",
   "missing_fields": []
