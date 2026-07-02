@@ -81,7 +81,8 @@
     "anuncio_comentario_que_horas": "O Open Chopp é das 16h às 21h 🍻",
     "anuncio_comentario_valor": "Domingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nDas 16h às 21h 🍻",
     "anuncio_padrao_especifica": "Boa pergunta 😊\n\nPara eu não te passar nenhuma informação errada, chama a equipe pelo WhatsApp que eles confirmam certinho para você:\nhttps://wa.me/5519997858351",
-    "anuncio_primeiro_contato_manychat": "Que bom te ver por aqui 😊\n\nO Open Chopp do Sr. Boteco acontece das 16h às 21h:\n\n🍻 Domingo a quinta: R$ 29,90\n🍻 Sexta e sábado: R$ 49,90\n\nTambém temos porções e opções do cardápio para acompanhar.\n\nEstamos no Pátio Limeira Shopping.\n\nQuer falar com a equipe pelo WhatsApp para confirmar mesa ou tirar dúvida mais rápido?"
+    "anuncio_primeiro_contato_manychat": "Que bom te ver por aqui 😊\n\nO Open Chopp do Sr. Boteco acontece das 16h às 21h:\n\n🍻 Domingo a quinta: R$ 29,90\n🍻 Sexta e sábado: R$ 49,90\n\nTambém temos porções e opções do cardápio para acompanhar.\n\nEstamos no Pátio Limeira Shopping.\n\nQuer falar com a equipe pelo WhatsApp para confirmar mesa ou tirar dúvida mais rápido?",
+    "fondue_valor_porcoes": "Isso mesmo 😊\n\nO valor não é por pessoa, é do prato de fondue feito para servir 2 pessoas.\n\n🧀 O Fondue Salgado sai por R$ 99,90\n🍫 O Fondue Doce sai por R$ 89,90\n\nEle fica disponível das 16h às 21h."
   },
   "campanhas": {
     "almoco_pratos_do_dia": {
@@ -194,7 +195,9 @@
           "valor": "R$ 89,90",
           "acompanha": "Morango, uva, banana, brownie e marshmallow."
         }
-      ]
+      ],
+      "regra_valor_porcao": "O valor informado é referente ao prato feito para servir 2 pessoas, não é por pessoa. Fondue Salgado: R$ 99,90 o prato para 2 pessoas. Fondue Doce: R$ 89,90 o prato para 2 pessoas.",
+      "resposta_valor_porcoes": "Isso mesmo 😊\n\nO valor não é por pessoa, é do prato de fondue feito para servir 2 pessoas.\n\n🧀 O Fondue Salgado sai por R$ 99,90\n🍫 O Fondue Doce sai por R$ 89,90\n\nEle fica disponível das 16h às 21h."
     },
     "marcacao_story": {
       "descricao": "Resposta de relacionamento quando cliente marca o Sr. Boteco em story/foto.",
@@ -343,7 +346,8 @@
     "Fondue continua ativo sem relação com Dia dos Namorados.",
     "Quando houver marcação em story/foto, agradecer de forma humana e curta.",
     "Mensagens de empresas/equipes devem ser direcionadas para atendimento B2B via WhatsApp, destacando almoço executivo e happy hour.",
-    "Se o cliente perguntar sobre chopp zero, open chopp zero, cerveja zero ou bebida sem álcool, informar que não temos chopp zero e oferecer Heineken Zero long neck. Não inventar valor."
+    "Se o cliente perguntar sobre chopp zero, open chopp zero, cerveja zero ou bebida sem álcool, informar que não temos chopp zero e oferecer Heineken Zero long neck. Não inventar valor.",
+    "Se o cliente perguntar se o valor do fondue é por pessoa, por casal, individual, ou se serve 2 pessoas, responder diretamente que o valor é do prato feito para servir 2 pessoas. Não responder com Open Chopp, jogo, combo ou público família/casal."
   ],
   "respostas_anuncio_open_chopp": {
     "valor_open_chopp": "O Open Chopp acontece das 16h às 21h 🍻\n\nDomingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nEstamos no Pátio Limeira Shopping.\nQuer que eu te mande o WhatsApp para falar com a equipe mais rápido?",
