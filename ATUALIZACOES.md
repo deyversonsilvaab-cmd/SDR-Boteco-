@@ -73,3 +73,13 @@ Volta mais vezes, viu? 🍻
    - Criado bloco `respostas_anuncio_open_chopp` no `knowledge.json` com 38 respostas mapeadas.
    - Atualizado `manychat.js` para reconhecer perguntas do anúncio antes das respostas genéricas.
    - Observação: para comentários muito curtos como “Valor?” dentro do anúncio, é recomendado o ManyChat enviar `last_intent=open_chopp` ou `last_topic=anuncio_open_chopp` no External Request.
+
+## Atualização — Fondue: valor por pessoa/casal
+
+- Criada a resposta rápida `fondue_valor_porcoes`.
+- Quando o cliente perguntar se o valor do fondue é por pessoa, por casal, individual ou se serve 2 pessoas, o sistema responde que o valor é do prato feito para servir 2 pessoas.
+- Valores confirmados:
+  - Fondue Salgado: R$ 99,90 o prato para 2 pessoas.
+  - Fondue Doce: R$ 89,90 o prato para 2 pessoas.
+- A regra foi colocada antes das respostas de combo, casal/turma e Open Chopp para evitar respostas fora de contexto, como jogo ou Open Chopp.
+- Recomendação para o ManyChat: enviar `last_intent=\"fondue\"` ou `last_topic=\"fondue\"` quando a pessoa vier de anúncio/post de fondue.

@@ -178,3 +178,36 @@ Para mensagens curtas como `Valor?` ou `Que horas?` vindas do anúncio, envie no
 ```
 
 Isso ajuda o sistema a responder com o valor e horário do Open Chopp, em vez de tratar a pergunta como genérica do cardápio.
+
+## Fluxo Fondue — dúvida sobre valor por pessoa/casal
+
+Foi adicionada uma resposta direta para perguntas como:
+
+- “Valor por pessoa ou casal?”
+- “Esse valor é pro casal?”
+- “Serve 2 pessoas?”
+- “É individual?”
+- “Para quantas pessoas serve?”
+
+Resposta usada pelo sistema:
+
+```text
+Isso mesmo 😊
+
+O valor não é por pessoa, é do prato de fondue feito para servir 2 pessoas.
+
+🧀 O Fondue Salgado sai por R$ 99,90
+🍫 O Fondue Doce sai por R$ 89,90
+
+Ele fica disponível das 16h às 21h.
+```
+
+Para melhorar o contexto no ManyChat, envie no External Request:
+
+```json
+{
+  "message": "{{last text input}}",
+  "last_intent": "fondue",
+  "last_topic": "fondue"
+}
+```
