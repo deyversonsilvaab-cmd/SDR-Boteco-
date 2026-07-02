@@ -1,32 +1,54 @@
 # Bot Sr. Boteco — ManyChat + Vercel + OpenAI
 
-Webhook para responder mensagens do Instagram via ManyChat usando OpenAI, com regra de não inventar preços.
+Webhook para responder mensagens do Instagram/WhatsApp via ManyChat usando OpenAI, com respostas rápidas para as principais campanhas e regra para não inventar preços.
 
 ## 1. Arquivos principais
 
 - `api/manychat.js` — endpoint que o ManyChat chama.
-- `data/knowledge.json` — base de conhecimento: produtos, preços, regras e links.
+- `data/knowledge.json` — base de conhecimento: campanhas, respostas, preços autorizados, horários e links.
 - `.env.example` — variáveis que devem ser cadastradas na Vercel.
 - `vercel.json` — configuração do deploy.
+- `audit-test.mjs` — simulação local das principais perguntas.
 
-## 2. Como subir no GitHub
+## 2. Melhorias incluídas nesta versão
 
-1. Crie um repositório chamado `bot-sr-boteco`.
-2. Envie todos estes arquivos para o repositório.
-3. Entre na Vercel e clique em **Add New Project**.
-4. Importe o repositório.
-5. Em **Environment Variables**, cadastre:
+- Fondue atualizado sem relação com Dia dos Namorados.
+- Resposta de marcação em story/foto mais humana.
+- Open Chopp separado de rodízio, jogo e Open em Campo.
+- Valores do Open Chopp liberados:
+  - Domingo a quinta: R$ 29,90
+  - Sexta e sábado: R$ 49,90
+  - Horário: 16h às 21h
+- Almoço atualizado com texto mais orgânico e opções a partir de R$ 19,90.
+- Consulta de preços dos itens do cardápio direcionada para WhatsApp.
+- Correção para não classificar “free” e “serviço” como vaga.
+- Correção para “guaraná normal” não cair em bebida proteica.
+- Novas intenções: `open_chopp`, `happy_hour`, `double_burger`, `feijoada`, `marcacao_story`, `empresa_b2b`, `estacionamento`, `bebidas` e `bebida_sem_alcool`.
+- Opção sem álcool atualizada: não temos chopp zero; temos Heineken Zero long neck.
+
+## 3. Como subir no GitHub
+
+1. Crie ou abra o repositório do bot.
+2. Substitua os arquivos antigos por estes arquivos atualizados.
+3. Envie as alterações para o GitHub.
+4. A Vercel deve fazer o deploy automaticamente se o repositório já estiver conectado.
+
+Se for um projeto novo:
+
+1. Entre na Vercel e clique em **Add New Project**.
+2. Importe o repositório.
+3. Em **Environment Variables**, cadastre:
 
 ```env
 OPENAI_API_KEY=sua_chave_da_openai
-OPENAI_MODEL=gpt-5.5
+OPENAI_MODEL=gpt-4o
 WEBHOOK_SECRET=uma_senha_forte_criada_por_voce
 BUSINESS_NAME=Sr. Boteco Limeira
 ```
 
-6. Clique em **Deploy**.
+4. Clique em **Deploy**.
 
-## 3. URL que será usada no ManyChat
+## 4. URL que será usada no ManyChat
 
 Depois do deploy, a Vercel vai gerar uma URL parecida com:
 
@@ -36,11 +58,11 @@ https://bot-sr-boteco.vercel.app/api/manychat
 
 Abra essa URL no navegador. Se aparecer `Webhook online`, está funcionando.
 
-## 4. Configuração no ManyChat
+## 5. Configuração no ManyChat
 
 No Flow Builder:
 
-1. Crie um bloco para receber mensagens do Instagram.
+1. Crie ou abra o bloco que recebe mensagens do Instagram.
 2. Adicione uma ação **External Request**.
 3. Method: `POST`.
 4. URL: `https://SEU-PROJETO.vercel.app/api/manychat`.
@@ -51,48 +73,54 @@ Content-Type: application/json
 x-webhook-secret: sua_senha_do_WEBHOOK_SECRET
 ```
 
-6. Body JSON:
+6. Body JSON recomendado:
 
 ```json
 {
   "subscriber_id": "{{subscriber.id}}",
   "first_name": "{{first_name}}",
   "username": "{{username}}",
-  "message": "{{last_input_text}}"
+  "message": "{{last_input_text}}",
+  "last_intent": "{{ai_intent}}"
 }
 ```
 
+O campo `last_intent` ajuda o bot a responder quando o cliente manda só “valor” depois de perguntar sobre Open Chopp.
+
 7. Salve a resposta `$.reply` em um campo personalizado, por exemplo: `ai_reply`.
-8. No próximo bloco, envie a mensagem:
+8. Salve também:
+
+```txt
+$.intent → ai_intent
+$.needs_human → ai_needs_human
+$.lead_temperature → ai_lead_temperature
+```
+
+9. No próximo bloco, envie a mensagem:
 
 ```txt
 {{ai_reply}}
 ```
 
-Também pode salvar:
+## 6. Como editar preços
 
-- `$.intent` em `ai_intent`
-- `$.needs_human` em `ai_needs_human`
-- `$.lead_temperature` em `ai_lead_temperature`
-
-## 5. Como editar preços
-
-Abra `data/knowledge.json` e altere somente os itens dentro de `produtos_precos`.
+Abra `data/knowledge.json` e altere somente os itens dentro de `produtos_precos` ou as campanhas aprovadas.
 
 Exemplo:
 
 ```json
 {
+  "categoria": "Fondue",
   "nome": "Fondue Salgado",
-  "aliases": ["fondue salgado", "fundi salgado", "salgado"],
+  "aliases": ["fondue salgado", "fundi salgado"],
   "valor": "R$ 99,90",
-  "descricao": "Opção salgada do fondue."
+  "validade": "Das 16h às 21h."
 }
 ```
 
-Se um preço não estiver nessa base, a IA foi instruída a não inventar.
+Se um preço não estiver nessa base, o bot deve direcionar para o WhatsApp e não inventar valor.
 
-## 6. Teste local opcional
+## 7. Teste local opcional
 
 ```bash
 npm install
@@ -106,6 +134,47 @@ Em outro terminal:
 WEBHOOK_SECRET=sua_senha npm run test:local
 ```
 
-## 7. Observação importante sobre modelo
+Para rodar a varredura de intenções:
+
+```bash
+npm run audit
+```
+
+## 8. Observação importante sobre modelo
 
 O modelo fica na variável `OPENAI_MODEL`. Se sua conta não tiver acesso ao modelo configurado, troque o valor por outro modelo disponível na sua conta OpenAI.
+
+## Campanha Open Chopp — tráfego pago
+
+As respostas prontas do anúncio ficam em `data/knowledge.json`, no bloco:
+
+```json
+respostas_anuncio_open_chopp
+```
+
+O webhook reconhece perguntas sobre:
+
+- valor do Open Chopp;
+- Open Chopp hoje;
+- localização;
+- reserva e mesa;
+- desafio do placar;
+- combo frango a passarinho + calabresa;
+- família, criança, casal, turma e aniversário;
+- horário, pagamento, taxa e regra individual;
+- bebida sem álcool / Heineken Zero long neck;
+- almoço;
+- grupos e happy hour de empresa;
+- comentários curtos e palpites de placar.
+
+Para mensagens curtas como `Valor?` ou `Que horas?` vindas do anúncio, envie no External Request um campo de contexto, por exemplo:
+
+```json
+{
+  "message": "{{last_text_input}}",
+  "last_intent": "open_chopp",
+  "last_topic": "anuncio_open_chopp"
+}
+```
+
+Isso ajuda o sistema a responder com o valor e horário do Open Chopp, em vez de tratar a pergunta como genérica do cardápio.
