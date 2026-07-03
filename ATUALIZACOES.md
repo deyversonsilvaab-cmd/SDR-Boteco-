@@ -83,3 +83,21 @@ Volta mais vezes, viu? 🍻
   - Fondue Doce: R$ 89,90 o prato para 2 pessoas.
 - A regra foi colocada antes das respostas de combo, casal/turma e Open Chopp para evitar respostas fora de contexto, como jogo ou Open Chopp.
 - Recomendação para o ManyChat: enviar `last_intent=\"fondue\"` ou `last_topic=\"fondue\"` quando a pessoa vier de anúncio/post de fondue.
+
+
+## Correção de gatilhos Instagram e Fondue
+
+- O webhook agora aceita mais campos de entrada enviados pelo ManyChat, como `input`, `query`, `comment_text`, `story_text`, `trigger_text` e campos dentro de `custom_fields`.
+- Se o ManyChat enviar evento de marcação em story sem texto digitado, o sistema tenta identificar `story_mention` / `marcacao_story` e responde com a mensagem humana de agradecimento.
+- Quando não vier texto nem evento reconhecível, o webhook retorna fallback em JSON 200 em vez de erro 400, evitando travar o fluxo no ManyChat.
+- Perguntas como “qual valor do fondue?” agora recebem resposta direta com os valores do Fondue Salgado e Doce e a informação de que o prato serve 2 pessoas.
+
+## Atualização — Fondue com descrição completa
+
+- Resposta principal do Fondue atualizada com descrição completa dos acompanhamentos.
+- Perguntas como “qual valor do fondue?” agora retornam as opções completas:
+  - Fondue Salgado — R$ 99,90, acompanha torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.
+  - Fondue Doce — R$ 89,90, acompanha morango, uva, banana, brownie e marshmallow.
+- Mantida a regra: o valor é referente ao prato feito para servir 2 pessoas, não é por pessoa.
+- Mantido horário: das 16h às 21h.
+

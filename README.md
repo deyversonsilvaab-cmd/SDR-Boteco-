@@ -211,3 +211,57 @@ Para melhorar o contexto no ManyChat, envie no External Request:
   "last_topic": "fondue"
 }
 ```
+
+
+## Ajuste obrigatório no ManyChat para Instagram
+
+Para o robô responder conversas e marcações, o ManyChat precisa chamar o webhook em cada gatilho. Apenas a mensagem de boas-vindas não aciona a IA.
+
+### Conversas / Direct
+No fluxo de Direct, depois da mensagem inicial, adicione um bloco **External Request** apontando para `/api/manychat` e envie no body:
+
+```json
+{
+  "message": "{{last_text_input}}",
+  "first_name": "{{first_name}}",
+  "username": "{{username}}",
+  "last_intent": "{{last_intent}}",
+  "last_topic": "{{last_topic}}"
+}
+```
+
+Mapeie a resposta `$.reply` para o campo/resposta exibida no ManyChat.
+
+### Marcação em story
+Crie um gatilho de **Instagram Story Mention / Menção no Story**. Nesse gatilho, chame o mesmo webhook enviando:
+
+```json
+{
+  "message": "mencionou você no próprio story",
+  "event_type": "story_mention",
+  "first_name": "{{first_name}}",
+  "username": "{{username}}"
+}
+```
+
+Também é possível usar a mensagem fixa diretamente no ManyChat:
+
+```text
+Aaa que demais ver sua marcação 😍
+
+Obrigado por compartilhar esse momento com a gente.
+
+Ficamos felizes demais de fazer parte do seu passeio.
+
+Volta mais vezes, viu? 🍻
+```
+
+### Fondue
+
+A resposta de Fondue deve apresentar as duas opções completas com acompanhamentos:
+
+- Fondue Salgado — R$ 99,90: torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.
+- Fondue Doce — R$ 89,90: morango, uva, banana, brownie e marshmallow.
+
+Regra: o valor é do prato feito para servir 2 pessoas, não é por pessoa. Disponível das 16h às 21h.
+
