@@ -56,12 +56,65 @@ function extractMessage(body) {
   return safeText(
     body?.message ||
       body?.text ||
+      body?.input ||
+      body?.query ||
+      body?.question ||
+      body?.user_message ||
       body?.last_input_text ||
       body?.last_text_input ||
+      body?.last_text ||
+      body?.comment ||
+      body?.comment_text ||
+      body?.caption ||
+      body?.story_text ||
+      body?.trigger_text ||
+      body?.event_text ||
       body?.custom_fields?.message ||
+      body?.custom_fields?.text ||
+      body?.custom_fields?.input ||
       body?.custom_fields?.last_input_text ||
+      body?.custom_fields?.last_text_input ||
+      body?.custom_fields?.last_text ||
+      body?.custom_fields?.comment_text ||
+      body?.custom_fields?.story_text ||
       ""
   );
+}
+
+function bodyContains(body, terms) {
+  let raw = "";
+  try {
+    raw = JSON.stringify(body || {}).slice(0, 12000);
+  } catch {
+    raw = "";
+  }
+  const text = normalizeText(raw);
+  return includesAny(text, terms);
+}
+
+function inferMessageFromEvent(body) {
+  const eventText = safeText(
+    body?.event_type ||
+      body?.event ||
+      body?.trigger ||
+      body?.source ||
+      body?.flow_trigger ||
+      body?.custom_fields?.event_type ||
+      body?.custom_fields?.event ||
+      body?.custom_fields?.trigger ||
+      ""
+  );
+
+  if (includesAny(eventText, ["marcacao_story", "story_mention", "story mention", "mentioned in story", "mencionou", "marcou no story"]) ||
+      bodyContains(body, ["marcacao_story", "story_mention", "story mention", "mentioned in story", "mencionou voce no proprio story", "mencionou você no próprio story", "marcou no story"])) {
+    return "mencionou você no próprio story";
+  }
+
+  if (includesAny(eventText, ["comment", "comentario", "comentário"]) || bodyContains(body, ["instagram_comment", "comentario no post", "comentário no post"])) {
+    return safeText(body?.comment_text || body?.comment || body?.custom_fields?.comment_text || body?.custom_fields?.comment || "comentário no post");
+  }
+
+  return "";
 }
 
 function extractCustomer(body) {
@@ -275,6 +328,16 @@ function buildDirectReply(message, knowledge, context = {}) {
   if (isFonduePortionQuestion(text) && (fondueContext || (!openContext && !includesAny(text, ["open", "chopp", "combo", "frango", "calabresa", "jogo", "placar"])))) {
     return {
       reply: respostas.fondue_valor_porcoes || DEFAULT_FALLBACK,
+      intent: "fondue_valor_porcoes",
+      needs_human: false,
+      lead_temperature: "quente",
+      missing_fields: []
+    };
+  }
+
+  if ((priceQuestion || includesAny(text, ["valor do fondue", "preco do fondue", "preço do fondue", "qual valor do fondue", "quanto custa o fondue"])) && fondueContext) {
+    return {
+      reply: respostas.fondue_valores || respostas.fondue_valor_porcoes || respostas.fondue || DEFAULT_FALLBACK,
       intent: "fondue_valor_porcoes",
       needs_human: false,
       lead_temperature: "quente",
@@ -542,11 +605,21 @@ export default async function handler(req, res) {
     if (!isAuthorized(req)) return send(res, 401, { ok: false, error: "Não autorizado. Verifique WEBHOOK_SECRET." });
 
     const body = req.body || {};
-    const customerMessage = extractMessage(body);
+    const customerMessage = extractMessage(body) || inferMessageFromEvent(body);
     const customer = extractCustomer(body);
     const conversationContext = extractConversationContext(body);
 
-    if (!customerMessage) return send(res, 400, { ok: false, error: "Mensagem vazia. Envie no campo message ou text." });
+    if (!customerMessage) {
+      return send(res, 200, {
+        ok: true,
+        reply: DEFAULT_FALLBACK,
+        intent: "humano",
+        needs_human: true,
+        lead_temperature: "morno",
+        missing_fields: [],
+        messages: [{ type: "text", text: DEFAULT_FALLBACK }]
+      });
+    }
 
     const knowledge = await loadKnowledge();
     const fallback = knowledge.resposta_fallback || DEFAULT_FALLBACK;
