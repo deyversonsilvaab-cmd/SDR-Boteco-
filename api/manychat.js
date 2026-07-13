@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 const DEFAULT_FALLBACK = "Vou confirmar com a equipe para não te passar nenhuma informação errada e já te retorno 😊";
+const DEFAULT_WHATSAPP_LINK = "https://wa.me/5519997858351";
 const INSTAGRAM_MAX_MESSAGE_LENGTH = 900;
 const INSTAGRAM_MAX_MESSAGE_PARTS = 3;
 
@@ -315,6 +316,26 @@ function extractPricesFromText(text) {
 function containsInventedPrice(text, allowedPrices) {
     const pricesInText = extractPricesFromText(text);
     return pricesInText.some((price) => !allowedPrices.has(price));
+}
+
+function getWhatsappLink(knowledge) {
+        return (
+                    knowledge?.empresa?.whatsapp_link ||
+                    knowledge?.links?.whatsapp ||
+                    DEFAULT_WHATSAPP_LINK
+                );
+}
+
+function hasWhatsappLink(text) {
+        return /wa\.me\//i.test(String(text || ""));
+}
+
+function ensureWhatsappHandoff(text, knowledge) {
+        const base = String(text || "").trim();
+        if (hasWhatsappLink(base)) return base;
+        const link = getWhatsappLink(knowledge);
+        const linha = `Para um atendimento mais rápido, com mais atenção ou para confirmar disponibilidade, fala com a nossa equipe no WhatsApp: ${link}`;
+        return base ? `${base}\n\n📲 ${linha}` : `📲 ${linha}`;
 }
 
 function splitForInstagram(text, maxLen = INSTAGRAM_MAX_MESSAGE_LENGTH, maxParts = INSTAGRAM_MAX_MESSAGE_PARTS) {
@@ -655,6 +676,7 @@ function buildSystemPrompt(knowledge) {
     16. Nunca se refira a si mesmo como robô, IA ou sistema automático. Seja sempre caloroso, use emojis com moderação quando fizer sentido, e trate o cliente pelo primeiro nome quando disponível.
     17. Você é um atendente completo do restaurante: pode acolher saudações iniciais, tirar dúvidas sobre cardápio, horário, reservas, Open Chopp, fondue, delivery, vagas e despedidas, sempre com tom acolhedor, mas sempre restrito aos fatos da BASE_DE_CONHECIMENTO.
     18. Se não tiver certeza sobre algo (preço, item, disponibilidade), nunca arrisque um palpite: direcione o cliente para o WhatsApp da equipe.
+    19. Sempre que a resposta envolver reserva de mesa, aniversário, grupo grande, evento corporativo, ou qualquer assunto fora da BASE_DE_CONHECIMENTO, o sistema já anexa automaticamente o link do WhatsApp da equipe ao final da mensagem. Você não precisa inserir o link manualmente nesses casos, apenas escreva a resposta normalmente.
 
     FORMATO:
     {
@@ -725,10 +747,11 @@ export default async function handler(req, res) {
           const conversationContext = extractConversationContext(body);
 
       if (!customerMessage) {
-              const fallbackPayload = buildMessagesPayload(DEFAULT_FALLBACK);
+              const noMsgReply = ensureWhatsappHandoff(DEFAULT_FALLBACK, null);
+          const fallbackPayload = buildMessagesPayload(noMsgReply);
               return send(res, 200, {
                         ok: true,
-                        reply: DEFAULT_FALLBACK,
+                        reply: noMsgReply,
                         intent: "humano",
                         needs_human: true,
                         lead_temperature: "morno",
@@ -751,10 +774,12 @@ export default async function handler(req, res) {
 
       if (!process.env.OPENAI_API_KEY) {
               if (resolved) {
-                        const safePayload = buildMessagesPayload(resolved.facts);
+                        let degradedReply = resolved.facts;
+                                  if (resolved.needs_human) degradedReply = ensureWhatsappHandoff(degradedReply, knowledge);
+                                  const safePayload = buildMessagesPayload(degradedReply);
                         return send(res, 200, {
                                     ok: true,
-                                    reply: resolved.facts,
+                                                        reply: degradedReply,
                                     intent: resolved.intent,
                                     needs_human: resolved.needs_human,
                                     lead_temperature: resolved.lead_temperature,
@@ -797,9 +822,15 @@ export default async function handler(req, res) {
       // conhecimento, a resposta é descartada e substituída por um fato oficial (ou fallback
       // seguro), para nunca entregar um preço inventado ao cliente.
       let finalReplyText = parsed.reply;
-          if (containsInventedPrice(finalReplyText, allowedPrices)) {
-                  finalReplyText = (resolved && typeof resolved.facts === "string" && resolved.facts) || fallback;
-          }
+          const invented = containsInventedPrice(finalReplyText, allowedPrices);
+                    if (invented) {
+                                        finalReplyText = (resolved && typeof resolved.facts === "string" && resolved.facts) || fallback;
+                    }
+
+                    const needsHumanFinal = resolved ? resolved.needs_human : true;
+                    if (needsHumanFinal || invented) {
+                                        finalReplyText = ensureWhatsappHandoff(finalReplyText, knowledge);
+                    }
 
       const result = resolved
             ? {
@@ -812,7 +843,7 @@ export default async function handler(req, res) {
               : {
                         reply: finalReplyText,
                         intent: parsed.intent,
-                        needs_human: parsed.needs_human,
+                                            needs_human: true,
                         lead_temperature: parsed.lead_temperature,
                         missing_fields: parsed.missing_fields
               };
@@ -829,10 +860,11 @@ export default async function handler(req, res) {
       });
     } catch (error) {
           console.error("ERRO_GERAL:", error);
-          const errorPayload = buildMessagesPayload(DEFAULT_FALLBACK);
+const errorReply = ensureWhatsappHandoff(DEFAULT_FALLBACK, null);
+                const errorPayload = buildMessagesPayload(errorReply);
           return send(res, 200, {
                   ok: false,
-                  reply: DEFAULT_FALLBACK,
+                              reply: errorReply,
                   intent: "humano",
                   needs_human: true,
                   lead_temperature: "quente",
