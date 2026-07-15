@@ -588,7 +588,7 @@ function resolveIntent(message, knowledge, context = {}) {
         return { facts: respostas.bebida_sem_alcool || respostas.bebidas || DEFAULT_FALLBACK, intent: "bebida_sem_alcool", needs_human: false, lead_temperature: "morno", missing_fields: [] };
   }
 
-  if (mentionsOpenChopp(text) || (priceOnlyQuestion && openContext)) {
+  if (mentionsOpenChopp(text) && includesAny(text, ["marca", "qual cerveja", "que cerveja", "cerveja do open", "marca do chopp", "marca do open"])) {    return { facts: respostas.open_chopp_marca || DEFAULT_FALLBACK, intent: "open_chopp_marca", needs_human: true, lead_temperature: "quente", missing_fields: [] };  }  if (includesAny(text, ["heineken", "brahma", "ashby", "canecao", "canecão", "caneca", "chopp individual", "chopp avulso", "chopp unitario", "chopp unitário", "marcas de chopp", "qual chopp voces tem", "qual chopp vocês tem", "chopp voces tem", "chopp vocês tem", "tipos de chopp"]) && !mentionsOpenChopp(text)) {    const chopMarcaFacts = (priceQuestion || priceOnlyQuestion) ? (respostas.chopp_marcas_valor || DEFAULT_FALLBACK) : (respostas.chopp_marcas || DEFAULT_FALLBACK);    return { facts: chopMarcaFacts, intent: "chopp_marca", needs_human: false, lead_temperature: "quente", missing_fields: [] };  }  if (mentionsOpenChopp(text) || (priceOnlyQuestion && openContext)) {
         const asksToday = includesAny(text, ["hoje", "tem hoje", "open hoje"]);
         const facts = asksToday
           ? getAdReply(knowledge, "open_chopp_hoje")
