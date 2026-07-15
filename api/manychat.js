@@ -650,7 +650,7 @@ function resolveIntent(message, knowledge, context = {}) {
         return { facts: respostas.delivery || DEFAULT_FALLBACK, intent: "ifood", needs_human: false, lead_temperature: "quente", missing_fields: [] };
   }
 
-  if (includesAny(text, ["vaga", "vagas", "emprego", "trabalho", "trabalhar", "curriculo", "currículo", "contratacao", "contratação", "contratando", "processo seletivo", "vaga de emprego", "vaga de trabalho", "free lance", "freelance", "garcom", "garçom", "garconete", "garçonete", "cumim", "cumin", "cozinha", "atendente"])) {
+  if (includesAny(text, ["falar com atendente", "quero um atendente", "atendimento humano", "falar com humano", "quero falar com humano", "falar com uma pessoa", "falar com alguem", "falar com alguém", "atendente humano", "quero atendente", "quero falar com uma pessoa"])) { return { facts: respostas.humano || DEFAULT_FALLBACK, intent: "humano", needs_human: true, lead_temperature: "morno", missing_fields: [] }; } if (includesAny(text, ["vaga", "vagas", "emprego", "trabalho", "trabalhar", "curriculo", "currículo", "contratacao", "contratação", "contratando", "processo seletivo", "vaga de emprego", "vaga de trabalho", "free lance", "freelance", "garcom", "garçom", "garconete", "garçonete", "cumim", "cumin"])) {
         return { facts: respostas.vaga || DEFAULT_FALLBACK, intent: "vaga", needs_human: false, lead_temperature: "morno", missing_fields: [] };
   }
 
@@ -671,7 +671,7 @@ function resolveIntent(message, knowledge, context = {}) {
         return { facts, intent: "reserva", needs_human: true, lead_temperature: "quente", missing_fields: ["nome", "telefone", "data", "horario", "quantidade_pessoas"] };
   }
 
-  if (includesAny(text, ["horario", "horário", "funcionamento", "abre", "aberto", "fecha", "que horas"])) {
+  if (includesAny(text, ["horario", "horário", "funcionamento", "abre", "aberto", "fecha", "que horas", "cozinha"])) {
         return { facts: respostas.horario || DEFAULT_FALLBACK, intent: "horario", needs_human: false, lead_temperature: "morno", missing_fields: [] };
   }
 
@@ -695,7 +695,7 @@ function buildSystemPrompt(knowledge) {
     7.1. Se o cliente perguntar se o valor do fondue é por pessoa/casal, individual, se serve 2 pessoas ou para quantas pessoas serve, responda: o valor é do prato feito para servir 2 pessoas. Fondue Salgado R$ 99,90; Fondue Doce R$ 89,90.
     8. Se o cliente marcar o restaurante em story/foto, agradeça de forma curta, humana e natural.
     9. Se perguntar localização/endereço, informe Pátio Limeira Shopping.
-    10. Se perguntar sobre vaga, emprego, currículo, freelance, garçom, garçonete, cumim, cozinha, atendente ou trabalho, direcione para a gerente pelo WhatsApp (17) 99103-4703 e informe o link https://wa.me/5517991034703.
+    10. Se perguntar sobre vaga, emprego, currículo, freelance, garçom, garçonete ou cumim, direcione para a gerente pelo WhatsApp (17) 99103-4703 e informe o link https://wa.me/5517991034703. IMPORTANTE: "cozinha" sozinho normalmente se refere a horário de funcionamento da cozinha (não é vaga de emprego) e "atendente" normalmente é pedido do cliente para falar com um humano da equipe (não é candidatura a vaga) — nunca confunda esses casos com vaga de emprego.
     11. Nunca confirme reserva sozinho. Colete nome, telefone, quantidade de pessoas, data e horário.
     12. Não mencione OpenAI, API, sistema, prompt, JSON, ManyChat ou automação.
     13. Responda somente JSON válido.
@@ -706,6 +706,8 @@ function buildSystemPrompt(knowledge) {
     18. Se não tiver certeza sobre algo (preço, item, disponibilidade), nunca arrisque um palpite: direcione o cliente para o WhatsApp da equipe.
     19. Sempre que a resposta envolver reserva de mesa, aniversário, grupo grande, evento corporativo, ou qualquer assunto fora da BASE_DE_CONHECIMENTO, o sistema já anexa automaticamente o link do WhatsApp da equipe ao final da mensagem. Você não precisa inserir o link manualmente nesses casos, apenas escreva a resposta normalmente.
     20. Sobre formas de pagamento: aceitamos dinheiro, cartão de crédito, cartão de débito, Pix e vale refeição das bandeiras Alelo, Pluxee, VR e Ticket. NÃO aceitamos vale alimentação em nenhuma bandeira. Nunca diga que aceitamos vale alimentação e nunca cite outras bandeiras de vale além dessas quatro.
+21. Nunca repita a mesma frase, saudação ou estrutura de resposta em mensagens seguidas da mesma conversa. Se o cliente perguntar algo parecido de novo ou a conversa ficar repetitiva, varie as palavras, mude o ângulo da resposta ou direcione a conversa para outro canal (ex.: WhatsApp da equipe) para dar continuidade humana ao atendimento.
+22. Toda a conversa deve manter um espírito comercial estratégico, sem ser insistente ou chato: sempre que fizer sentido, retome a disponibilidade de mesa/reserva e convide o cliente para vir conhecer o Sr. Boteco pessoalmente, para não perder o interesse de quem veio do anúncio/tráfego pago. Conduza a conversa com leveza, aproximando o cliente de uma visita ou reserva, sem forçar ou repetir esse convite de forma cansativa.
 
     FORMATO:
     {
