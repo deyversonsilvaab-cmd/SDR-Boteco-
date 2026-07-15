@@ -20,6 +20,12 @@
     "ifood": "https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72",
     "whatsapp_vagas": "https://wa.me/5517991034703"
   },
+  "formas_pagamento": {
+    "aceitos": ["Dinheiro", "Cartão de crédito", "Cartão de débito", "Pix"],
+    "vale_refeicao_bandeiras_aceitas": ["Alelo", "Pluxee", "VR", "Ticket"],
+    "vale_alimentacao": "Não aceitamos vale alimentação em nenhuma bandeira.",
+    "regra": "Aceitamos vale refeição somente das bandeiras Alelo, Pluxee, VR e Ticket. Não aceitamos vale alimentação em nenhuma bandeira e não aceitamos outras bandeiras de vale refeição além dessas quatro. Nunca informar isso de outra forma."
+  },
   "respostas_rapidas": {
     "saudacao_inicial": "Oi, seja muito bem-vindo(a) ao Sr. Boteco \ud83d\ude0a\n\nFicamos no P\u00e1tio Limeira Shopping e funcionamos todos os dias das 11h \u00e0s 22h.\n\nPosso te ajudar com card\u00e1pio, reserva, Open Chopp, fondue ou hor\u00e1rio de funcionamento. O que voc\u00ea gostaria de saber?",
     "despedida": "Foi um prazer falar com voc\u00ea \ud83d\ude0a\n\nQualquer d\u00favida \u00e9 s\u00f3 chamar por aqui.\n\nTe esperamos no Sr. Boteco \u2014 P\u00e1tio Limeira Shopping! \ud83c\udf7b",
@@ -66,7 +72,7 @@
     "anuncio_horario_funcionamento": "Funcionamos todos os dias das 11h às 22h 😊\n\nO Open Chopp acontece das 16h às 21h.",
     "anuncio_open_comeca": "Começa às 16h e vai até às 21h 🍻",
     "anuncio_chegar_mais_tarde": "Sim 😊\n\nO Open Chopp vai até às 21h. Chegando dentro desse horário, dá para aproveitar.",
-    "anuncio_aceita_cartao": "Aceitamos sim 😊\n\nPara confirmar formas de pagamento ou tirar dúvidas específicas, chama a equipe no WhatsApp:\nhttps://wa.me/5519997858351",
+        "anuncio_aceita_cartao": "Aceitamos sim 😊\n\nTrabalhamos com dinheiro, cartão de crédito, cartão de débito e Pix.\n\nTambém aceitamos vale refeição das bandeiras Alelo, Pluxee, VR e Ticket.\n\nNão aceitamos vale alimentação.\n\nQualquer dúvida, nossa equipe confirma certinho pelo WhatsApp:\nhttps://wa.me/5519997858351",
     "anuncio_tem_taxa": "Para confirmar qualquer detalhe de consumo, taxa ou regra atualizada, o melhor é falar direto com a equipe pelo WhatsApp:\nhttps://wa.me/5519997858351",
     "anuncio_open_individual": "Sim, o Open Chopp é por pessoa 😊\n\nValores:\nDomingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nDas 16h às 21h.",
     "anuncio_pode_dividir_open": "O Open Chopp é individual 😊\n\nCada pessoa que quiser participar precisa contratar o seu.",
@@ -352,7 +358,8 @@
     "Quando houver marcação em story/foto, agradecer de forma humana e curta.",
     "Mensagens de empresas/equipes devem ser direcionadas para atendimento B2B via WhatsApp, destacando almoço executivo e happy hour.",
     "Se o cliente perguntar sobre chopp zero, open chopp zero, cerveja zero ou bebida sem álcool, informar que não temos chopp zero e oferecer Heineken Zero long neck. Não inventar valor.",
-    "Se o cliente perguntar se o valor do fondue é por pessoa, por casal, individual, ou se serve 2 pessoas, responder diretamente que o valor é do prato feito para servir 2 pessoas. Não responder com Open Chopp, jogo, combo ou público família/casal."
+    "Se o cliente perguntar se o valor do fondue é por pessoa, por casal, individual, ou se serve 2 pessoas, responder diretamente que o valor é do prato feito para servir 2 pessoas. Não responder com Open Chopp, jogo, combo ou público família/casal.",
+    "Aceitamos vale refeição das bandeiras Alelo, Pluxee, VR e Ticket. Não aceitamos vale alimentação em nenhuma bandeira nem outras bandeiras de vale refeição além dessas quatro."
   ],
   "respostas_anuncio_open_chopp": {
     "valor_open_chopp": "O Open Chopp acontece das 16h às 21h 🍻\n\nDomingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nEstamos no Pátio Limeira Shopping.\nQuer que eu te mande o WhatsApp para falar com a equipe mais rápido?",
@@ -375,7 +382,7 @@
     "horario_funcionamento": "Funcionamos todos os dias das 11h às 22h 😊\n\nO Open Chopp acontece das 16h às 21h.",
     "open_comeca": "Começa às 16h e vai até às 21h 🍻",
     "chegar_mais_tarde": "Sim 😊\n\nO Open Chopp vai até às 21h. Chegando dentro desse horário, dá para aproveitar.",
-    "aceita_cartao": "Aceitamos sim 😊\n\nPara confirmar formas de pagamento ou tirar dúvidas específicas, chama a equipe no WhatsApp:\nhttps://wa.me/5519997858351",
+        "aceita_cartao": "Aceitamos sim 😊\n\nTrabalhamos com dinheiro, cartão de crédito, cartão de débito e Pix.\n\nTambém aceitamos vale refeição das bandeiras Alelo, Pluxee, VR e Ticket.\n\nNão aceitamos vale alimentação.\n\nQualquer dúvida, nossa equipe confirma certinho pelo WhatsApp:\nhttps://wa.me/5519997858351",
     "tem_taxa": "Para confirmar qualquer detalhe de consumo, taxa ou regra atualizada, o melhor é falar direto com a equipe pelo WhatsApp:\nhttps://wa.me/5519997858351",
     "open_individual": "Sim, o Open Chopp é por pessoa 😊\n\nValores:\nDomingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nDas 16h às 21h.",
     "pode_dividir_open": "O Open Chopp é individual 😊\n\nCada pessoa que quiser participar precisa contratar o seu.",
