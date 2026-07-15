@@ -508,7 +508,7 @@ function resolveIntent(message, knowledge, context = {}) {
         return { facts: getAdReply(knowledge, "outras_porcoes"), intent: "cardapio", needs_human: false, lead_temperature: "morno", missing_fields: [] };
   }
 
-  if (includesAny(text, ["crianca pode ir", "criança pode ir", "pode ir crianca", "pode ir criança", "leva crianca", "levar criança", "levar filho", "familia com crianca", "família com criança"])) {
+  if (includesAny(text, ["crianca pode ir", "criança pode ir", "pode ir crianca", "pode ir criança", "leva crianca", "levar criança", "levar filho", "levar meu filho", "levar minha filha", "ir com filho", "ir com minha filha", "ir com criança", "ir com a criança", "familia com crianca", "família com criança"])) {
         return { facts: getAdReply(knowledge, "crianca"), intent: "familia", needs_human: false, lead_temperature: "morno", missing_fields: [] };
   }
 
@@ -626,7 +626,7 @@ function resolveIntent(message, knowledge, context = {}) {
         return { facts: respostas.preco_cardapio || DEFAULT_FALLBACK, intent: "preco", needs_human: false, lead_temperature: "quente", missing_fields: [] };
   }
 
-  if (includesAny(text, ["cardapio", "cardápio", "menu", "opcoes", "opções", "comidas", "pratos", "tem o que", "o que tem", "cardapio completo", "cardápio completo"])) {
+  if (includesAny(text, ["guarana proteico", "guaraná proteico", "pure up", "pureup", "bebida proteica", "refri proteico", "refrigerante proteico", "proteico bebida"])) {return { facts: respostas.guarana_proteico || respostas.proteicos || DEFAULT_FALLBACK, intent: "proteico", needs_human: false, lead_temperature: "quente", missing_fields: [] };}if (includesAny(text, ["proteico", "proteica", "fitness", "fit", "saudavel", "saudável", "low carb", "frango power", "executivo proteico", "tilapia premium", "tilápia premium", "low carb supreme", "salada proteica", "tilapia fresh", "tilápia fresh", "prato saudavel", "prato saudável", "pratos proteicos", "cardapio fitness", "cardápio fitness"])) {return { facts: respostas.proteicos || DEFAULT_FALLBACK, intent: "proteico", needs_human: false, lead_temperature: "quente", missing_fields: [] };}if (includesAny(text, ["cardapio", "cardápio", "menu", "opcoes", "opções", "comidas", "pratos", "tem o que", "o que tem", "cardapio completo", "cardápio completo"])) {
         return { facts: respostas.cardapio || DEFAULT_FALLBACK, intent: "cardapio", needs_human: false, lead_temperature: "morno", missing_fields: [] };
   }
 
@@ -650,7 +650,7 @@ function resolveIntent(message, knowledge, context = {}) {
         return { facts: respostas.delivery || DEFAULT_FALLBACK, intent: "ifood", needs_human: false, lead_temperature: "quente", missing_fields: [] };
   }
 
-  if (includesAny(text, ["falar com atendente", "quero um atendente", "atendimento humano", "falar com humano", "quero falar com humano", "falar com uma pessoa", "falar com alguem", "falar com alguém", "atendente humano", "quero atendente", "quero falar com uma pessoa"])) { return { facts: respostas.humano || DEFAULT_FALLBACK, intent: "humano", needs_human: true, lead_temperature: "morno", missing_fields: [] }; } if (includesAny(text, ["vaga", "vagas", "emprego", "trabalho", "trabalhar", "curriculo", "currículo", "contratacao", "contratação", "contratando", "processo seletivo", "vaga de emprego", "vaga de trabalho", "free lance", "freelance", "garcom", "garçom", "garconete", "garçonete", "cumim", "cumin"])) {
+  if (includesAny(text, ["atendente", "humano", "falar com atendente", "quero um atendente", "atendimento humano", "falar com humano", "quero falar com humano", "falar com uma pessoa", "falar com alguem", "falar com alguém", "atendente humano", "quero atendente", "quero falar com uma pessoa"]) && !includesAny(text, ["vaga", "vagas", "emprego", "trabalho", "trabalhar", "curriculo", "currículo", "contratacao", "contratação", "contratando", "processo seletivo", "freelance", "garcom", "garçom", "garconete", "garçonete", "cumim", "cumin"])) { return { facts: respostas.humano || DEFAULT_FALLBACK, intent: "humano", needs_human: true, lead_temperature: "morno", missing_fields: [] }; } if (includesAny(text, ["vaga", "vagas", "emprego", "trabalho", "trabalhar", "curriculo", "currículo", "contratacao", "contratação", "contratando", "processo seletivo", "vaga de emprego", "vaga de trabalho", "free lance", "freelance", "garcom", "garçom", "garconete", "garçonete", "cumim", "cumin"])) {
         return { facts: respostas.vaga || DEFAULT_FALLBACK, intent: "vaga", needs_human: false, lead_temperature: "morno", missing_fields: [] };
   }
 
