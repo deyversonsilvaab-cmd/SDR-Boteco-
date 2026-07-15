@@ -13,7 +13,7 @@
     "ofertas_tarde_noite": "Ofertas válidas das 16h às 21h.",
     "almoco": "Almoço de segunda a sexta-feira, das 11h às 15h.",
     "open_chopp": "Open Chopp das 16h às 21h.",
-    "happy_hour": "Happy hour das 16h às 21h."
+    "happy_hour": "Happy hour das 16h às 21h.", "delivery_ifood": "Entrega via iFood todos os dias das 11h às 22h."
   },
   "links": {
     "whatsapp": "https://wa.me/5519997858351",
@@ -32,8 +32,8 @@
     "cardapio": "Temos várias opções no cardápio do Sr. Boteco 😊\n\n🍽️ Executivos\n🍟 Porções\n🥩 À la carte\n🍔 Burgers\n👧 Pratos kids\n🍰 Sobremesas\n🍺 Chopp, cervejas e bebidas\n🥤 Sucos e bebidas sem álcool\n\nPara consultar valores atualizados ou receber o cardápio completo, chama no WhatsApp:\n\n📲 https://wa.me/5519997858351",
     "localizacao": "Ficamos no Pátio Limeira Shopping 😊\n\nÉ só chegar no Sr. Boteco.\n\nSe quiser falar com a equipe para confirmar mesa ou tirar dúvida mais rápido, chama no WhatsApp:\nhttps://wa.me/5519997858351",
     "almoco": "Temos sim 😊\n\nDe segunda a sexta, das 11h às 15h, servimos almoço com pratos executivos bem servidos e opções a partir de R$ 19,90.\n\nTem bisteca, frango, parmegiana, strogonoff, omelete, prato fitness e outras opções do dia.\n\nEstamos no Pátio Limeira Shopping.\n\nQuer que eu te mande o WhatsApp para confirmar o cardápio de hoje?",
-    "delivery": "Sim 😊\n\nFazemos entregas através do iFood.\n\n📲 Faça seu pedido pelo link:\nhttps://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72\n\nCaso prefira, também pode conferir nosso cardápio completo pelo aplicativo do iFood.",
-    "vaga": "Olá! 😊\n\nPara oportunidades de trabalho no Sr. Boteco, por favor envie seu currículo diretamente para a gerente do restaurante pelo WhatsApp:\n\n📲 https://wa.me/5517991034703\n\nEla irá analisar seu perfil e retornar caso tenha uma oportunidade compatível.",
+    "delivery": "Sim 😊\n\nFazemos entregas através do iFood, todos os dias das 11h às 22h.\n\n📲 Faça seu pedido pelo link:\nhttps://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72\n\nCaso prefira, também pode conferir nosso cardápio completo pelo aplicativo do iFood. Mas se puder, vem provar aqui no salão também — fica ainda melhor 😄 Quer que eu veja a disponibilidade de mesa para você?",
+    "vaga": "Olá! 😊\n\nPara oportunidades de trabalho no Sr. Boteco, por favor envie seu currículo diretamente para a gerente do restaurante pelo WhatsApp:\n\n📲 https://wa.me/5517991034703\n\nEla irá analisar seu perfil e retornar caso tenha uma oportunidade compatível.", "humano": "Claro, posso te ajudar por aqui 😊 Mas se preferir um atendimento mais pessoal, é só chamar a nossa equipe no WhatsApp que já te atendem por lá.",
     "fondue": "Temos duas opções para compartilhar:\n\n🧀 Fondue Salgado — R$ 99,90\nAcompanha: torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.\n\n🍫 Fondue Doce — R$ 89,90\nAcompanha: morango, uva, banana, brownie e marshmallow.\n\nOs valores são referentes ao prato feito para servir 2 pessoas.\n\n⏰ Disponível das 16h às 21h.\n📍 Sr. Boteco — Pátio Limeira Shopping.\n\nVocê pensa em vir com quantas pessoas?",
     "horario": "Funcionamos todos os dias das 11h às 22h 😊\n\nO Open Chopp acontece das 16h às 21h.",
     "proteicos": "Temos opções mais leves e proteicas no cardápio do Sr. Boteco 💪🍽️\n\nEntre as opções, temos pratos com frango, tilápia, saladas e versões low carb.\n\nPara confirmar as opções e valores atualizados do dia, fala com a equipe pelo WhatsApp:\nhttps://wa.me/5519997858351",
@@ -265,7 +265,7 @@
     "responsavel": "Gerente do restaurante",
     "whatsapp": "(17) 99103-4703",
     "whatsapp_link": "https://wa.me/5517991034703",
-    "orientacao": "Direcionar assuntos claramente relacionados a vaga, emprego, currículo, freelance, garçom, garçonete, cumim, cozinha, atendente ou trabalho para a gerente pelo WhatsApp. Não usar palavras genéricas como free ou serviço para classificar como vaga."
+    "orientacao": "Direcionar assuntos claramente relacionados a vaga, emprego, currículo, freelance, garçom, garçonete ou cumim para a gerente pelo WhatsApp. Não usar palavras genéricas como free, serviço, cozinha ou atendente para classificar como vaga — cozinha refere-se a horário de funcionamento e atendente refere-se a pedido de atendimento humano."
   },
   "produtos_precos": [
     {
@@ -359,7 +359,7 @@
     "Mensagens de empresas/equipes devem ser direcionadas para atendimento B2B via WhatsApp, destacando almoço executivo e happy hour.",
     "Se o cliente perguntar sobre chopp zero, open chopp zero, cerveja zero ou bebida sem álcool, informar que não temos chopp zero e oferecer Heineken Zero long neck. Não inventar valor.",
     "Se o cliente perguntar se o valor do fondue é por pessoa, por casal, individual, ou se serve 2 pessoas, responder diretamente que o valor é do prato feito para servir 2 pessoas. Não responder com Open Chopp, jogo, combo ou público família/casal.",
-    "Aceitamos vale refeição das bandeiras Alelo, Pluxee, VR e Ticket. Não aceitamos vale alimentação em nenhuma bandeira nem outras bandeiras de vale refeição além dessas quatro."
+    "Aceitamos vale refeição das bandeiras Alelo, Pluxee, VR e Ticket. Não aceitamos vale alimentação em nenhuma bandeira nem outras bandeiras de vale refeição além dessas quatro.", "Fazemos entrega via iFood todos os dias das 11h às 22h.", "Se o cliente pedir para falar com atendente ou humano, nunca tratar como vaga de emprego: acolher e oferecer o WhatsApp da equipe para um atendimento mais pessoal.", "Sempre que fizer sentido, conduzir a conversa de forma estratégica para reserva de mesa ou visita ao restaurante, reforçando disponibilidade e convidando o cliente a conhecer o Sr. Boteco, sem ser repetitivo ou insistente, e sem perder o interesse de quem veio por anúncio/tráfego pago."
   ],
   "respostas_anuncio_open_chopp": {
     "valor_open_chopp": "O Open Chopp acontece das 16h às 21h 🍻\n\nDomingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nEstamos no Pátio Limeira Shopping.\nQuer que eu te mande o WhatsApp para falar com a equipe mais rápido?",
