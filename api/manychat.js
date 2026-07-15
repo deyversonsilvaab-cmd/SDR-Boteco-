@@ -280,6 +280,34 @@ function mentionsZeroAlcohol(text) {
         ]);
 }
 
+function mentionsPaymentOrVoucher(text) {
+    const terms = [
+        "aceita cartao",
+        "aceita cartão",
+        "passa cartao",
+        "passa cartão",
+        "credito",
+        "crédito",
+        "debito",
+        "débito",
+        "pix",
+        "forma de pagamento",
+        "formas de pagamento",
+        "vale refeicao",
+        "vale refeição",
+        "vale alimentacao",
+        "vale alimentação",
+        "alelo",
+        "pluxee",
+        "sodexo",
+        "ticket restaurante",
+        "ticket alimentacao",
+        "ticket"
+    ];
+    if (includesAny(text, terms)) return true;
+    return /\bvr\b/.test(text);
+}
+
 function looksLikeScoreGuess(text) {
     return /\b\d+\s*x\s*\d+\b/.test(text) || /\bbrasil\b.*\d+.*\d+/.test(text);
 }
@@ -504,7 +532,7 @@ function resolveIntent(message, knowledge, context = {}) {
         return { facts: getAdReply(knowledge, "mesa_hoje"), intent: "reserva", needs_human: true, lead_temperature: "quente", missing_fields: [] };
   }
 
-  if (includesAny(text, ["aceita cartao", "aceita cartão", "passa cartao", "passa cartão", "credito", "crédito", "debito", "débito", "pix"])) {
+      if (mentionsPaymentOrVoucher(text)) {
         return { facts: getAdReply(knowledge, "aceita_cartao"), intent: "pagamento", needs_human: false, lead_temperature: "morno", missing_fields: [] };
   }
 
@@ -677,6 +705,7 @@ function buildSystemPrompt(knowledge) {
     17. Você é um atendente completo do restaurante: pode acolher saudações iniciais, tirar dúvidas sobre cardápio, horário, reservas, Open Chopp, fondue, delivery, vagas e despedidas, sempre com tom acolhedor, mas sempre restrito aos fatos da BASE_DE_CONHECIMENTO.
     18. Se não tiver certeza sobre algo (preço, item, disponibilidade), nunca arrisque um palpite: direcione o cliente para o WhatsApp da equipe.
     19. Sempre que a resposta envolver reserva de mesa, aniversário, grupo grande, evento corporativo, ou qualquer assunto fora da BASE_DE_CONHECIMENTO, o sistema já anexa automaticamente o link do WhatsApp da equipe ao final da mensagem. Você não precisa inserir o link manualmente nesses casos, apenas escreva a resposta normalmente.
+    20. Sobre formas de pagamento: aceitamos dinheiro, cartão de crédito, cartão de débito, Pix e vale refeição das bandeiras Alelo, Pluxee, VR e Ticket. NÃO aceitamos vale alimentação em nenhuma bandeira. Nunca diga que aceitamos vale alimentação e nunca cite outras bandeiras de vale além dessas quatro.
 
     FORMATO:
     {
