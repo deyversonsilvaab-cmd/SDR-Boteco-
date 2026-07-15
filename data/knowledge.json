@@ -1,5 +1,5 @@
 {
-  "empresaX": {
+  "empresa": {
     "nome": "Sr. Boteco Limeira",
     "instagram": "@srbotecolimeira",
     "whatsapp": "5519997858351",
@@ -51,39 +51,7 @@
     "empresa_b2b": "Claro 😊\n\nAtendemos equipes de empresas próximas ao Pátio Limeira Shopping, tanto para almoço executivo quanto para happy hour.\n\nNo almoço, servimos de segunda a sexta, das 11h às 15h, com pratos executivos a partir de R$ 19,90.\n\nPara happy hour, temos opções das 16h às 21h.\n\nPara alinhar a melhor forma de atender sua equipe, chama direto no WhatsApp:\nhttps://wa.me/5519997858351",
     "estacionamento": "O Sr. Boteco fica dentro do Pátio Limeira Shopping 😊\n\nPara confirmar a regra atual do estacionamento e qualquer condição do dia, fala com a equipe pelo WhatsApp:\nhttps://wa.me/5519997858351",
     "bebidas": "Temos opções de bebidas, chopp, cervejas, sucos e bebidas sem álcool 😊\n\nPara confirmar as opções e valores atualizados do dia, fala com a equipe pelo WhatsApp:\nhttps://wa.me/5519997858351",
-    "chopp_marcas": "Temos chopp individual (avulso) das marcas Heineken, Brahma e Ashby 🍺\n\nServido em caneca de 340 ml, copo de 500 ml, caneca de 630 ml, caneca de 700 ml ou canecão de 1,2 L.\n\nEsse chopp avulso é diferente do Open Chopp promocional.\n\nQuer que eu te passe os valores de cada opção?",    "chopp_marcas_valor": "Valores do nosso chopp individual (avulso, fora do Open Chopp promocional) 🍺\n\nHeineken\nCaneca 340 ml — R$ 16,90\nCopo 500 ml — R$ 23,90\nCaneca 630 ml — R$ 29,90\nCaneca 700 ml — R$ 33,90\nCanecão 1,2 L — R$ 55,90\n\nBrahma\nCaneca 340 ml — R$ 13,90\nCopo 500 ml — R$ 21,90\nCaneca 630 ml — R$ 26,90\nCaneca 700 ml — R$ 29,90\nCanecão 1,2 L — R$ 51,90\n\nAshby\nCaneca 340 ml — R$ 9,90\nCopo 500 ml — R$ 13,90\nCaneca 630 ml — R$ 16,90\nCaneca 700 ml — R$ 18,90\nCanecão 1,2 L — R$ 32,90",    "open_chopp_marca": "Essa informação de marca do Open Chopp promocional a equipe confirma certinho com você 😊\n\nChama no WhatsApp:\nhttps://wa.me/5519997858351",    "chopp_vinho": "Temos também Chopp de Vinho 🍷, servido em taça/caneca de 300 ml, 500 ml ou 1,2 L, além de opções descartáveis de 500 ml e 700 ml.
-
-Quer que eu te passe os valores de cada opção?","chopp_vinho_valor": "Valores do Chopp de Vinho 🍷
-
-300 ml — R$ 15,90
-500 ml — R$ 25,90
-1,2 L — R$ 51,90
-Descartável 500 ml — R$ 25,90
-Descartável 700 ml — R$ 36,90","cervejas": "Temos Heineken Long Neck e Heineken Zero Long Neck 🍺
-
-Quer que eu te passe os valores?","cervejas_valor": "Valores das cervejas 🍺
-
-Heineken Long Neck — R$ 18,60
-Heineken Zero Long Neck — R$ 18,60","caipirinhas": "Temos caipirinhas de cachaça, saquê, vinho branco e vodka 🍹, nos sabores abacaxi, kiwi, laranja, limão, morango e maracujá.
-
-Quer que eu te passe os valores?","caipirinhas_valor": "Valores das caipirinhas 🍹
-
-Cachaça — R$ 20,90
-Saquê — R$ 23,90
-Vinho Branco — R$ 23,90
-Vodka — R$ 23,90
-
-Sabores: Abacaxi, Kiwi, Laranja, Limão, Morango e Maracujá.","doses": "Temos doses de Campari, Licor 43, Tequila, Velho Barreiro e Whisky (Black Label, Jack Daniels e Red Label) 🥃
-
-Quer que eu te passe os valores?","doses_valor": "Valores das doses (50 ml) 🥃
-
-Campari — R$ 13,90
-Licor 43 — R$ 22,00
-Tequila — R$ 26,90
-Velho Barreiro — R$ 7,70
-Whisky Black Label — R$ 22,90
-Whisky Jack Daniels — R$ 29,90
-Whisky Red Label — R$ 28,90","bebida_sem_alcool": "Temos sim 😊\n\nNo momento não temos chopp zero, mas temos Heineken Zero long neck como opção sem álcool.\n\nPara consultar disponibilidade e valores atualizados:\nhttps://wa.me/5519997858351",
+    "chopp_marcas": "Temos chopp individual (avulso) das marcas Heineken, Brahma e Ashby 🍺\n\nServido em caneca de 340 ml, copo de 500 ml, caneca de 630 ml, caneca de 700 ml ou canecão de 1,2 L.\n\nEsse chopp avulso é diferente do Open Chopp promocional.\n\nQuer que eu te passe os valores de cada opção?",    "chopp_marcas_valor": "Valores do nosso chopp individual (avulso, fora do Open Chopp promocional) 🍺\n\nHeineken\nCaneca 340 ml — R$ 16,90\nCopo 500 ml — R$ 23,90\nCaneca 630 ml — R$ 29,90\nCaneca 700 ml — R$ 33,90\nCanecão 1,2 L — R$ 55,90\n\nBrahma\nCaneca 340 ml — R$ 13,90\nCopo 500 ml — R$ 21,90\nCaneca 630 ml — R$ 26,90\nCaneca 700 ml — R$ 29,90\nCanecão 1,2 L — R$ 51,90\n\nAshby\nCaneca 340 ml — R$ 9,90\nCopo 500 ml — R$ 13,90\nCaneca 630 ml — R$ 16,90\nCaneca 700 ml — R$ 18,90\nCanecão 1,2 L — R$ 32,90",    "open_chopp_marca": "Essa informação de marca do Open Chopp promocional a equipe confirma certinho com você 😊\n\nChama no WhatsApp:\nhttps://wa.me/5519997858351",    "chopp_vinho": "Temos também Chopp de Vinho 🍷, servido em taça/caneca de 300 ml, 500 ml ou 1,2 L, além de opções descartáveis de 500 ml e 700 ml.\n\nQuer que eu te passe os valores de cada opção?","chopp_vinho_valor": "Valores do Chopp de Vinho 🍷\n\n300 ml — R$ 15,90\n500 ml — R$ 25,90\n1,2 L — R$ 51,90\nDescartável 500 ml — R$ 25,90\nDescartável 700 ml — R$ 36,90","cervejas": "Temos Heineken Long Neck e Heineken Zero Long Neck 🍺\n\nQuer que eu te passe os valores?","cervejas_valor": "Valores das cervejas 🍺\n\nHeineken Long Neck — R$ 18,60\nHeineken Zero Long Neck — R$ 18,60","caipirinhas": "Temos caipirinhas de cachaça, saquê, vinho branco e vodka 🍹, nos sabores abacaxi, kiwi, laranja, limão, morango e maracujá.\n\nQuer que eu te passe os valores?","caipirinhas_valor": "Valores das caipirinhas 🍹\n\nCachaça — R$ 20,90\nSaquê — R$ 23,90\nVinho Branco — R$ 23,90\nVodka — R$ 23,90\n\nSabores: Abacaxi, Kiwi, Laranja, Limão, Morango e Maracujá.","doses": "Temos doses de Campari, Licor 43, Tequila, Velho Barreiro e Whisky (Black Label, Jack Daniels e Red Label) 🥃\n\nQuer que eu te passe os valores?","doses_valor": "Valores das doses (50 ml) 🥃\n\nCampari — R$ 13,90\nLicor 43 — R$ 22,00\nTequila — R$ 26,90\nVelho Barreiro — R$ 7,70\nWhisky Black Label — R$ 22,90\nWhisky Jack Daniels — R$ 29,90\nWhisky Red Label — R$ 28,90","bebida_sem_alcool": "Temos sim 😊\n\nNo momento não temos chopp zero, mas temos Heineken Zero long neck como opção sem álcool.\n\nPara consultar disponibilidade e valores atualizados:\nhttps://wa.me/5519997858351",
     "anuncio_valor_open_chopp": "O Open Chopp acontece das 16h às 21h 🍻\n\nDomingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nEstamos no Pátio Limeira Shopping.\nQuer que eu te mande o WhatsApp para falar com a equipe mais rápido?",
     "anuncio_open_chopp_hoje": "Temos sim 😊\n\nNosso Open Chopp é das 16h às 21h.\n\nDomingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nQuer que eu te mande o WhatsApp para confirmar sua mesa?",
     "anuncio_localizacao": "Ficamos no Pátio Limeira Shopping 😊\n\nÉ só chegar no Sr. Boteco.\n\nSe quiser falar com a equipe para confirmar mesa ou tirar dúvida mais rápido, chama no WhatsApp:\nhttps://wa.me/5519997858351",
