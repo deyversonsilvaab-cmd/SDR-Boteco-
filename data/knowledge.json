@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "versao": "2.0.0",
+    "versao": "2.0.1",
     "revisado_em": "2026-09-15",
     "politica": "Base fechada: o bot só afirma preço, composição, porção, horário, promoção ou disponibilidade quando a informação estiver registrada aqui."
   },
@@ -11,7 +11,7 @@
     "whatsapp_formatado": "(19) 99785-8351",
     "whatsapp_link": "https://wa.me/5519997858351",
     "endereco": "Pátio Limeira Shopping",
-    "whatsapp_vagas_formatado": "(17) 99103-4703"
+    "whatsapp_vagas_formatado": "(17) 99602-2567"
   },
   "links": {
     "cardapio_pedido": "https://botequimpatiolimeira.saipos.com/home",
@@ -19,7 +19,7 @@
     "ifood": "https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72",
     "food99": "https://99app.com/99food/food/",
     "whatsapp": "https://wa.me/5519997858351",
-    "whatsapp_vagas": "https://wa.me/5517991034703"
+    "whatsapp_vagas": "https://wa.me/5517996022567"
   },
   "pedidos": {
     "orientacao": "Quando o cliente pedir cardápio, preço não cadastrado, comida, pedido, retirada ou entrega, priorizar o link de cardápio/pedido. Informar que pelo link é possível conferir as opções e fazer o pedido para retirada no local ou entrega conforme as opções exibidas no checkout. Para delivery, também oferecer iFood e 99Food. Se a informação específica não estiver na base, nunca inventar: oferecer o WhatsApp da equipe.",
@@ -49,10 +49,10 @@
     "regra": "Aceitamos vale refeição somente das bandeiras Alelo, Pluxee, VR e Ticket. Não aceitamos vale alimentação em nenhuma bandeira e não aceitamos outras bandeiras de vale refeição além dessas quatro."
   },
   "vagas_emprego": {
-    "responsavel": "Gerente do restaurante",
-    "whatsapp": "(17) 99103-4703",
-    "whatsapp_link": "https://wa.me/5517991034703",
-    "orientacao": "Direcionar assuntos claramente relacionados a vaga, emprego, currículo, freelance, garçom, garçonete ou cumim para a gerente pelo WhatsApp. 'Cozinha' sozinho normalmente é dúvida sobre funcionamento; 'atendente' sozinho normalmente é pedido para falar com uma pessoa da equipe."
+    "responsavel": "RH do restaurante",
+    "whatsapp": "(17) 99602-2567",
+    "whatsapp_link": "https://wa.me/5517996022567",
+    "orientacao": "Direcionar assuntos claramente relacionados a vaga, emprego, currículo, freelance, garçom, garçonete, cumim ou interesse em trabalhar no Sr. Boteco para o RH pelo WhatsApp. Não prometer contratação, entrevista, retorno ou vaga disponível. Informar que o RH fará a análise do perfil e entrará em contato caso surja uma oportunidade compatível com a experiência. 'Cozinha' sozinho normalmente é dúvida sobre funcionamento; 'atendente' sozinho normalmente é pedido para falar com uma pessoa da equipe."
   },
   "categorias_cardapio": [
     "Executivos",
@@ -647,7 +647,8 @@
     "reserva": "Para organizar sua reserva, preciso de nome, telefone, data, horário e quantidade de pessoas. A disponibilidade só é confirmada pela equipe.",
     "story_mention": "Adorei ver sua marcação. Obrigado por dividir esse momento com a gente — esperamos te receber de novo em breve.",
     "despedida": "Foi um prazer te atender. Quando quiser voltar ou fazer um pedido, é só chamar.",
-    "fallback": "Quero te passar a informação certa. Como esse detalhe não está validado na minha base, consulte o cardápio em https://botequimpatiolimeira.saipos.com/home ou fale com a equipe no WhatsApp: https://wa.me/5519997858351"
+    "fallback": "Quero te passar a informação certa. Como esse detalhe não está validado na minha base, consulte o cardápio em https://botequimpatiolimeira.saipos.com/home ou fale com a equipe no WhatsApp: https://wa.me/5519997858351",
+    "vaga": "Para oportunidades de trabalho no Sr. Boteco, envie seu currículo diretamente para o RH do restaurante pelo WhatsApp:\n\n📲 https://wa.me/5517996022567\n\nEla fará a análise do seu perfil e entrará em contato caso surja uma oportunidade compatível com sua experiência.\n\nAgradecemos o seu interesse em fazer parte da equipe do Sr. Boteco!"
   },
   "regras_atendimento": [
     "Nunca inventar preço, produto, promoção, composição, quantidade de pessoas servidas, horário, evento, disponibilidade de mesa ou condição de entrega.",
@@ -659,7 +660,7 @@
     "O Fondue Salgado é o único fondue ativo nesta base: R$ 99,90, serve 2 pessoas, acompanha torradas, iscas de frango empanado, contrafilé, calabresa e batata frita, disponível das 16h às 21h.",
     "Não fornecer informação sobre produtos ou campanhas removidos da base. Se o cliente insistir em algo não ativo, responder apenas que a condição/opção não está nas informações ativas e direcionar para cardápio/WhatsApp.",
     "Aceitamos dinheiro, cartão de crédito, cartão de débito, Pix e vale refeição Alelo, Pluxee, VR e Ticket. Não aceitamos vale alimentação.",
-    "Assuntos de vaga, currículo, freelance, garçom, garçonete ou cumim vão para https://wa.me/5517991034703.",
+    "Assuntos de vaga, currículo, freelance, garçom, garçonete ou cumim vão para o RH pelo WhatsApp https://wa.me/5517996022567. Nunca prometer vaga, entrevista ou retorno; informar apenas que o perfil será analisado e que o RH entrará em contato se surgir oportunidade compatível.",
     "Pedido para falar com atendente/humano não é vaga: direcionar para https://wa.me/5519997858351.",
     "Reservas, aniversários, grupos e eventos nunca devem ser confirmados automaticamente; coletar os dados e direcionar para confirmação da equipe.",
     "O tom deve ser de venda humanizada: cordial, específico, consultivo e objetivo, com no máximo um convite comercial claro por resposta. Evitar texto genérico, excesso de emojis e frases repetidas."
