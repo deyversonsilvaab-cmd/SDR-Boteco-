@@ -37,6 +37,7 @@ Crie estes campos de usuário no ManyChat:
 | `ai_next_action` | Texto | ação comercial recomendada |
 | `ai_needs_human` | Booleano ou Texto | indica necessidade de humano |
 | `ai_last_bot_reply` | Texto | opcional, histórico curto |
+| `ai_whatsapp_vagas_link` | Texto | link do RH para currículos |
 
 Se usar **Dynamic Block v2**, os campos `ai_intent`, `ai_topic`, `ai_lead_temperature`, `ai_next_action` e `ai_needs_human` precisam existir com esses nomes exatos, pois o próprio JSON tenta preenchê-los.
 
@@ -75,6 +76,7 @@ $.topic                    -> ai_topic
 $.lead_temperature         -> ai_lead_temperature
 $.next_action              -> ai_next_action
 $.needs_human              -> ai_needs_human
+$.whatsapp_vagas_link       -> ai_whatsapp_vagas_link
 ```
 
 O campo `ai_topic` é o mais importante para perguntas de continuidade.
@@ -93,6 +95,17 @@ Não envie as partes 2 e 3 quando estiverem vazias.
 ### Alternativa
 
 Se você não quiser dividir mensagens, envie somente `ai_reply`. A divisão em partes existe para tornar a automação mais robusta no Instagram.
+
+### Rota específica de vagas — modo External Request
+
+Quando `ai_intent = vaga`, mantenha a resposta retornada pelo webhook e, se quiser usar botão adicional no ManyChat, configure:
+
+```text
+Texto do botão: Enviar currículo
+URL: ai_whatsapp_vagas_link
+```
+
+O link atual autorizado do RH é `https://wa.me/5517996022567`. Não direcione currículos para o WhatsApp geral do restaurante. O webhook não promete contratação, entrevista ou retorno; informa somente que o RH analisará o perfil e entrará em contato se surgir oportunidade compatível.
 
 ## 6. Default Reply — rede de segurança principal
 
@@ -196,6 +209,7 @@ Nesse modo o retorno segue a estrutura `version: v2` e pode adicionar botões co
 - Cardápio / Pedir
 - iFood
 - Falar no WhatsApp
+- Enviar currículo, quando a intenção for vaga
 
 Use este modo somente depois de testar o formato no seu workspace. A versão por External Request + Response Mapping é mais fácil de depurar e permite ver todos os campos de saída separadamente.
 
@@ -239,6 +253,8 @@ Qual o valor da bisteca?
 Vocês entregam?
 Aceita vale alimentação?
 Quero reservar uma mesa
+Quero mandar meu currículo
+Tem vaga de garçom?
 ```
 
 Critérios de aprovação:
@@ -250,4 +266,5 @@ Critérios de aprovação:
 - pedido recebe link de pedido;
 - delivery apresenta os canais configurados;
 - a pergunta seguinte continua no contexto do item anterior;
-- erro de rede cai no fallback e não deixa a conversa parada.
+- erro de rede cai no fallback e não deixa a conversa parada;
+- mensagens de vaga/currículo retornam o WhatsApp do RH `https://wa.me/5517996022567`, nunca o WhatsApp geral.

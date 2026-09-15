@@ -50,7 +50,7 @@ const cases = [
   { message: "aceita vale alimentação?", intent: "pagamento", must: ["Não aceitamos vale alimentação"] },
   { message: "quero reservar para 6 pessoas amanhã", intent: "reserva", must: ["confirmação", "WhatsApp"] },
   { message: `tem ${["open", "chopp"].join(" ")}?`, intent: "item_inativo" },
-  { message: "vaga de garçom", intent: "vaga", must: ["wa.me/5517991034703"] }
+  { message: "vaga de garçom", intent: "vaga", must: ["RH do restaurante", "wa.me/5517996022567", "análise do seu perfil", "oportunidade compatível"] }
 ];
 
 let failed = 0;
@@ -94,4 +94,19 @@ console.log(`\nTodos os ${cases.length} testes passaram.`);
     process.exit(1);
   }
   console.log("PASS | dynamic_block v2 | instagram | 5 actions");
+}
+
+// Validação específica da rota de vagas no Dynamic Block v2.
+{
+  const { status, payload } = await call("quero mandar currículo", { response_mode: "dynamic_block" });
+  const errors = [];
+  if (status !== 200) errors.push(`status=${status}`);
+  const buttons = payload?.content?.messages?.flatMap((m) => Array.isArray(m?.buttons) ? m.buttons : []) || [];
+  if (!buttons.some((b) => b?.url === "https://wa.me/5517996022567" && b?.caption === "Enviar currículo")) errors.push("botao_rh_incorreto");
+  if (buttons.some((b) => b?.url === "https://wa.me/5519997858351")) errors.push("botao_whatsapp_geral_na_vaga");
+  if (errors.length) {
+    console.error(`FAIL | dynamic vaga | ${errors.join(", ")}`);
+    process.exit(1);
+  }
+  console.log("PASS | dynamic vaga | botão direcionado ao RH");
 }

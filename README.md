@@ -1,6 +1,6 @@
 # SDR Boteco — ManyChat + Instagram + Vercel
 
-Versão 2.0.0 — revisão de produção em 15/09/2026.
+Versão 2.0.1 — revisão de produção em 15/09/2026.
 
 Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estruturado para receber mensagens do ManyChat, identificar a intenção do cliente, consultar uma base fechada de informações comerciais e devolver uma resposta humanizada sem inventar preços, itens, composição, porções, horários ou disponibilidade.
 
@@ -24,7 +24,9 @@ Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estr
 - iFood: `https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72`
 - 99Food: `https://99app.com/99food/food/`
 - Site: `https://srboteco.com.br/`
-- Vagas: `https://wa.me/5517991034703`
+- Vagas: `https://wa.me/5517996022567`
+
+Os currículos são encaminhados diretamente ao RH. O bot não promete vaga, entrevista ou retorno; informa que o perfil será analisado e que o RH entrará em contato caso surja oportunidade compatível.
 
 O 99Food está configurado com o link oficial do serviço. Como não há um deep link específico da loja validado nesta base, a resposta orienta o cliente a procurar por **Sr. Boteco Limeira** no aplicativo.
 

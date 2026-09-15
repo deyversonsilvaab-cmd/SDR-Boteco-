@@ -1,3 +1,13 @@
+
+## 2.0.1 — RH / vagas
+
+- WhatsApp de vagas alterado para `(17) 99602-2567`.
+- Link oficial de currículos: `https://wa.me/5517996022567`.
+- Resposta de vaga atualizada com texto aprovado pelo operador.
+- Resposta de vaga não passa pela humanização da IA, evitando alteração de instruções de RH.
+- Dynamic Block usa botão **Enviar currículo** apontando ao WhatsApp do RH, sem misturar com o WhatsApp geral do restaurante.
+- Testes de regressão atualizados.
+
 # Atualizações — versão 2.0.0
 
 Data da revisão: 15/09/2026

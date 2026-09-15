@@ -1,4 +1,4 @@
-# Revisão final de produção — SDR Boteco v2.0.0
+# Revisão final de produção — SDR Boteco v2.0.1
 
 Data: 15/09/2026
 
@@ -11,11 +11,13 @@ Projeto revisado para uso como webhook de atendimento do Instagram via ManyChat 
 - `api/manychat.js`: sintaxe Node.js válida.
 - `data/knowledge.json`: JSON válido.
 - 18 cenários críticos automatizados: **18/18 aprovados**.
-- 1 teste adicional de integração do Dynamic Block v2: **aprovado**.
+- 2 testes adicionais de integração do Dynamic Block v2: **aprovados** (cardápio e vaga/RH).
 - Dynamic Block v2: retorno validado com `version=v2`, canal `instagram`, mensagem, botão e ações de custom fields.
 - Personalização por primeiro nome validada nos testes.
 - Fallback interno validado por inspeção e estrutura do handler.
 - Base e documentação verificadas para eliminar conteúdo comercial descontinuado solicitado na revisão.
+
+- Rota de vagas atualizada para o RH no WhatsApp `https://wa.me/5517996022567`; resposta aprovada mantida determinística e o botão Dynamic Block aponta exclusivamente para o RH.
 - Valor conflitante da cerveja sem álcool foi tratado de forma conservadora: o webhook não informa preço e encaminha para confirmação, evitando escolher arbitrariamente entre duas informações diferentes existentes no material antigo.
 
 ## Casos de aceite cobertos
