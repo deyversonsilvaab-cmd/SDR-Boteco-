@@ -169,7 +169,7 @@ function getLinks(knowledge) {
     whatsapp: knowledge?.links?.whatsapp || knowledge?.empresa?.whatsapp_link || DEFAULT_WHATSAPP_LINK,
     ifood: knowledge?.links?.ifood || DEFAULT_IFOOD_LINK,
     food99: knowledge?.links?.food99 || DEFAULT_99FOOD_LINK,
-    jobs: knowledge?.links?.whatsapp_vagas || "https://wa.me/5517991034703"
+    jobs: knowledge?.links?.whatsapp_vagas || "https://wa.me/5517996022567"
   };
 }
 
@@ -294,7 +294,14 @@ function resolveIntent(message, knowledge, context = {}) {
   }
 
   if (includesAny(text, ["vaga", "emprego", "curriculo", "currículo", "freelance", "garcom", "garçom", "garconete", "garçonete", "cumim", "trabalhar com voces", "trabalhar com vocês"])) {
-    return makeResolution({ facts: `Para oportunidades de trabalho, envie seu currículo direto para a gerente pelo WhatsApp: ${links.jobs}`, intent: "vaga", topic: "rh", needs_human: true, lead_temperature: "morno", next_action: "whatsapp_vagas" });
+    return makeResolution({
+      facts: base.vaga || `Para oportunidades de trabalho no Sr. Boteco, envie seu currículo diretamente para o RH do restaurante pelo WhatsApp:\n\n📲 ${links.jobs}\n\nEla fará a análise do seu perfil e entrará em contato caso surja uma oportunidade compatível com sua experiência.\n\nAgradecemos o seu interesse em fazer parte da equipe do Sr. Boteco!`,
+      intent: "vaga",
+      topic: "rh",
+      needs_human: true,
+      lead_temperature: "morno",
+      next_action: "whatsapp_vagas"
+    });
   }
 
   if (includesAny(text, ["cardapio", "menu", "opcoes", "opções", "o que tem", "comidas", "pratos", "ver cardapio", "ver o cardapio"])) {
@@ -562,6 +569,7 @@ function buildStandardPayload({ reply, resolved, links, requestId }) {
     next_action: resolved.next_action,
     cardapio_link: links.menu,
     whatsapp_link: links.whatsapp,
+    whatsapp_vagas_link: links.jobs,
     ifood_link: links.ifood,
     food99_link: links.food99,
     reply_part_1: parts[0] || "",
@@ -582,7 +590,11 @@ function dynamicButtons(resolved, links) {
     add("iFood", links.ifood);
     add("99Food", links.food99);
   }
-  if (resolved.needs_human || ["whatsapp", "cardapio_ou_whatsapp", "coletar_reserva"].includes(resolved.next_action)) add("Falar no WhatsApp", links.whatsapp);
+  if (resolved.next_action === "whatsapp_vagas") {
+    add("Enviar currículo", links.jobs);
+  } else if (resolved.needs_human || ["whatsapp", "cardapio_ou_whatsapp", "coletar_reserva"].includes(resolved.next_action)) {
+    add("Falar no WhatsApp", links.whatsapp);
+  }
   return buttons;
 }
 
@@ -629,7 +641,7 @@ export default async function handler(req, res) {
       return send(res, 200, {
         ok: true,
         service: "sdr-boteco",
-        version: "2.0.0",
+        version: "2.0.1",
         message: "Webhook online. Use POST para conversar.",
         openai_configured: Boolean(process.env.OPENAI_API_KEY),
         model: process.env.OPENAI_MODEL || "gpt-4o"
@@ -658,7 +670,8 @@ export default async function handler(req, res) {
         });
 
     const allowedPrices = collectAllowedPrices(resolved.facts);
-    const aiReply = message ? await callOpenAI({ knowledge, customer, context, message, resolved }) : null;
+    const shouldHumanizeWithAI = message && resolved.intent !== "vaga";
+    const aiReply = shouldHumanizeWithAI ? await callOpenAI({ knowledge, customer, context, message, resolved }) : null;
 
     let finalReply = aiReply || resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;
     const allowedUrls = [links.menu, links.whatsapp, links.ifood, links.food99, links.jobs, knowledge?.links?.site_oficial].filter(Boolean);
