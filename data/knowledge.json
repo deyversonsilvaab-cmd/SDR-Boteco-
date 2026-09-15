@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "versao": "2.0.1",
+    "versao": "2.0.2",
     "revisado_em": "2026-09-15",
     "politica": "Base fechada: o bot só afirma preço, composição, porção, horário, promoção ou disponibilidade quando a informação estiver registrada aqui."
   },
@@ -644,7 +644,7 @@
     "localizacao": "Ficamos no Pátio Limeira Shopping.",
     "horario": "Funcionamos todos os dias das 11h às 22h.",
     "almoco": "De segunda a sexta-feira, das 11h às 15h, temos almoço executivo. Posso consultar um prato específico da base ou te enviar o cardápio completo.",
-    "reserva": "Para organizar sua reserva, preciso de nome, telefone, data, horário e quantidade de pessoas. A disponibilidade só é confirmada pela equipe.",
+    "reserva": "Para adiantar sua reserva, me passe nome, dia/data, horário e quantas pessoas. A equipe faz a confirmação final.",
     "story_mention": "Adorei ver sua marcação. Obrigado por dividir esse momento com a gente — esperamos te receber de novo em breve.",
     "despedida": "Foi um prazer te atender. Quando quiser voltar ou fazer um pedido, é só chamar.",
     "fallback": "Quero te passar a informação certa. Como esse detalhe não está validado na minha base, consulte o cardápio em https://botequimpatiolimeira.saipos.com/home ou fale com a equipe no WhatsApp: https://wa.me/5519997858351",

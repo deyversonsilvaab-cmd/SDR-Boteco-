@@ -41,6 +41,7 @@ const cases = [
   { message: "Vcs tem picanha?", intent: "item_nao_encontrado", must: ["cardápio", "WhatsApp"] },
   { message: "Foundie", intent: "item_cardapio", must: ["R$ 99,90", "2 pessoas", "contrafilé"] },
   { message: ["fondue", "doce"].join(" "), intent: "item_inativo" },
+  { message: "Consegue me doar robux?", intent: "fora_contexto", must: ["Robux", "brincadeira"], forbidden: ["saipos.com", "wa.me", "Faça o seu pedido"] },
   { message: "Olá boa noite, queria fazer um pedido", intent: "pedido", must: ["saipos.com", "retirada", "entrega"] },
   { message: "tem delivery?", intent: "delivery", must: ["iFood", "99Food", "saipos.com"] },
   { message: "qual o valor da bisteca?", intent: "item_cardapio", must: ["R$ 19,90"] },
@@ -48,7 +49,7 @@ const cases = [
   { message: "qual valor do chopp Brahma?", intent: "item_cardapio", must: ["R$ 13,90", "R$ 51,90"] },
   { message: "heineken zero valor", intent: "item_cardapio", must: ["não tenho o valor", "WhatsApp"] },
   { message: "aceita vale alimentação?", intent: "pagamento", must: ["Não aceitamos vale alimentação"] },
-  { message: "quero reservar para 6 pessoas amanhã", intent: "reserva", must: ["confirmação", "WhatsApp"] },
+  { message: "quero reservar para 6 pessoas amanhã", intent: "reserva", must: ["nome", "dia/data", "horário", "quantas pessoas", "confirmação"] },
   { message: `tem ${["open", "chopp"].join(" ")}?`, intent: "item_inativo" },
   { message: "vaga de garçom", intent: "vaga", must: ["RH do restaurante", "wa.me/5517996022567", "análise do seu perfil", "oportunidade compatível"] }
 ];

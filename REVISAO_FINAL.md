@@ -1,75 +1,72 @@
-# Revisão final de produção — SDR Boteco v2.0.1
+# Revisão final de produção — SDR Boteco v2.0.2
 
 Data: 15/09/2026
 
 ## Resultado
 
-Projeto revisado para uso como webhook de atendimento do Instagram via ManyChat + Vercel.
+Projeto revisado para uso como webhook de atendimento do Instagram via ManyChat + Vercel, mantendo o contrato da API e adicionando a persona humanizada solicitada.
 
 ### Validações concluídas
 
-- `api/manychat.js`: sintaxe Node.js válida.
-- `data/knowledge.json`: JSON válido.
-- 18 cenários críticos automatizados: **18/18 aprovados**.
+- `api/manychat.js`: sintaxe Node.js válida e integração preservada.
+- `lib/persona.js`: persona/system prompt isolado do handler para manutenção segura.
+- `data/knowledge.json`: JSON válido; base comercial continua fechada e sem criação de fatos.
+- 19 cenários críticos automatizados: **19/19 aprovados**.
 - 2 testes adicionais de integração do Dynamic Block v2: **aprovados** (cardápio e vaga/RH).
-- Dynamic Block v2: retorno validado com `version=v2`, canal `instagram`, mensagem, botão e ações de custom fields.
-- Personalização por primeiro nome validada nos testes.
-- Fallback interno validado por inspeção e estrutura do handler.
-- Base e documentação verificadas para eliminar conteúdo comercial descontinuado solicitado na revisão.
+- Campos mínimos do contrato mantidos: `reply`, `intent`, `topic`, `lead_temperature`, `needs_human`, `next_action`.
+- `x-webhook-secret` / `WEBHOOK_SECRET` mantidos sem alteração.
+- `event_type` passa a ser informado ao prompt da IA para adaptar Direct, resposta a Story, menção em Story e comentário.
+- `last_intent`, `last_topic` e `last_bot_reply` continuam disponíveis para manter o contexto e reduzir repetição.
+- Proteções contra preço inventado, URL não autorizada e conteúdo comercial removido continuam ativas.
 
-- Rota de vagas atualizada para o RH no WhatsApp `https://wa.me/5517996022567`; resposta aprovada mantida determinística e o botão Dynamic Block aponta exclusivamente para o RH.
-- Valor conflitante da cerveja sem álcool foi tratado de forma conservadora: o webhook não informa preço e encaminha para confirmação, evitando escolher arbitrariamente entre duas informações diferentes existentes no material antigo.
+## Casos de aceite da atualização de persona
 
-## Casos de aceite cobertos
+### Fora de contexto / troll
 
-1. Tábua Mista sem dados comerciais validados.
-2. Continuação: `O que acompanha o prato?` mantendo o contexto anterior.
-3. `Olá tem alguém?`.
-4. Pedido de cardápio.
-5. Categoria `Burgers`.
-6. Pergunta sobre picanha.
-7. Erro de digitação em item conhecido.
-8. Solicitação de opção comercial não ativa.
-9. Cliente querendo fazer pedido.
-10. Delivery.
-11. Preço de item cadastrado.
-12. Item conhecido sem preço validado.
-13. Valores de chopp individual cadastrado.
-14. Item com conflito histórico de preço.
-15. Vale alimentação.
-16. Reserva.
-17. Consulta sobre condição comercial não ativa.
-18. Vaga de emprego.
+Entrada de teste:
 
-## Política de cardápio
+```text
+Consegue me doar robux?
+```
 
-O arquivo original não continha uma cópia integral e atual do cardápio online com **descrição + preço + quantidade de pessoas** para todos os produtos. Alguns nomes citados nas conversas, por exemplo, não possuíam esses três dados validados no material fornecido.
+Resultado determinístico: intenção `fora_contexto`, tom leve, sem cardápio e sem WhatsApp forçados. Com OpenAI configurada, a persona pode reescrever mantendo a mesma restrição factual.
 
-Para não fabricar informação, a versão 2 segue esta regra:
+### Pedido
 
-- se o item está na base com dados validados, responde com os dados existentes;
-- se o preço ou quantidade de pessoas não estiver validado, informa isso e oferece confirmação humana;
-- se o item não estiver catalogado, envia imediatamente o cardápio online + WhatsApp;
-- em todos esses casos a conversa recebe resposta e o assunto é salvo em `topic` para manter a continuidade.
+Mensagens de intenção clara de pedido continuam com `intent=pedido` e direcionamento para o cardápio/pedido oficial. A persona foi instruída a responder de forma curta e calorosa, sem encerrar com `Faça o seu pedido!`.
 
-A estrutura do `catalogo` já está pronta para receber o restante do cardápio quando houver uma exportação oficial com os dados completos. Não é necessário alterar a lógica do webhook para acrescentar novos itens.
+### Reserva
 
-## Conversão para pedido
+A resposta coleta:
 
-As rotas comerciais utilizam:
+- nome;
+- dia/data;
+- horário;
+- número de pessoas.
 
-- cardápio/pedido direto para retirada ou entrega;
-- iFood;
-- 99Food;
-- WhatsApp para confirmação humana quando faltar informação validada.
+O bot não confirma a reserva sozinho. `needs_human=true` e `next_action=coletar_reserva` continuam disponíveis para o ManyChat.
 
-## Arquivos mais importantes
+## Persona por evento
 
-- `api/manychat.js` — lógica principal.
-- `data/knowledge.json` — única fonte de fatos comerciais do bot.
-- `MANYCHAT_COORDENADAS.md` — configuração operacional no ManyChat.
-- `PROMPT_CONFIGURACAO_ADICIONAL.md` — prompt pronto para executar a configuração que não pode ser feita pelo GitHub/Vercel.
-- `audit-test.mjs` — testes de regressão.
+- `direct`: conversa normal, objetiva e natural.
+- `story_reply`: responde ao conteúdo/reação do Story sem transformar tudo em venda.
+- `story_mention`: agradece a marcação sem CTA forçado.
+- `instagram_comment`: resposta pública mais curta; continuidade individual pode ser levada ao Direct.
+
+## Segurança comercial preservada
+
+A IA continua funcionando somente como camada de redação. A aplicação determina intenção e fornece `fatos_para_esta_resposta`. A resposta gerada é descartada se trouxer preço não permitido, URL não autorizada ou informação comercial removida.
+
+O arquivo `data/knowledge.json` continua sendo a fonte de fatos comerciais. Dados ausentes não devem ser completados por memória ou suposição.
+
+## Arquivos principais da versão 2.0.2
+
+- `api/manychat.js` — roteamento, contrato, travas e integração.
+- `lib/persona.js` — voz/persona da IA.
+- `data/knowledge.json` — fatos comerciais validados.
+- `PERSONA_E_PROMPT_VERCEL.md` — documento de referência da solicitação.
+- `audit-test.mjs` — testes de regressão, incluindo o caso Robux.
+- `MANYCHAT_COORDENADAS.md` — configuração operacional do ManyChat.
 
 ## Comando obrigatório antes de cada deploy futuro
 

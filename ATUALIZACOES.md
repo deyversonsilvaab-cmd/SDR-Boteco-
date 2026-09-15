@@ -73,3 +73,13 @@ Data da revisão: 15/09/2026
   - emprego/currículo.
 
 Consulte `REVISAO_FINAL.md` para o resultado da auditoria antes do deploy.
+
+## 2.0.2 — Persona humanizada do Instagram
+
+- Persona da IA isolada em `lib/persona.js` para manutenção segura.
+- Tom atualizado para atendimento de boteco: curto, caloroso, natural e sem CTA forçado.
+- `event_type` agora é informado ao prompt da IA para adaptar Direct, Story Reply, Story Mention e comentários.
+- Contexto `last_intent`, `last_topic` e `last_bot_reply` continua preservado e é reforçado no prompt para evitar repetição.
+- Mantidas as proteções existentes contra preço, URL e informações comerciais inventadas.
+- Mensagens claramente fora de contexto, como pedido de Robux, recebem resposta bem-humorada sem despejar cardápio ou WhatsApp.
+- Contrato de entrada/saída do webhook mantido, inclusive `reply`, `intent`, `topic`, `lead_temperature`, `needs_human` e `next_action`.

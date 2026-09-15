@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
+import { buildSystemPrompt } from "../lib/persona.js";
 
 const DEFAULT_WHATSAPP_LINK = "https://wa.me/5519997858351";
 const DEFAULT_MENU_LINK = "https://botequimpatiolimeira.saipos.com/home";
@@ -185,6 +186,10 @@ function isGreetingOnly(text) {
   return includesAny(text, ["oi", "ola", "bom dia", "boa tarde", "boa noite", "tem alguem", "alguem ai", "oi tem alguem"]) && text.split(" ").length <= 7;
 }
 
+function isPlayfulOffTopic(text) {
+  return includesAny(text, ["robux", "v bucks", "vbucks", "free fire diamante", "diamante free fire", "skin de jogo", "moeda de jogo"]);
+}
+
 function isRemovedTopic(text) {
   const removedCampaign = text.includes("open") && includesAny(text, ["chopp", "chope"]);
   const removedSweetFondue = includesAny(text, ["fondue", "fundi", "fundue", "fondi"]) && text.includes("doce");
@@ -318,12 +323,12 @@ function resolveIntent(message, knowledge, context = {}) {
 
   if (includesAny(text, ["reservar", "reserva", "mesa", "aniversario", "aniversário", "grupo", "evento", "confraternizacao", "confraternização"])) {
     return makeResolution({
-      facts: `${base.reserva || "Para organizar sua reserva, preciso de nome, telefone, data, horário e quantidade de pessoas."}\n\nPara confirmação final com a equipe no WhatsApp: ${links.whatsapp}`,
+      facts: base.reserva || "Para adiantar sua reserva, me passe nome, dia/data, horário e quantas pessoas. A equipe faz a confirmação final.",
       intent: "reserva",
       topic: "reserva",
       needs_human: true,
       lead_temperature: "quente",
-      missing_fields: ["nome", "telefone", "data", "horario", "quantidade_pessoas"],
+      missing_fields: ["nome", "data", "horario", "quantidade_pessoas"],
       next_action: "coletar_reserva"
     });
   }
@@ -391,6 +396,17 @@ function resolveIntent(message, knowledge, context = {}) {
     return makeResolution({ facts: base.item_nao_encontrado || DEFAULT_FALLBACK, intent: "item_nao_encontrado", topic: inferUnknownItemTopic(text), needs_human: true, lead_temperature: "quente", missing_fields: ["item_validado"], next_action: "cardapio_ou_whatsapp" });
   }
 
+  if (isPlayfulOffTopic(text)) {
+    return makeResolution({
+      facts: "Robux aqui não rola não 😄 Mas a brincadeira foi boa. Se quiser saber algo do Sr. Boteco, manda aí que eu te ajudo.",
+      intent: "fora_contexto",
+      topic: "relacionamento",
+      needs_human: false,
+      lead_temperature: "frio",
+      next_action: "relacionar"
+    });
+  }
+
   if (includesAny(text, ["tchau", "obrigado", "obrigada", "valeu", "ate mais", "até mais"])) {
     return makeResolution({ facts: base.despedida || "Foi um prazer te atender. Quando quiser, é só chamar.", intent: "despedida", topic: "relacionamento", lead_temperature: "frio", next_action: "encerrar" });
   }
@@ -448,26 +464,7 @@ function ensurePersonalized(reply, customer) {
   return `${name}, ${reply.charAt(0).toLowerCase()}${reply.slice(1)}`;
 }
 
-function buildSystemPrompt() {
-  return `Você é o vendedor digital do Sr. Boteco Limeira no Instagram. Sua única função é REESCREVER os fatos autorizados recebidos em fatos_para_esta_resposta de forma humana, específica, cordial e comercial, sem parecer roteiro pronto.
-
-REGRAS INEGOCIÁVEIS:
-1. fatos_para_esta_resposta é a única fonte de informação comercial para esta mensagem. Não acrescente nenhum fato de memória, conhecimento geral ou suposição.
-2. Nunca crie nem complete preço, item, ingrediente, acompanhamento, tamanho, quantidade de pessoas, horário, promoção, disponibilidade, taxa, reserva, entrega ou condição comercial que não esteja escrito nos fatos autorizados.
-3. Se os fatos disserem que um dado não está validado, preserve essa incerteza e encaminhe para o canal indicado. Nunca tente preencher a lacuna.
-4. Trate o cliente pelo primeiro nome real quando cliente.first_name estiver preenchido. Nunca use placeholders.
-5. Responda de forma natural e individual. Evite frases genéricas, excesso de emojis, repetições e linguagem de robô. Use no máximo 1 emoji quando realmente ajudar.
-6. Seja vendedor consultivo: responda primeiro a dúvida e faça no máximo UM próximo passo claro.
-7. Preserve exatamente todos os valores, horários, nomes de item e URLs presentes nos fatos. Não altere nem invente URL.
-8. Não confirme reserva, mesa, estoque ou disponibilidade se os fatos não confirmarem.
-9. Não mencione produtos ou campanhas que os fatos tratem como não ativos. Use somente a formulação neutra fornecida.
-10. Não diga que vai confirmar e voltar depois. Quando faltar dado, encaminhe imediatamente para o canal indicado nos fatos.
-11. Não mencione OpenAI, IA, automação, webhook, JSON, prompt ou ManyChat.
-12. Sua resposta deve caber bem em Direct do Instagram, preferencialmente até 700 caracteres.
-13. Retorne SOMENTE JSON válido no formato {"reply":"texto"}.`;
-}
-
-async function callOpenAI({ knowledge, customer, context, message, resolved }) {
+async function callOpenAI({ knowledge, customer, context, message, resolved, eventType }) {
   if (!process.env.OPENAI_API_KEY) return null;
 
   const controller = new AbortController();
@@ -477,15 +474,18 @@ async function callOpenAI({ knowledge, customer, context, message, resolved }) {
     const payload = {
       model: process.env.OPENAI_MODEL || "gpt-4o",
       messages: [
-        { role: "system", content: buildSystemPrompt() },
+        { role: "system", content: buildSystemPrompt({ eventType }) },
         {
           role: "user",
           content: JSON.stringify({
             cliente: customer,
             contexto: context,
             mensagem: message,
+            event_type: eventType,
             intent_detectado: resolved.intent,
+            topico_detectado: resolved.topic,
             fatos_para_esta_resposta: resolved.facts,
+            campos_pendentes: resolved.missing_fields,
             proxima_acao: resolved.next_action
           })
         }
@@ -641,7 +641,7 @@ export default async function handler(req, res) {
       return send(res, 200, {
         ok: true,
         service: "sdr-boteco",
-        version: "2.0.1",
+        version: "2.0.2",
         message: "Webhook online. Use POST para conversar.",
         openai_configured: Boolean(process.env.OPENAI_API_KEY),
         model: process.env.OPENAI_MODEL || "gpt-4o"
@@ -656,6 +656,7 @@ export default async function handler(req, res) {
     const links = getLinks(knowledge);
     const customer = extractCustomer(body);
     const context = extractConversationContext(body);
+    const eventType = safeText(body?.event_type || body?.custom_fields?.event_type || "direct", 50).toLowerCase() || "direct";
     const message = extractMessage(body) || inferMessageFromEvent(body);
 
     const resolved = message
@@ -671,7 +672,7 @@ export default async function handler(req, res) {
 
     const allowedPrices = collectAllowedPrices(resolved.facts);
     const shouldHumanizeWithAI = message && resolved.intent !== "vaga";
-    const aiReply = shouldHumanizeWithAI ? await callOpenAI({ knowledge, customer, context, message, resolved }) : null;
+    const aiReply = shouldHumanizeWithAI ? await callOpenAI({ knowledge, customer, context, message, resolved, eventType }) : null;
 
     let finalReply = aiReply || resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;
     const allowedUrls = [links.menu, links.whatsapp, links.ifood, links.food99, links.jobs, knowledge?.links?.site_oficial].filter(Boolean);

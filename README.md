@@ -1,6 +1,6 @@
 # SDR Boteco — ManyChat + Instagram + Vercel
 
-Versão 2.0.1 — revisão de produção em 15/09/2026.
+Versão 2.0.2 — persona humanizada e revisão de produção em 15/09/2026.
 
 Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estruturado para receber mensagens do ManyChat, identificar a intenção do cliente, consultar uma base fechada de informações comerciais e devolver uma resposta humanizada sem inventar preços, itens, composição, porções, horários ou disponibilidade.
 
@@ -38,10 +38,13 @@ O 99Food está configurado com o link oficial do serviço. Como não há um deep
 │   └── manychat.js              # webhook principal
 ├── data/
 │   └── knowledge.json           # fonte oficial de fatos, preços e regras
+├── lib/
+│   └── persona.js               # persona/system prompt da IA
 ├── audit-test.mjs               # auditoria de cenários críticos
 ├── test-local.js                # teste simples do endpoint local
 ├── MANYCHAT_COORDENADAS.md      # configuração detalhada no ManyChat
 ├── PROMPT_CONFIGURACAO_ADICIONAL.md
+├── PERSONA_E_PROMPT_VERCEL.md   # referência da atualização da persona
 ├── REVISAO_FINAL.md
 ├── package.json
 ├── vercel.json
@@ -72,7 +75,9 @@ GET https://SEU-PROJETO.vercel.app/api/manychat
   "message": "{{last_text_input}}",
   "last_intent": "{{ai_intent}}",
   "last_topic": "{{ai_topic}}",
-  "channel": "instagram"
+  "last_bot_reply": "{{ai_last_bot_reply}}",
+  "channel": "instagram",
+  "event_type": "direct"
 }
 ```
 
@@ -188,6 +193,14 @@ O mesmo mecanismo funciona para itens catalogados e perguntas como preço, compo
 O ManyChat deve enviar `first_name` em todas as chamadas possíveis. O webhook usa apenas o nome recebido do contato e nunca cria nome fictício.
 
 Se `first_name` estiver vazio, a resposta continua funcionando sem placeholder. Para cumprir a experiência de atendimento personalizada, confirme no ManyChat se o campo de sistema de primeiro nome está sendo passado no External Request.
+
+## Persona humanizada
+
+A voz do atendimento está isolada em `lib/persona.js`. O handler envia para essa persona o primeiro nome, o contexto da conversa (`last_intent`, `last_topic`, `last_bot_reply`), a intenção detectada, os fatos permitidos e o `event_type`.
+
+O tom foi ajustado para conversa curta e natural de boteco, com no máximo um emoji, sem CTA forçado e sem frases de atendimento robótico. `story_reply`, `story_mention` e `instagram_comment` recebem instruções específicas de tom. Mensagens claramente fora de contexto, como pedido de Robux, são tratadas com humor leve sem despejar cardápio ou WhatsApp.
+
+A persona não substitui as travas determinísticas: preços, produtos, horários, promoções, disponibilidade e URLs continuam limitados aos fatos validados pela aplicação.
 
 ## OpenAI
 
