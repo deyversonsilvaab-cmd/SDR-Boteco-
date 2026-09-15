@@ -1,4 +1,9 @@
 {
+  "_meta": {
+    "versao": "2.0.0",
+    "revisado_em": "2026-09-15",
+    "politica": "Base fechada: o bot só afirma preço, composição, porção, horário, promoção ou disponibilidade quando a informação estiver registrada aqui."
+  },
   "empresa": {
     "nome": "Sr. Boteco Limeira",
     "instagram": "@srbotecolimeira",
@@ -8,245 +13,48 @@
     "endereco": "Pátio Limeira Shopping",
     "whatsapp_vagas_formatado": "(17) 99103-4703"
   },
-  "horarios": {
-    "funcionamento": "Funcionamos todos os dias das 11h às 22h.",
-    "ofertas_tarde_noite": "Ofertas válidas das 16h às 21h.",
-    "almoco": "Almoço de segunda a sexta-feira, das 11h às 15h.",
-    "open_chopp": "Open Chopp das 16h às 21h.",
-    "happy_hour": "Happy hour das 16h às 21h.", "delivery_ifood": "Entrega via iFood todos os dias das 11h às 22h."
-  },
   "links": {
-    "whatsapp": "https://wa.me/5519997858351",
+    "cardapio_pedido": "https://botequimpatiolimeira.saipos.com/home",
+    "site_oficial": "https://srboteco.com.br/",
     "ifood": "https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72",
+    "food99": "https://99app.com/99food/food/",
+    "whatsapp": "https://wa.me/5519997858351",
     "whatsapp_vagas": "https://wa.me/5517991034703"
   },
+  "pedidos": {
+    "orientacao": "Quando o cliente pedir cardápio, preço não cadastrado, comida, pedido, retirada ou entrega, priorizar o link de cardápio/pedido. Informar que pelo link é possível conferir as opções e fazer o pedido para retirada no local ou entrega conforme as opções exibidas no checkout. Para delivery, também oferecer iFood e 99Food. Se a informação específica não estiver na base, nunca inventar: oferecer o WhatsApp da equipe.",
+    "retirada": "Use o link de cardápio/pedido e selecione retirada no local quando a opção estiver disponível no checkout.",
+    "entrega_direta": "Use o link de cardápio/pedido e selecione entrega quando a opção estiver disponível no checkout.",
+    "food99": "No 99Food, procure por Sr. Boteco Limeira no aplicativo. Não inventar link específico de loja se ele não estiver cadastrado nesta base."
+  },
+  "horarios": {
+    "funcionamento": "Funcionamos todos os dias das 11h às 22h.",
+    "almoco": "Almoço de segunda a sexta-feira, das 11h às 15h.",
+    "happy_hour": "Happy hour das 16h às 21h."
+  },
   "formas_pagamento": {
-    "aceitos": ["Dinheiro", "Cartão de crédito", "Cartão de débito", "Pix"],
-    "vale_refeicao_bandeiras_aceitas": ["Alelo", "Pluxee", "VR", "Ticket"],
+    "aceitos": [
+      "Dinheiro",
+      "Cartão de crédito",
+      "Cartão de débito",
+      "Pix"
+    ],
+    "vale_refeicao_bandeiras_aceitas": [
+      "Alelo",
+      "Pluxee",
+      "VR",
+      "Ticket"
+    ],
     "vale_alimentacao": "Não aceitamos vale alimentação em nenhuma bandeira.",
-    "regra": "Aceitamos vale refeição somente das bandeiras Alelo, Pluxee, VR e Ticket. Não aceitamos vale alimentação em nenhuma bandeira e não aceitamos outras bandeiras de vale refeição além dessas quatro. Nunca informar isso de outra forma."
+    "regra": "Aceitamos vale refeição somente das bandeiras Alelo, Pluxee, VR e Ticket. Não aceitamos vale alimentação em nenhuma bandeira e não aceitamos outras bandeiras de vale refeição além dessas quatro."
   },
-  "respostas_rapidas": {
-    "saudacao_inicial": "Oi, seja muito bem-vindo(a) ao Sr. Boteco \ud83d\ude0a\n\nFicamos no P\u00e1tio Limeira Shopping e funcionamos todos os dias das 11h \u00e0s 22h.\n\nPosso te ajudar com card\u00e1pio, reserva, Open Chopp, fondue ou hor\u00e1rio de funcionamento. O que voc\u00ea gostaria de saber?",
-    "despedida": "Foi um prazer falar com voc\u00ea \ud83d\ude0a\n\nQualquer d\u00favida \u00e9 s\u00f3 chamar por aqui.\n\nTe esperamos no Sr. Boteco \u2014 P\u00e1tio Limeira Shopping! \ud83c\udf7b",
-    "cardapio": "Temos várias opções no cardápio do Sr. Boteco 😊\n\n🍽️ Executivos\n🍟 Porções\n🥩 À la carte\n🍔 Burgers\n👧 Pratos kids\n🍰 Sobremesas\n🍺 Chopp, cervejas e bebidas\n🥤 Sucos e bebidas sem álcool\n\nPara consultar valores atualizados ou receber o cardápio completo, chama no WhatsApp:\n\n📲 https://wa.me/5519997858351",
-    "localizacao": "Ficamos no Pátio Limeira Shopping 😊\n\nÉ só chegar no Sr. Boteco.\n\nSe quiser falar com a equipe para confirmar mesa ou tirar dúvida mais rápido, chama no WhatsApp:\nhttps://wa.me/5519997858351",
-    "almoco": "Temos sim 😊\n\nDe segunda a sexta, das 11h às 15h, servimos almoço com pratos executivos bem servidos e opções a partir de R$ 19,90.\n\nTem bisteca, frango, parmegiana, strogonoff, omelete, prato fitness e outras opções do dia.\n\nEstamos no Pátio Limeira Shopping.\n\nQuer que eu te mande o WhatsApp para confirmar o cardápio de hoje?",
-    "delivery": "Sim 😊\n\nFazemos entregas através do iFood, todos os dias das 11h às 22h.\n\n📲 Faça seu pedido pelo link:\nhttps://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72\n\nCaso prefira, também pode conferir nosso cardápio completo pelo aplicativo do iFood. Mas se puder, vem provar aqui no salão também — fica ainda melhor 😄 Quer que eu veja a disponibilidade de mesa para você?",
-    "vaga": "Olá! 😊\n\nPara oportunidades de trabalho no Sr. Boteco, por favor envie seu currículo diretamente para a gerente do restaurante pelo WhatsApp:\n\n📲 https://wa.me/5517991034703\n\nEla irá analisar seu perfil e retornar caso tenha uma oportunidade compatível.", "humano": "Claro, posso te ajudar por aqui 😊 Mas se preferir um atendimento mais pessoal, é só chamar a nossa equipe no WhatsApp que já te atendem por lá.",
-    "fondue": "Temos duas opções para compartilhar:\n\n🧀 Fondue Salgado — R$ 99,90\nAcompanha: torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.\n\n🍫 Fondue Doce — R$ 89,90\nAcompanha: morango, uva, banana, brownie e marshmallow.\n\nOs valores são referentes ao prato feito para servir 2 pessoas.\n\n⏰ Disponível das 16h às 21h.\n📍 Sr. Boteco — Pátio Limeira Shopping.\n\nVocê pensa em vir com quantas pessoas?",
-    "horario": "Funcionamos todos os dias das 11h às 22h 😊\n\nO Open Chopp acontece das 16h às 21h.",
-    "proteicos": "Temos opções mais leves e proteicas no cardápio do Sr. Boteco 💪🍽️\n\nEntre as opções, temos pratos com frango, tilápia, saladas e versões low carb.\n\nPara confirmar as opções e valores atualizados do dia, fala com a equipe pelo WhatsApp:\nhttps://wa.me/5519997858351",
-    "guarana_proteico": "Sim 😊\n\nTemos bebida proteica Pure Up como opção gelada e refrescante para acompanhar os pratos saudáveis/proteicos.\n\nPara confirmar sabores e valores atualizados, chama a equipe pelo WhatsApp:\nhttps://wa.me/5519997858351",
-    "rodizio_open_em_campo": "Nosso Rodízio do Boteco inclui:\n\n🍟 Batata frita à vontade\n🍗 Frango empanado\n🍗 Frango frito\n🥔 Mandioca frita\n\nQuer que eu te mande o WhatsApp para confirmar valores e disponibilidade?",
-    "preco_cardapio": "Para valores dos itens do cardápio, o ideal é confirmar direto com a equipe pelo WhatsApp, assim você recebe as opções atualizadas do dia. 😊\n\nVocê pode falar mais rápido por aqui:\nhttps://wa.me/5519997858351",
-    "open_chopp": "Que bom te ver por aqui 😊\n\nO Open Chopp do Sr. Boteco acontece das 16h às 21h:\n\n🍻 Domingo a quinta: R$ 29,90\n🍻 Sexta e sábado: R$ 49,90\n\nTambém temos porções e opções do cardápio para acompanhar.\n\nEstamos no Pátio Limeira Shopping.\n\nQuer falar com a equipe pelo WhatsApp para confirmar mesa ou tirar dúvida mais rápido?",
-    "open_chopp_valor": "Domingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nDas 16h às 21h 🍻\n\nPara falar mais rápido com a equipe:\nhttps://wa.me/5519997858351",
-    "happy_hour": "Temos happy hour todos os dias das 16h às 21h 😊\n\nÉ uma ótima opção para vir depois do trabalho, reunir os amigos ou a equipe.\n\nEstamos no Pátio Limeira Shopping.\n\nQuer que eu te mande o WhatsApp para falar com a equipe mais rápido?",
-    "double_burger": "Toda terça tem Hambúrguer em Dobro no Sr. Boteco 🍔\n\nVocê compra 1 e ganha outro.\n\nVálido das 16h às 21h, no Pátio Limeira Shopping.\n\nQuer que eu te mande o WhatsApp para confirmar as opções?",
-    "feijoada": "Temos feijoada às quartas e aos sábados 😊\n\nO Sr. Boteco fica no Pátio Limeira Shopping.\n\nQuer que eu te mande o WhatsApp para confirmar a disponibilidade de hoje?",
-    "marcacao_story": "Aaa que demais ver sua marcação 😍\n\nObrigado por compartilhar esse momento com a gente.\n\nFicamos felizes demais de fazer parte do seu passeio.\n\nVolta mais vezes, viu? 🍻",
-    "rodizio": "Nosso Rodízio do Boteco inclui:\n\n🍟 Batata frita à vontade\n🍗 Frango empanado\n🍗 Frango frito\n🥔 Mandioca frita\n\nQuer que eu te mande o WhatsApp para confirmar valores e disponibilidade?",
-    "reserva": "Claro 😊 Para reserva, me passa por favor:\n\n• Nome\n• Telefone\n• Data\n• Horário\n• Quantidade de pessoas\n\nA equipe confirma a disponibilidade certinho para você.",
-    "empresa_b2b": "Claro 😊\n\nAtendemos equipes de empresas próximas ao Pátio Limeira Shopping, tanto para almoço executivo quanto para happy hour.\n\nNo almoço, servimos de segunda a sexta, das 11h às 15h, com pratos executivos a partir de R$ 19,90.\n\nPara happy hour, temos opções das 16h às 21h.\n\nPara alinhar a melhor forma de atender sua equipe, chama direto no WhatsApp:\nhttps://wa.me/5519997858351",
-    "estacionamento": "O Sr. Boteco fica dentro do Pátio Limeira Shopping 😊\n\nPara confirmar a regra atual do estacionamento e qualquer condição do dia, fala com a equipe pelo WhatsApp:\nhttps://wa.me/5519997858351",
-    "bebidas": "Temos opções de bebidas, chopp, cervejas, sucos e bebidas sem álcool 😊\n\nPara confirmar as opções e valores atualizados do dia, fala com a equipe pelo WhatsApp:\nhttps://wa.me/5519997858351",
-    "chopp_marcas": "Temos chopp individual (avulso) das marcas Heineken, Brahma e Ashby 🍺\n\nServido em caneca de 340 ml, copo de 500 ml, caneca de 630 ml, caneca de 700 ml ou canecão de 1,2 L.\n\nEsse chopp avulso é diferente do Open Chopp promocional.\n\nQuer que eu te passe os valores de cada opção?",    "chopp_marcas_valor": "Valores do nosso chopp individual (avulso, fora do Open Chopp promocional) 🍺\n\nHeineken\nCaneca 340 ml — R$ 16,90\nCopo 500 ml — R$ 23,90\nCaneca 630 ml — R$ 29,90\nCaneca 700 ml — R$ 33,90\nCanecão 1,2 L — R$ 55,90\n\nBrahma\nCaneca 340 ml — R$ 13,90\nCopo 500 ml — R$ 21,90\nCaneca 630 ml — R$ 26,90\nCaneca 700 ml — R$ 29,90\nCanecão 1,2 L — R$ 51,90\n\nAshby\nCaneca 340 ml — R$ 9,90\nCopo 500 ml — R$ 13,90\nCaneca 630 ml — R$ 16,90\nCaneca 700 ml — R$ 18,90\nCanecão 1,2 L — R$ 32,90",    "open_chopp_marca": "Essa informação de marca do Open Chopp promocional a equipe confirma certinho com você 😊\n\nChama no WhatsApp:\nhttps://wa.me/5519997858351",    "chopp_vinho": "Temos também Chopp de Vinho 🍷, servido em taça/caneca de 300 ml, 500 ml ou 1,2 L, além de opções descartáveis de 500 ml e 700 ml.\n\nQuer que eu te passe os valores de cada opção?","chopp_vinho_valor": "Valores do Chopp de Vinho 🍷\n\n300 ml — R$ 15,90\n500 ml — R$ 25,90\n1,2 L — R$ 51,90\nDescartável 500 ml — R$ 25,90\nDescartável 700 ml — R$ 36,90","cervejas": "Temos Heineken Long Neck e Heineken Zero Long Neck 🍺\n\nQuer que eu te passe os valores?","cervejas_valor": "Valores das cervejas 🍺\n\nHeineken Long Neck — R$ 18,60\nHeineken Zero Long Neck — R$ 18,60","caipirinhas": "Temos caipirinhas de cachaça, saquê, vinho branco e vodka 🍹, nos sabores abacaxi, kiwi, laranja, limão, morango e maracujá.\n\nQuer que eu te passe os valores?","caipirinhas_valor": "Valores das caipirinhas 🍹\n\nCachaça — R$ 20,90\nSaquê — R$ 23,90\nVinho Branco — R$ 23,90\nVodka — R$ 23,90\n\nSabores: Abacaxi, Kiwi, Laranja, Limão, Morango e Maracujá.","doses": "Temos doses de Campari, Licor 43, Tequila, Velho Barreiro e Whisky (Black Label, Jack Daniels e Red Label) 🥃\n\nQuer que eu te passe os valores?","doses_valor": "Valores das doses (50 ml) 🥃\n\nCampari — R$ 13,90\nLicor 43 — R$ 22,00\nTequila — R$ 26,90\nVelho Barreiro — R$ 7,70\nWhisky Black Label — R$ 22,90\nWhisky Jack Daniels — R$ 29,90\nWhisky Red Label — R$ 28,90","bebida_sem_alcool": "Temos sim 😊\n\nNo momento não temos chopp zero, mas temos Heineken Zero long neck como opção sem álcool.\n\nPara consultar disponibilidade e valores atualizados:\nhttps://wa.me/5519997858351",
-    "anuncio_valor_open_chopp": "O Open Chopp acontece das 16h às 21h 🍻\n\nDomingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nEstamos no Pátio Limeira Shopping.\nQuer que eu te mande o WhatsApp para falar com a equipe mais rápido?",
-    "anuncio_open_chopp_hoje": "Temos sim 😊\n\nNosso Open Chopp é das 16h às 21h.\n\nDomingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nQuer que eu te mande o WhatsApp para confirmar sua mesa?",
-    "anuncio_localizacao": "Ficamos no Pátio Limeira Shopping 😊\n\nÉ só chegar no Sr. Boteco.\n\nSe quiser falar com a equipe para confirmar mesa ou tirar dúvida mais rápido, chama no WhatsApp:\nhttps://wa.me/5519997858351",
-    "anuncio_precisa_reservar": "Não é obrigatório, mas recomendamos reservar, principalmente em dia de jogo ou fim de semana 😊\n\nMe fala para quantas pessoas seria que eu te mando o WhatsApp da equipe para agilizar.",
-    "anuncio_mesa_hoje": "Provavelmente sim 😊\n\nPara confirmar certinho e já agilizar sua chegada, chama a equipe no WhatsApp:\nhttps://wa.me/5519997858351",
-    "anuncio_desafio_placar": "Funciona assim 👀⚽\n\nVocê comenta o palpite do placar aqui no post.\n\nA primeira pessoa que acertar o resultado correto ganha 1 Open Chopp grátis, válido para 1 pessoa.\n\nBoa sorte 🍻",
-    "anuncio_um_palpite_por_perfil": "Para ficar justo, vale 1 palpite por perfil 😊\n\nComenta seu placar e já marca os amigos para virem assistir com você.",
-    "anuncio_duas_pessoas_acertarem": "Ganha a primeira pessoa que comentou o placar correto 👀\n\nA ordem considerada é a dos comentários no post.",
-    "anuncio_ate_quando_comentar": "Pode comentar até o início do jogo ⚽\n\nDepois que a partida começar, os palpites não entram mais no desafio.",
-    "anuncio_premio_quando": "O Open Chopp grátis é válido para 1 pessoa.\n\nA equipe confirma com o ganhador direitinho pelo direct depois do resultado 🍻",
-    "anuncio_combo_itens": "O combo vem com frango a passarinho + calabresa por R$ 49,90 🍗\n\nÓtimo para dividir enquanto assiste ao jogo.",
-    "anuncio_serve_quantas_pessoas": "Depende da fome da turma 😄\n\nMas é uma boa opção para compartilhar enquanto toma um chopp e acompanha o jogo.",
-    "anuncio_outras_porcoes": "Temos sim 😊\n\nPara ver as opções e valores atualizados do cardápio, chama a equipe pelo WhatsApp:\nhttps://wa.me/5519997858351",
-    "anuncio_familia": "Dá sim 😊\n\nO Sr. Boteco fica dentro do Pátio Limeira Shopping, então é uma opção bem tranquila para vir com família, amigos ou casal.",
-    "anuncio_crianca": "Pode sim 😊\n\nO restaurante é aberto para famílias.\n\nApenas o consumo de bebidas alcoólicas é permitido somente para maiores de 18 anos.",
-    "anuncio_casal_ou_turma": "Serve para os dois 😊\n\nTem gente que vem em casal, com amigos, em família e também em grupo para assistir jogo e aproveitar o Open Chopp.",
-    "anuncio_aniversario": "Dá sim 🎉\n\nO Sr. Boteco é uma ótima opção para comemorar com a turma.\n\nMe fala a data e quantidade de pessoas que eu te mando o WhatsApp da equipe para organizar certinho.",
-    "anuncio_horario_funcionamento": "Funcionamos todos os dias das 11h às 22h 😊\n\nO Open Chopp acontece das 16h às 21h.",
-    "anuncio_open_comeca": "Começa às 16h e vai até às 21h 🍻",
-    "anuncio_chegar_mais_tarde": "Sim 😊\n\nO Open Chopp vai até às 21h. Chegando dentro desse horário, dá para aproveitar.",
-        "anuncio_aceita_cartao": "Aceitamos sim 😊\n\nTrabalhamos com dinheiro, cartão de crédito, cartão de débito e Pix.\n\nTambém aceitamos vale refeição das bandeiras Alelo, Pluxee, VR e Ticket.\n\nNão aceitamos vale alimentação.\n\nQualquer dúvida, nossa equipe confirma certinho pelo WhatsApp:\nhttps://wa.me/5519997858351",
-    "anuncio_tem_taxa": "Para confirmar qualquer detalhe de consumo, taxa ou regra atualizada, o melhor é falar direto com a equipe pelo WhatsApp:\nhttps://wa.me/5519997858351",
-    "anuncio_open_individual": "Sim, o Open Chopp é por pessoa 😊\n\nValores:\nDomingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nDas 16h às 21h.",
-    "anuncio_pode_dividir_open": "O Open Chopp é individual 😊\n\nCada pessoa que quiser participar precisa contratar o seu.",
-    "anuncio_sem_alcool": "Temos sim 😊\n\nNo momento não temos chopp zero, mas temos Heineken Zero long neck como opção sem álcool.\n\nPara consultar disponibilidade e valores atualizados:\nhttps://wa.me/5519997858351",
-    "anuncio_so_comer": "Claro 😊\n\nVocê pode vir só para comer também. Temos porções, pratos e opções do cardápio.\n\nPara ver valores atualizados:\nhttps://wa.me/5519997858351",
-    "anuncio_almoco_tambem": "Temos sim 😊\n\nDe segunda a sexta, das 11h às 15h, servimos almoço com pratos executivos bem servidos e opções a partir de R$ 19,90.\n\nTem bisteca, frango, parmegiana, strogonoff, omelete, prato fitness e outras opções do dia.\n\nEstamos no Pátio Limeira Shopping.\n\nQuer que eu te mande o WhatsApp para confirmar o cardápio de hoje?",
-    "anuncio_open_no_almoco": "O Open Chopp acontece das 16h às 21h 🍻\n\nNo almoço, de segunda a sexta, temos pratos executivos das 11h às 15h.",
-    "anuncio_levar_turma": "Boa! 😊\n\nPara grupo, é melhor falar direto com a equipe para organizar mesa e horário.\n\nChama no WhatsApp:\nhttps://wa.me/5519997858351",
-    "anuncio_happy_hour_empresa": "Dá sim 😊\n\nO Sr. Boteco é uma ótima opção para happy hour de equipe, principalmente das 16h às 21h.\n\nMe fala o nome da empresa e quantidade aproximada de pessoas que eu te mando o WhatsApp da equipe.",
-    "anuncio_comentario_eu_vou": "Aí sim! Esperamos você no Sr. Boteco 🍻",
-    "anuncio_comentario_partiu": "Partiu boteco! Chama a turma 🍻⚽",
-    "anuncio_comentario_palpite": "Palpite registrado 👀⚽🍻",
-    "anuncio_comentario_marcando_amigo": "Essa dupla já tem que vir pro boteco 🍻😄",
-    "anuncio_comentario_que_horas": "O Open Chopp é das 16h às 21h 🍻",
-    "anuncio_comentario_valor": "Domingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nDas 16h às 21h 🍻",
-    "anuncio_padrao_especifica": "Boa pergunta 😊\n\nPara eu não te passar nenhuma informação errada, chama a equipe pelo WhatsApp que eles confirmam certinho para você:\nhttps://wa.me/5519997858351",
-    "anuncio_primeiro_contato_manychat": "Que bom te ver por aqui 😊\n\nO Open Chopp do Sr. Boteco acontece das 16h às 21h:\n\n🍻 Domingo a quinta: R$ 29,90\n🍻 Sexta e sábado: R$ 49,90\n\nTambém temos porções e opções do cardápio para acompanhar.\n\nEstamos no Pátio Limeira Shopping.\n\nQuer falar com a equipe pelo WhatsApp para confirmar mesa ou tirar dúvida mais rápido?",
-    "fondue_valor_porcoes": "Isso mesmo 😊\n\nO valor é do prato de fondue feito para servir 2 pessoas, não é por pessoa.\n\n🧀 Fondue Salgado — R$ 99,90\nAcompanha: torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.\n\n🍫 Fondue Doce — R$ 89,90\nAcompanha: morango, uva, banana, brownie e marshmallow.\n\n⏰ Disponível das 16h às 21h.",
-    "fondue_valores": "Temos duas opções para compartilhar:\n\n🧀 Fondue Salgado — R$ 99,90\nAcompanha: torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.\n\n🍫 Fondue Doce — R$ 89,90\nAcompanha: morango, uva, banana, brownie e marshmallow.\n\nOs valores são referentes ao prato feito para servir 2 pessoas.\n\n⏰ Disponível das 16h às 21h.\n📍 Sr. Boteco — Pátio Limeira Shopping."
+  "vagas_emprego": {
+    "responsavel": "Gerente do restaurante",
+    "whatsapp": "(17) 99103-4703",
+    "whatsapp_link": "https://wa.me/5517991034703",
+    "orientacao": "Direcionar assuntos claramente relacionados a vaga, emprego, currículo, freelance, garçom, garçonete ou cumim para a gerente pelo WhatsApp. 'Cozinha' sozinho normalmente é dúvida sobre funcionamento; 'atendente' sozinho normalmente é pedido para falar com uma pessoa da equipe."
   },
-  "campanhas": {
-    "almoco_pratos_do_dia": {
-      "descricao": "Almoço de segunda a sexta, das 11h às 15h, com pratos executivos bem servidos.",
-      "validade": "Segunda a sexta-feira, das 11h às 15h.",
-      "chamada": "Pratos executivos a partir de R$ 19,90.",
-      "orientacao_atendimento": "Usar resposta humanizada, sem listar todos os preços automaticamente. Direcionar para WhatsApp para confirmar opções do dia.",
-      "pratos_referencia": [
-        {
-          "nome": "Bisteca",
-          "valor": "R$ 19,90"
-        },
-        {
-          "nome": "Filé de Frango com Toscana",
-          "valor": "R$ 22,90"
-        },
-        {
-          "nome": "Bife Acebolado",
-          "valor": "R$ 27,90"
-        },
-        {
-          "nome": "Filé de Frango Grelhado",
-          "valor": "R$ 22,90"
-        },
-        {
-          "nome": "Linguiça Toscana",
-          "valor": "R$ 21,90"
-        },
-        {
-          "nome": "Strogonoff de Frango",
-          "valor": "R$ 21,90"
-        },
-        {
-          "nome": "Filé de Frango à Parmegiana",
-          "valor": "R$ 26,90"
-        },
-        {
-          "nome": "Omelete de Calabresa",
-          "valor": "R$ 21,90"
-        },
-        {
-          "nome": "Prato Fitness Frango",
-          "valor": "R$ 19,90"
-        }
-      ]
-    },
-    "open_em_campo_rodizio": {
-      "descricao": "Rodízio do Boteco durante o Open em Campo, com transmissão do jogo.",
-      "validade": "Das 16h às 21h.",
-      "itens": [
-        "Batata frita à vontade",
-        "Frango empanado",
-        "Frango frito",
-        "Mandioca frita"
-      ],
-      "observacao": "Também temos Open Chopp das 16h às 21h durante o OPEN EM CAMPO."
-    },
-    "novos_pratos_proteicos": {
-      "descricao": "Novos pratos saudáveis/proteicos do Sr. Boteco. Não informar preços até validação da equipe.",
-      "regra_preco": "Não passar preço e não inventar valores. Se perguntarem preço, informar que os valores serão confirmados pela equipe.",
-      "itens": [
-        {
-          "nome": "Frango Power",
-          "descricao": "200g de frango, arroz, feijão, salada e legumes."
-        },
-        {
-          "nome": "Executivo Proteico",
-          "descricao": "200g de frango, 2 ovos, arroz, feijão e salada."
-        },
-        {
-          "nome": "Tilápia Premium",
-          "descricao": "170g de tilápia, arroz, legumes e salada."
-        },
-        {
-          "nome": "Low Carb Supreme",
-          "descricao": "200g de frango ou tilápia, legumes e salada."
-        },
-        {
-          "nome": "Salada Proteica de Frango",
-          "descricao": "Mix de folhas, tomate, cenoura, cebola roxa e 180g de frango grelhado. Croutons opcionais."
-        },
-        {
-          "nome": "Tilápia Fresh",
-          "descricao": "Alface americana, 180g de tilápia grelhada, tomate, cenoura ralada, azeitona, palmito e limão."
-        },
-        {
-          "nome": "Bebida Proteica Pure Up",
-          "descricao": "Bebida proteica gaseificada. Não informar preço."
-        }
-      ]
-    },
-    "open_chopp": {
-      "descricao": "Open Chopp do Sr. Boteco.",
-      "validade": "Todos os dias, das 16h às 21h.",
-      "domingo_a_quinta": "R$ 29,90",
-      "sexta_e_sabado": "R$ 49,90",
-      "regra": "Responder valores diretamente quando o cliente perguntar por Open Chopp. Não relacionar com jogo, futebol, transmissão ou Open em Campo."
-    },
-    "fondue": {
-      "descricao": "Fondue do Sr. Boteco, sem relação com campanha de Dia dos Namorados.",
-      "validade": "Das 16h às 21h.",
-      "opcoes": [
-        {
-          "nome": "Fondue Salgado",
-          "valor": "R$ 99,90",
-          "acompanha": "Torradas, iscas de frango empanado, contrafilé, calabresa e batata frita."
-        },
-        {
-          "nome": "Fondue Doce",
-          "valor": "R$ 89,90",
-          "acompanha": "Morango, uva, banana, brownie e marshmallow."
-        }
-      ],
-      "regra_valor_porcao": "O valor informado é referente ao prato feito para servir 2 pessoas, não é por pessoa. Fondue Salgado: R$ 99,90 o prato para 2 pessoas. Fondue Doce: R$ 89,90 o prato para 2 pessoas.",
-      "resposta_valor_porcoes": "Isso mesmo 😊\n\nO valor é do prato de fondue feito para servir 2 pessoas, não é por pessoa.\n\n🧀 Fondue Salgado — R$ 99,90\nAcompanha: torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.\n\n🍫 Fondue Doce — R$ 89,90\nAcompanha: morango, uva, banana, brownie e marshmallow.\n\n⏰ Disponível das 16h às 21h.",
-      "resposta_principal": "Temos duas opções para compartilhar:\n\n🧀 Fondue Salgado — R$ 99,90\nAcompanha: torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.\n\n🍫 Fondue Doce — R$ 89,90\nAcompanha: morango, uva, banana, brownie e marshmallow.\n\nOs valores são referentes ao prato feito para servir 2 pessoas.\n\n⏰ Disponível das 16h às 21h.\n📍 Sr. Boteco — Pátio Limeira Shopping.\n\nVocê pensa em vir com quantas pessoas?",
-      "resposta_valores": "Temos duas opções para compartilhar:\n\n🧀 Fondue Salgado — R$ 99,90\nAcompanha: torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.\n\n🍫 Fondue Doce — R$ 89,90\nAcompanha: morango, uva, banana, brownie e marshmallow.\n\nOs valores são referentes ao prato feito para servir 2 pessoas.\n\n⏰ Disponível das 16h às 21h.\n📍 Sr. Boteco — Pátio Limeira Shopping."
-    },
-    "marcacao_story": {
-      "descricao": "Resposta de relacionamento quando cliente marca o Sr. Boteco em story/foto.",
-      "tom": "Humano, curto, natural e agradecido.",
-      "resposta_final": "Aaa que demais ver sua marcação 😍\n\nObrigado por compartilhar esse momento com a gente.\n\nFicamos felizes demais de fazer parte do seu passeio.\n\nVolta mais vezes, viu? 🍻"
-    },
-    "hamburguer_em_dobro": {
-      "descricao": "Toda terça-feira, compra 1 hambúrguer e ganha outro.",
-      "validade": "Terças-feiras, das 16h às 21h."
-    },
-    "feijoada": {
-      "descricao": "Feijoada às quartas e sábados."
-    },
-    "empresa_b2b": {
-      "descricao": "Atendimento para empresas próximas ao Pátio Limeira Shopping.",
-      "opcoes": [
-        "Almoço executivo de segunda a sexta, das 11h às 15h.",
-        "Happy hour das 16h às 21h."
-      ],
-      "whatsapp": "https://wa.me/5519997858351"
-    },
-    "bebidas_sem_alcool": {
-      "descricao": "Opções de bebidas sem álcool do Sr. Boteco.",
-      "regra": "Não informar chopp zero. Se o cliente pedir chopp zero/open chopp zero, responder que não temos chopp zero e oferecer Heineken Zero long neck como opção sem álcool.",
-      "opcoes": [
-        "Heineken Zero long neck"
-      ]
-    },
-    "anuncio_open_chopp_jogo": {
-      "descricao": "Respostas prontas para campanha de tráfego pago de Open Chopp + jogo/desafio do placar.",
-      "open_chopp": "Domingo a quinta R$ 29,90; sexta e sábado R$ 49,90; das 16h às 21h.",
-      "combo": "Frango a passarinho + calabresa por R$ 49,90.",
-      "desafio": "Primeira pessoa que acertar o placar correto ganha 1 Open Chopp grátis, válido para 1 pessoa. Palpites até o início do jogo. 1 palpite por perfil.",
-      "observacao_sem_alcool": "Não temos chopp zero; oferecer Heineken Zero long neck.",
-      "whatsapp": "https://wa.me/5519997858351"
-    }
-  },
-  "cardapio_categorias_sem_preco": [
+  "categorias_cardapio": [
     "Executivos",
     "Porções",
     "À la carte",
@@ -257,148 +65,603 @@
     "Sucos e bebidas sem álcool",
     "Pratos saudáveis e proteicos",
     "Saladas proteicas",
-    "Bebidas proteicas",
-    "Cervejas zero álcool"
+    "Bebidas proteicas"
   ],
-  "resposta_fallback": "Vou confirmar com a equipe para não te passar nenhuma informação errada e já te retorno 😊",
-  "vagas_emprego": {
-    "responsavel": "Gerente do restaurante",
-    "whatsapp": "(17) 99103-4703",
-    "whatsapp_link": "https://wa.me/5517991034703",
-    "orientacao": "Direcionar assuntos claramente relacionados a vaga, emprego, currículo, freelance, garçom, garçonete ou cumim para a gerente pelo WhatsApp. Não usar palavras genéricas como free, serviço, cozinha ou atendente para classificar como vaga — cozinha refere-se a horário de funcionamento e atendente refere-se a pedido de atendimento humano."
-  },
-  "produtos_precos": [
+  "catalogo": [
     {
-      "categoria": "Open Chopp",
-      "nome": "Open Chopp — domingo a quinta",
-      "aliases": [
-        "open chopp domingo",
-        "open chopp segunda",
-        "open chopp terca",
-        "open chopp terça",
-        "open chopp quarta",
-        "open chopp quinta"
-      ],
-      "valor": "R$ 29,90",
-      "validade": "Domingo a quinta, das 16h às 21h."
-    },
-    {
-      "categoria": "Open Chopp",
-      "nome": "Open Chopp — sexta e sábado",
-      "aliases": [
-        "open chopp sexta",
-        "open chopp sabado",
-        "open chopp sábado",
-        "open chopp fim de semana"
-      ],
-      "valor": "R$ 49,90",
-      "validade": "Sexta e sábado, das 16h às 21h."
-    },
-    {
+      "id": "fondue_salgado",
       "categoria": "Fondue",
       "nome": "Fondue Salgado",
       "aliases": [
+        "fondue",
         "fondue salgado",
+        "fundi",
         "fundi salgado",
         "fundue salgado",
-        "fondi salgado"
+        "fondi salgado",
+        "foundie",
+        "foundue",
+        "foundie salgado"
       ],
-      "valor": "R$ 99,90",
       "descricao": "Acompanha torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.",
-      "validade": "Das 16h às 21h."
+      "valor": "R$ 99,90",
+      "serve_pessoas": 2,
+      "serve_texto": "Prato feito para servir 2 pessoas.",
+      "disponibilidade": "Das 16h às 21h."
     },
     {
-      "categoria": "Fondue",
-      "nome": "Fondue Doce",
+      "id": "almoco_bisteca",
+      "categoria": "Almoço executivo",
+      "nome": "Bisteca",
       "aliases": [
-        "fondue doce",
-        "fundi doce",
-        "fundue doce",
-        "fondi doce"
+        "bisteca",
+        "executivo bisteca",
+        "prato de bisteca"
       ],
-      "valor": "R$ 89,90",
-      "descricao": "Acompanha morango, uva, banana, brownie e marshmallow.",
-      "validade": "Das 16h às 21h."
+      "descricao": "Prato executivo do almoço.",
+      "valor": "R$ 19,90",
+      "serve_pessoas": null,
+      "disponibilidade": "Segunda a sexta-feira, das 11h às 15h."
     },
     {
-      "categoria": "Almoço",
-      "nome": "Pratos executivos",
+      "id": "almoco_file_frango_toscana",
+      "categoria": "Almoço executivo",
+      "nome": "Filé de Frango com Toscana",
       "aliases": [
-        "almoco",
-        "almoço",
-        "prato executivo",
-        "pratos executivos",
-        "prato comercial"
+        "file de frango com toscana",
+        "filé de frango com toscana",
+        "frango com toscana"
       ],
-      "valor": "A partir de R$ 19,90",
-      "validade": "Segunda a sexta-feira, das 11h às 15h."
+      "descricao": "Prato executivo do almoço.",
+      "valor": "R$ 22,90",
+      "serve_pessoas": null,
+      "disponibilidade": "Segunda a sexta-feira, das 11h às 15h."
     },
     {
-      "categoria": "Bebidas sem álcool",
-      "nome": "Heineken Zero long neck",
+      "id": "almoco_bife_acebolado",
+      "categoria": "Almoço executivo",
+      "nome": "Bife Acebolado",
+      "aliases": [
+        "bife acebolado",
+        "executivo bife acebolado"
+      ],
+      "descricao": "Prato executivo do almoço.",
+      "valor": "R$ 27,90",
+      "serve_pessoas": null,
+      "disponibilidade": "Segunda a sexta-feira, das 11h às 15h."
+    },
+    {
+      "id": "almoco_file_frango_grelhado",
+      "categoria": "Almoço executivo",
+      "nome": "Filé de Frango Grelhado",
+      "aliases": [
+        "file de frango grelhado",
+        "filé de frango grelhado",
+        "frango grelhado"
+      ],
+      "descricao": "Prato executivo do almoço.",
+      "valor": "R$ 22,90",
+      "serve_pessoas": null,
+      "disponibilidade": "Segunda a sexta-feira, das 11h às 15h."
+    },
+    {
+      "id": "almoco_linguica_toscana",
+      "categoria": "Almoço executivo",
+      "nome": "Linguiça Toscana",
+      "aliases": [
+        "linguica toscana",
+        "linguiça toscana",
+        "toscana"
+      ],
+      "descricao": "Prato executivo do almoço.",
+      "valor": "R$ 21,90",
+      "serve_pessoas": null,
+      "disponibilidade": "Segunda a sexta-feira, das 11h às 15h."
+    },
+    {
+      "id": "almoco_strogonoff_frango",
+      "categoria": "Almoço executivo",
+      "nome": "Strogonoff de Frango",
+      "aliases": [
+        "strogonoff de frango",
+        "estrogonofe de frango",
+        "strogonoff"
+      ],
+      "descricao": "Prato executivo do almoço.",
+      "valor": "R$ 21,90",
+      "serve_pessoas": null,
+      "disponibilidade": "Segunda a sexta-feira, das 11h às 15h."
+    },
+    {
+      "id": "almoco_parmegiana_frango",
+      "categoria": "Almoço executivo",
+      "nome": "Filé de Frango à Parmegiana",
+      "aliases": [
+        "file de frango a parmegiana",
+        "filé de frango à parmegiana",
+        "parmegiana de frango",
+        "parmegiana"
+      ],
+      "descricao": "Prato executivo do almoço.",
+      "valor": "R$ 26,90",
+      "serve_pessoas": null,
+      "disponibilidade": "Segunda a sexta-feira, das 11h às 15h."
+    },
+    {
+      "id": "almoco_omelete_calabresa",
+      "categoria": "Almoço executivo",
+      "nome": "Omelete de Calabresa",
+      "aliases": [
+        "omelete de calabresa",
+        "omelete calabresa",
+        "omelete"
+      ],
+      "descricao": "Prato executivo do almoço.",
+      "valor": "R$ 21,90",
+      "serve_pessoas": null,
+      "disponibilidade": "Segunda a sexta-feira, das 11h às 15h."
+    },
+    {
+      "id": "almoco_fitness_frango",
+      "categoria": "Almoço executivo",
+      "nome": "Prato Fitness Frango",
+      "aliases": [
+        "prato fitness frango",
+        "fitness frango",
+        "prato fitness"
+      ],
+      "descricao": "Prato executivo do almoço.",
+      "valor": "R$ 19,90",
+      "serve_pessoas": null,
+      "disponibilidade": "Segunda a sexta-feira, das 11h às 15h."
+    },
+    {
+      "id": "frango_power",
+      "categoria": "Pratos proteicos",
+      "nome": "Frango Power",
+      "aliases": [
+        "frango power"
+      ],
+      "descricao": "200g de frango, arroz, feijão, salada e legumes.",
+      "valor": null,
+      "serve_pessoas": null,
+      "disponibilidade": null
+    },
+    {
+      "id": "executivo_proteico",
+      "categoria": "Pratos proteicos",
+      "nome": "Executivo Proteico",
+      "aliases": [
+        "executivo proteico"
+      ],
+      "descricao": "200g de frango, 2 ovos, arroz, feijão e salada.",
+      "valor": null,
+      "serve_pessoas": null,
+      "disponibilidade": null
+    },
+    {
+      "id": "tilapia_premium",
+      "categoria": "Pratos proteicos",
+      "nome": "Tilápia Premium",
+      "aliases": [
+        "tilapia premium",
+        "tilápia premium"
+      ],
+      "descricao": "170g de tilápia, arroz, legumes e salada.",
+      "valor": null,
+      "serve_pessoas": null,
+      "disponibilidade": null
+    },
+    {
+      "id": "low_carb_supreme",
+      "categoria": "Pratos proteicos",
+      "nome": "Low Carb Supreme",
+      "aliases": [
+        "low carb supreme",
+        "low carb"
+      ],
+      "descricao": "200g de frango ou tilápia, legumes e salada.",
+      "valor": null,
+      "serve_pessoas": null,
+      "disponibilidade": null
+    },
+    {
+      "id": "salada_proteica_frango",
+      "categoria": "Pratos proteicos",
+      "nome": "Salada Proteica de Frango",
+      "aliases": [
+        "salada proteica de frango",
+        "salada proteica"
+      ],
+      "descricao": "Mix de folhas, tomate, cenoura, cebola roxa e 180g de frango grelhado. Croutons opcionais.",
+      "valor": null,
+      "serve_pessoas": null,
+      "disponibilidade": null
+    },
+    {
+      "id": "tilapia_fresh",
+      "categoria": "Pratos proteicos",
+      "nome": "Tilápia Fresh",
+      "aliases": [
+        "tilapia fresh",
+        "tilápia fresh"
+      ],
+      "descricao": "Alface americana, 180g de tilápia grelhada, tomate, cenoura ralada, azeitona, palmito e limão.",
+      "valor": null,
+      "serve_pessoas": null,
+      "disponibilidade": null
+    },
+    {
+      "id": "pure_up",
+      "categoria": "Bebidas proteicas",
+      "nome": "Bebida Proteica Pure Up",
+      "aliases": [
+        "pure up",
+        "pureup",
+        "bebida proteica",
+        "guarana proteico",
+        "guaraná proteico"
+      ],
+      "descricao": "Bebida proteica gaseificada.",
+      "valor": null,
+      "serve_pessoas": null,
+      "disponibilidade": null
+    },
+    {
+      "id": "chopp_heineken",
+      "categoria": "Chopp individual",
+      "nome": "Chopp Heineken",
+      "aliases": [
+        "chopp heineken",
+        "heineken chopp",
+        "heineken de chopp"
+      ],
+      "descricao": "Chopp individual Heineken.",
+      "variacoes": [
+        {
+          "nome": "Caneca 340 ml",
+          "valor": "R$ 16,90"
+        },
+        {
+          "nome": "Copo 500 ml",
+          "valor": "R$ 23,90"
+        },
+        {
+          "nome": "Caneca 630 ml",
+          "valor": "R$ 29,90"
+        },
+        {
+          "nome": "Caneca 700 ml",
+          "valor": "R$ 33,90"
+        },
+        {
+          "nome": "Canecão 1,2 L",
+          "valor": "R$ 55,90"
+        }
+      ],
+      "serve_pessoas": null
+    },
+    {
+      "id": "chopp_brahma",
+      "categoria": "Chopp individual",
+      "nome": "Chopp Brahma",
+      "aliases": [
+        "chopp brahma",
+        "brahma chopp",
+        "brahma de chopp"
+      ],
+      "descricao": "Chopp individual Brahma.",
+      "variacoes": [
+        {
+          "nome": "Caneca 340 ml",
+          "valor": "R$ 13,90"
+        },
+        {
+          "nome": "Copo 500 ml",
+          "valor": "R$ 21,90"
+        },
+        {
+          "nome": "Caneca 630 ml",
+          "valor": "R$ 26,90"
+        },
+        {
+          "nome": "Caneca 700 ml",
+          "valor": "R$ 29,90"
+        },
+        {
+          "nome": "Canecão 1,2 L",
+          "valor": "R$ 51,90"
+        }
+      ],
+      "serve_pessoas": null
+    },
+    {
+      "id": "chopp_ashby",
+      "categoria": "Chopp individual",
+      "nome": "Chopp Ashby",
+      "aliases": [
+        "chopp ashby",
+        "ashby chopp",
+        "ashby"
+      ],
+      "descricao": "Chopp individual Ashby.",
+      "variacoes": [
+        {
+          "nome": "Caneca 340 ml",
+          "valor": "R$ 9,90"
+        },
+        {
+          "nome": "Copo 500 ml",
+          "valor": "R$ 13,90"
+        },
+        {
+          "nome": "Caneca 630 ml",
+          "valor": "R$ 16,90"
+        },
+        {
+          "nome": "Caneca 700 ml",
+          "valor": "R$ 18,90"
+        },
+        {
+          "nome": "Canecão 1,2 L",
+          "valor": "R$ 32,90"
+        }
+      ],
+      "serve_pessoas": null
+    },
+    {
+      "id": "chopp_vinho",
+      "categoria": "Bebidas",
+      "nome": "Chopp de Vinho",
+      "aliases": [
+        "chopp de vinho",
+        "chopp vinho",
+        "vinho chopp"
+      ],
+      "descricao": "Chopp de vinho em diferentes tamanhos.",
+      "variacoes": [
+        {
+          "nome": "300 ml",
+          "valor": "R$ 15,90"
+        },
+        {
+          "nome": "500 ml",
+          "valor": "R$ 25,90"
+        },
+        {
+          "nome": "1,2 L",
+          "valor": "R$ 51,90"
+        },
+        {
+          "nome": "Descartável 500 ml",
+          "valor": "R$ 25,90"
+        },
+        {
+          "nome": "Descartável 700 ml",
+          "valor": "R$ 36,90"
+        }
+      ],
+      "serve_pessoas": null
+    },
+    {
+      "id": "heineken_long_neck",
+      "categoria": "Cervejas",
+      "nome": "Heineken Long Neck",
+      "aliases": [
+        "heineken long neck",
+        "heineken longneck",
+        "cerveja heineken",
+        "heineken"
+      ],
+      "descricao": "Heineken Long Neck.",
+      "valor": "R$ 18,60",
+      "serve_pessoas": null
+    },
+    {
+      "id": "heineken_zero_long_neck",
+      "categoria": "Cervejas sem álcool",
+      "nome": "Heineken Zero Long Neck",
       "aliases": [
         "heineken zero",
+        "heineken zero long neck",
         "cerveja zero",
         "long neck zero",
         "bebida sem alcool",
         "bebida sem álcool"
       ],
-      "valor": "Consultar com a equipe",
-      "descricao": "Opção de cerveja sem álcool. O Sr. Boteco não possui chopp zero.",
-      "validade": "Consultar disponibilidade do dia pelo WhatsApp."
+      "descricao": "Opção de cerveja sem álcool. O valor não está validado de forma consistente na base original.",
+      "valor": null,
+      "serve_pessoas": null,
+      "disponibilidade": "Valor e disponibilidade devem ser confirmados com a equipe."
+    },
+    {
+      "id": "caipirinha_cachaca",
+      "categoria": "Caipirinhas",
+      "nome": "Caipirinha de Cachaça",
+      "aliases": [
+        "caipirinha de cachaca",
+        "caipirinha de cachaça",
+        "caipi cachaca",
+        "caipi cachaça"
+      ],
+      "descricao": "Sabores disponíveis na base: abacaxi, kiwi, laranja, limão, morango e maracujá.",
+      "valor": "R$ 20,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "caipirinha_saque",
+      "categoria": "Caipirinhas",
+      "nome": "Caipirinha de Saquê",
+      "aliases": [
+        "caipirinha de saque",
+        "caipirinha de saquê",
+        "caipisaque",
+        "caipi saque",
+        "caipi saquê"
+      ],
+      "descricao": "Sabores disponíveis na base: abacaxi, kiwi, laranja, limão, morango e maracujá.",
+      "valor": "R$ 23,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "caipirinha_vinho_branco",
+      "categoria": "Caipirinhas",
+      "nome": "Caipirinha de Vinho Branco",
+      "aliases": [
+        "caipirinha de vinho branco",
+        "caipi vinho branco",
+        "caipi de vinho"
+      ],
+      "descricao": "Sabores disponíveis na base: abacaxi, kiwi, laranja, limão, morango e maracujá.",
+      "valor": "R$ 23,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "caipirinha_vodka",
+      "categoria": "Caipirinhas",
+      "nome": "Caipirinha de Vodka",
+      "aliases": [
+        "caipirinha de vodka",
+        "caipivodka",
+        "caipi vodka",
+        "caipi de vodka"
+      ],
+      "descricao": "Sabores disponíveis na base: abacaxi, kiwi, laranja, limão, morango e maracujá.",
+      "valor": "R$ 23,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "dose_campari",
+      "categoria": "Doses",
+      "nome": "Campari 50 ml",
+      "aliases": [
+        "campari",
+        "dose campari"
+      ],
+      "descricao": "Dose de 50 ml.",
+      "valor": "R$ 13,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "dose_licor43",
+      "categoria": "Doses",
+      "nome": "Licor 43 50 ml",
+      "aliases": [
+        "licor 43",
+        "licor43",
+        "dose licor 43"
+      ],
+      "descricao": "Dose de 50 ml.",
+      "valor": "R$ 22,00",
+      "serve_pessoas": null
+    },
+    {
+      "id": "dose_tequila",
+      "categoria": "Doses",
+      "nome": "Tequila 50 ml",
+      "aliases": [
+        "tequila",
+        "dose tequila"
+      ],
+      "descricao": "Dose de 50 ml.",
+      "valor": "R$ 26,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "dose_velho_barreiro",
+      "categoria": "Doses",
+      "nome": "Velho Barreiro 50 ml",
+      "aliases": [
+        "velho barreiro",
+        "dose velho barreiro"
+      ],
+      "descricao": "Dose de 50 ml.",
+      "valor": "R$ 7,70",
+      "serve_pessoas": null
+    },
+    {
+      "id": "dose_black_label",
+      "categoria": "Doses",
+      "nome": "Whisky Black Label 50 ml",
+      "aliases": [
+        "black label",
+        "whisky black label",
+        "whiskey black label"
+      ],
+      "descricao": "Dose de 50 ml.",
+      "valor": "R$ 22,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "dose_jack_daniels",
+      "categoria": "Doses",
+      "nome": "Whisky Jack Daniels 50 ml",
+      "aliases": [
+        "jack daniels",
+        "whisky jack daniels",
+        "whiskey jack daniels"
+      ],
+      "descricao": "Dose de 50 ml.",
+      "valor": "R$ 29,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "dose_red_label",
+      "categoria": "Doses",
+      "nome": "Whisky Red Label 50 ml",
+      "aliases": [
+        "red label",
+        "whisky red label",
+        "whiskey red label"
+      ],
+      "descricao": "Dose de 50 ml.",
+      "valor": "R$ 28,90",
+      "serve_pessoas": null
     }
   ],
+  "campanhas_ativas": {
+    "hamburguer_em_dobro": {
+      "descricao": "Toda terça-feira, compra 1 hambúrguer e ganha outro.",
+      "validade": "Terças-feiras, das 16h às 21h.",
+      "regra": "Não inventar quais burgers participam. Para opções participantes, enviar o cardápio e, se necessário, WhatsApp da equipe."
+    },
+    "feijoada": {
+      "descricao": "Feijoada às quartas e sábados.",
+      "regra": "Não inventar preço, composição ou tamanho. Se perguntarem detalhes ausentes, enviar cardápio e WhatsApp."
+    },
+    "happy_hour": {
+      "descricao": "Happy hour das 16h às 21h.",
+      "regra": "Não inventar promoções ou preços não cadastrados."
+    }
+  },
+  "respostas_base": {
+    "saudacao": "Que bom falar com você. Posso te ajudar com cardápio, pedido, reserva, horário, localização ou alguma dúvida sobre um item.",
+    "cardapio": "Aqui está nosso cardápio e canal de pedidos: https://botequimpatiolimeira.saipos.com/home\n\nPor esse link você pode conferir as opções e fazer o pedido para retirada no local ou entrega conforme aparecer no checkout.\n\niFood: https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72\n99Food: https://99app.com/99food/food/ — procure por Sr. Boteco Limeira no app.",
+    "pedido": "Você pode fazer seu pedido pelo nosso link: https://botequimpatiolimeira.saipos.com/home\n\nEscolha retirada no local ou entrega conforme as opções disponíveis no checkout.\n\niFood: https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72\n99Food: https://99app.com/99food/food/ — procure por Sr. Boteco Limeira no app.",
+    "delivery": "Para pedir com entrega, você pode usar nosso link de pedidos: https://botequimpatiolimeira.saipos.com/home\n\niFood: https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72\n\n99Food: https://99app.com/99food/food/ — procure por Sr. Boteco Limeira no app.",
+    "humano": "Claro. Para falar direto com a equipe e resolver mais rápido, acesse nosso WhatsApp: https://wa.me/5519997858351",
+    "item_nao_encontrado": "Não encontrei esse item com informação validada na minha base e prefiro não arriscar preço ou composição. Confira o cardápio atualizado em https://botequimpatiolimeira.saipos.com/home. Se quiser confirmar um detalhe específico com a equipe no WhatsApp: https://wa.me/5519997858351",
+    "localizacao": "Ficamos no Pátio Limeira Shopping.",
+    "horario": "Funcionamos todos os dias das 11h às 22h.",
+    "almoco": "De segunda a sexta-feira, das 11h às 15h, temos almoço executivo. Posso consultar um prato específico da base ou te enviar o cardápio completo.",
+    "reserva": "Para organizar sua reserva, preciso de nome, telefone, data, horário e quantidade de pessoas. A disponibilidade só é confirmada pela equipe.",
+    "story_mention": "Adorei ver sua marcação. Obrigado por dividir esse momento com a gente — esperamos te receber de novo em breve.",
+    "despedida": "Foi um prazer te atender. Quando quiser voltar ou fazer um pedido, é só chamar.",
+    "fallback": "Quero te passar a informação certa. Como esse detalhe não está validado na minha base, consulte o cardápio em https://botequimpatiolimeira.saipos.com/home ou fale com a equipe no WhatsApp: https://wa.me/5519997858351"
+  },
   "regras_atendimento": [
-    "Não inventar preço, produto, promoção, horário, evento ou disponibilidade.",
-    "Open Chopp tem preço autorizado: domingo a quinta R$ 29,90; sexta e sábado R$ 49,90; das 16h às 21h.",
-    "Não relacionar Open Chopp com jogo, futebol, transmissão ou Open em Campo.",
-    "Para preço de itens do cardápio, direcionar para WhatsApp: https://wa.me/5519997858351.",
-    "A resposta de almoço deve ser humanizada, sem lista grande de preços.",
-    "Fondue continua ativo sem relação com Dia dos Namorados.",
-    "Quando houver marcação em story/foto, agradecer de forma humana e curta.",
-    "Mensagens de empresas/equipes devem ser direcionadas para atendimento B2B via WhatsApp, destacando almoço executivo e happy hour.",
-    "Se o cliente perguntar sobre chopp zero, open chopp zero, cerveja zero ou bebida sem álcool, informar que não temos chopp zero e oferecer Heineken Zero long neck. Não inventar valor.",
-    "Se o cliente perguntar se o valor do fondue é por pessoa, por casal, individual, ou se serve 2 pessoas, responder diretamente que o valor é do prato feito para servir 2 pessoas. Não responder com Open Chopp, jogo, combo ou público família/casal.",
-    "Aceitamos vale refeição das bandeiras Alelo, Pluxee, VR e Ticket. Não aceitamos vale alimentação em nenhuma bandeira nem outras bandeiras de vale refeição além dessas quatro.", "Fazemos entrega via iFood todos os dias das 11h às 22h.", "Se o cliente pedir para falar com atendente ou humano, nunca tratar como vaga de emprego: acolher e oferecer o WhatsApp da equipe para um atendimento mais pessoal.", "Sempre que fizer sentido, conduzir a conversa de forma estratégica para reserva de mesa ou visita ao restaurante, reforçando disponibilidade e convidando o cliente a conhecer o Sr. Boteco, sem ser repetitivo ou insistente, e sem perder o interesse de quem veio por anúncio/tráfego pago."
-  ],
-  "regra_chopp_marcas_individuais": "Os chopps das marcas Heineken, Brahma e Ashby (caneca 340ml, copo 500ml, caneca 630ml, caneca 700ml e canecão 1,2L) são itens individuais/unitários do cardápio e não fazem parte do Open Chopp promocional. Informar preço desses chopps apenas quando o cliente perguntar o valor; caso contrário, informar somente marca, tipo de copo/caneca e quantidade servida. Se perguntarem qual é a marca do chopp usado no Open Chopp promocional, não informar marca: direcionar para o WhatsApp da equipe.",  "regra_bebidas_cardapio_imagem": "Chopp de Vinho (300 ml, 500 ml, 1,2 L, descartável 500 ml e descartável 700 ml), Cervejas (Heineken Long Neck e Heineken Zero Long Neck), Caipirinhas (cachaça, saquê, vinho branco e vodka, nos sabores abacaxi, kiwi, laranja, limão, morango e maracujá) e Doses de 50 ml (Campari, Licor 43, Tequila, Velho Barreiro, Whisky Black Label, Whisky Jack Daniels e Whisky Red Label) são itens do cardápio com preços fixos já informados na base de conhecimento. Informar o preço apenas quando o cliente perguntar o valor; caso contrário, informar somente o tipo, marca ou sabor e a quantidade/dose servida. Nunca inventar sabor, marca, tipo ou preço diferente do que está registrado aqui.","respostas_anuncio_open_chopp": {
-    "valor_open_chopp": "O Open Chopp acontece das 16h às 21h 🍻\n\nDomingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nEstamos no Pátio Limeira Shopping.\nQuer que eu te mande o WhatsApp para falar com a equipe mais rápido?",
-    "open_chopp_hoje": "Temos sim 😊\n\nNosso Open Chopp é das 16h às 21h.\n\nDomingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nQuer que eu te mande o WhatsApp para confirmar sua mesa?",
-    "localizacao": "Ficamos no Pátio Limeira Shopping 😊\n\nÉ só chegar no Sr. Boteco.\n\nSe quiser falar com a equipe para confirmar mesa ou tirar dúvida mais rápido, chama no WhatsApp:\nhttps://wa.me/5519997858351",
-    "precisa_reservar": "Não é obrigatório, mas recomendamos reservar, principalmente em dia de jogo ou fim de semana 😊\n\nMe fala para quantas pessoas seria que eu te mando o WhatsApp da equipe para agilizar.",
-    "mesa_hoje": "Provavelmente sim 😊\n\nPara confirmar certinho e já agilizar sua chegada, chama a equipe no WhatsApp:\nhttps://wa.me/5519997858351",
-    "desafio_placar": "Funciona assim 👀⚽\n\nVocê comenta o palpite do placar aqui no post.\n\nA primeira pessoa que acertar o resultado correto ganha 1 Open Chopp grátis, válido para 1 pessoa.\n\nBoa sorte 🍻",
-    "um_palpite_por_perfil": "Para ficar justo, vale 1 palpite por perfil 😊\n\nComenta seu placar e já marca os amigos para virem assistir com você.",
-    "duas_pessoas_acertarem": "Ganha a primeira pessoa que comentou o placar correto 👀\n\nA ordem considerada é a dos comentários no post.",
-    "ate_quando_comentar": "Pode comentar até o início do jogo ⚽\n\nDepois que a partida começar, os palpites não entram mais no desafio.",
-    "premio_quando": "O Open Chopp grátis é válido para 1 pessoa.\n\nA equipe confirma com o ganhador direitinho pelo direct depois do resultado 🍻",
-    "combo_itens": "O combo vem com frango a passarinho + calabresa por R$ 49,90 🍗\n\nÓtimo para dividir enquanto assiste ao jogo.",
-    "serve_quantas_pessoas": "Depende da fome da turma 😄\n\nMas é uma boa opção para compartilhar enquanto toma um chopp e acompanha o jogo.",
-    "outras_porcoes": "Temos sim 😊\n\nPara ver as opções e valores atualizados do cardápio, chama a equipe pelo WhatsApp:\nhttps://wa.me/5519997858351",
-    "familia": "Dá sim 😊\n\nO Sr. Boteco fica dentro do Pátio Limeira Shopping, então é uma opção bem tranquila para vir com família, amigos ou casal.",
-    "crianca": "Pode sim 😊\n\nO restaurante é aberto para famílias.\n\nApenas o consumo de bebidas alcoólicas é permitido somente para maiores de 18 anos.",
-    "casal_ou_turma": "Serve para os dois 😊\n\nTem gente que vem em casal, com amigos, em família e também em grupo para assistir jogo e aproveitar o Open Chopp.",
-    "aniversario": "Dá sim 🎉\n\nO Sr. Boteco é uma ótima opção para comemorar com a turma.\n\nMe fala a data e quantidade de pessoas que eu te mando o WhatsApp da equipe para organizar certinho.",
-    "horario_funcionamento": "Funcionamos todos os dias das 11h às 22h 😊\n\nO Open Chopp acontece das 16h às 21h.",
-    "open_comeca": "Começa às 16h e vai até às 21h 🍻",
-    "chegar_mais_tarde": "Sim 😊\n\nO Open Chopp vai até às 21h. Chegando dentro desse horário, dá para aproveitar.",
-        "aceita_cartao": "Aceitamos sim 😊\n\nTrabalhamos com dinheiro, cartão de crédito, cartão de débito e Pix.\n\nTambém aceitamos vale refeição das bandeiras Alelo, Pluxee, VR e Ticket.\n\nNão aceitamos vale alimentação.\n\nQualquer dúvida, nossa equipe confirma certinho pelo WhatsApp:\nhttps://wa.me/5519997858351",
-    "tem_taxa": "Para confirmar qualquer detalhe de consumo, taxa ou regra atualizada, o melhor é falar direto com a equipe pelo WhatsApp:\nhttps://wa.me/5519997858351",
-    "open_individual": "Sim, o Open Chopp é por pessoa 😊\n\nValores:\nDomingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nDas 16h às 21h.",
-    "pode_dividir_open": "O Open Chopp é individual 😊\n\nCada pessoa que quiser participar precisa contratar o seu.",
-    "sem_alcool": "Temos sim 😊\n\nNo momento não temos chopp zero, mas temos Heineken Zero long neck como opção sem álcool.\n\nPara consultar disponibilidade e valores atualizados:\nhttps://wa.me/5519997858351",
-    "so_comer": "Claro 😊\n\nVocê pode vir só para comer também. Temos porções, pratos e opções do cardápio.\n\nPara ver valores atualizados:\nhttps://wa.me/5519997858351",
-    "almoco_tambem": "Temos sim 😊\n\nDe segunda a sexta, das 11h às 15h, servimos almoço com pratos executivos bem servidos e opções a partir de R$ 19,90.\n\nTem bisteca, frango, parmegiana, strogonoff, omelete, prato fitness e outras opções do dia.\n\nEstamos no Pátio Limeira Shopping.\n\nQuer que eu te mande o WhatsApp para confirmar o cardápio de hoje?",
-    "open_no_almoco": "O Open Chopp acontece das 16h às 21h 🍻\n\nNo almoço, de segunda a sexta, temos pratos executivos das 11h às 15h.",
-    "levar_turma": "Boa! 😊\n\nPara grupo, é melhor falar direto com a equipe para organizar mesa e horário.\n\nChama no WhatsApp:\nhttps://wa.me/5519997858351",
-    "happy_hour_empresa": "Dá sim 😊\n\nO Sr. Boteco é uma ótima opção para happy hour de equipe, principalmente das 16h às 21h.\n\nMe fala o nome da empresa e quantidade aproximada de pessoas que eu te mando o WhatsApp da equipe.",
-    "comentario_eu_vou": "Aí sim! Esperamos você no Sr. Boteco 🍻",
-    "comentario_partiu": "Partiu boteco! Chama a turma 🍻⚽",
-    "comentario_palpite": "Palpite registrado 👀⚽🍻",
-    "comentario_marcando_amigo": "Essa dupla já tem que vir pro boteco 🍻😄",
-    "comentario_que_horas": "O Open Chopp é das 16h às 21h 🍻",
-    "comentario_valor": "Domingo a quinta: R$ 29,90\nSexta e sábado: R$ 49,90\n\nDas 16h às 21h 🍻",
-    "padrao_especifica": "Boa pergunta 😊\n\nPara eu não te passar nenhuma informação errada, chama a equipe pelo WhatsApp que eles confirmam certinho para você:\nhttps://wa.me/5519997858351",
-    "primeiro_contato_manychat": "Que bom te ver por aqui 😊\n\nO Open Chopp do Sr. Boteco acontece das 16h às 21h:\n\n🍻 Domingo a quinta: R$ 29,90\n🍻 Sexta e sábado: R$ 49,90\n\nTambém temos porções e opções do cardápio para acompanhar.\n\nEstamos no Pátio Limeira Shopping.\n\nQuer falar com a equipe pelo WhatsApp para confirmar mesa ou tirar dúvida mais rápido?"
-  }
+    "Nunca inventar preço, produto, promoção, composição, quantidade de pessoas servidas, horário, evento, disponibilidade de mesa ou condição de entrega.",
+    "Usar o primeiro nome real do cliente quando ele vier do ManyChat. Se não houver nome, não inventar nem usar placeholders.",
+    "Toda pergunta deve receber uma resposta útil. Nunca deixar a conversa sem saída: responder com o fato validado, o cardápio/pedido ou o WhatsApp da equipe.",
+    "Se o cliente pedir cardápio ou houver oportunidade natural de enviá-lo, usar https://botequimpatiolimeira.saipos.com/home e explicar retirada/entrega conforme as opções do checkout.",
+    "Se o cliente pedir delivery, oferecer o link direto, iFood e 99Food. No 99Food, orientar a busca por Sr. Boteco Limeira no app quando não houver deep link específico validado.",
+    "Se um item não estiver no catálogo ou estiver sem preço/composição/porção confirmados, dizer com transparência que a informação não está validada e enviar cardápio e WhatsApp.",
+    "O Fondue Salgado é o único fondue ativo nesta base: R$ 99,90, serve 2 pessoas, acompanha torradas, iscas de frango empanado, contrafilé, calabresa e batata frita, disponível das 16h às 21h.",
+    "Não fornecer informação sobre produtos ou campanhas removidos da base. Se o cliente insistir em algo não ativo, responder apenas que a condição/opção não está nas informações ativas e direcionar para cardápio/WhatsApp.",
+    "Aceitamos dinheiro, cartão de crédito, cartão de débito, Pix e vale refeição Alelo, Pluxee, VR e Ticket. Não aceitamos vale alimentação.",
+    "Assuntos de vaga, currículo, freelance, garçom, garçonete ou cumim vão para https://wa.me/5517991034703.",
+    "Pedido para falar com atendente/humano não é vaga: direcionar para https://wa.me/5519997858351.",
+    "Reservas, aniversários, grupos e eventos nunca devem ser confirmados automaticamente; coletar os dados e direcionar para confirmação da equipe.",
+    "O tom deve ser de venda humanizada: cordial, específico, consultivo e objetivo, com no máximo um convite comercial claro por resposta. Evitar texto genérico, excesso de emojis e frases repetidas."
+  ]
 }

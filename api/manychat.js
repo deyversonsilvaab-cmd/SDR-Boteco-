@@ -1,910 +1,699 @@
-import OpenAI from "openai";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import crypto from "node:crypto";
 
-const DEFAULT_FALLBACK = "Vou confirmar com a equipe para não te passar nenhuma informação errada e já te retorno 😊";
 const DEFAULT_WHATSAPP_LINK = "https://wa.me/5519997858351";
+const DEFAULT_MENU_LINK = "https://botequimpatiolimeira.saipos.com/home";
+const DEFAULT_IFOOD_LINK = "https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72";
+const DEFAULT_99FOOD_LINK = "https://99app.com/99food/food/";
+const DEFAULT_FALLBACK = `Quero te passar a informação certa. Confira o cardápio em ${DEFAULT_MENU_LINK} ou fale com a equipe no WhatsApp: ${DEFAULT_WHATSAPP_LINK}`;
 const INSTAGRAM_MAX_MESSAGE_LENGTH = 900;
 const INSTAGRAM_MAX_MESSAGE_PARTS = 3;
+const OPENAI_TIMEOUT_MS = 12000;
 
 function setJsonHeaders(res) {
-    res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-webhook-secret");
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, x-webhook-secret");
+  res.setHeader("Cache-Control", "no-store");
 }
 
 function send(res, statusCode, payload) {
-    setJsonHeaders(res);
-    return res.status(statusCode).json(payload);
+  setJsonHeaders(res);
+  return res.status(statusCode).json(payload);
 }
 
-function safeText(value) {
-    if (typeof value !== "string") return "";
-    return value.trim().slice(0, 1200);
+function safeText(value, max = 1800) {
+  if (value === null || value === undefined) return "";
+  return String(value).trim().slice(0, max);
 }
 
 function normalizeText(value) {
-    return safeText(value)
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^\w\s]/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+  return safeText(value, 5000)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function includesAny(text, terms) {
-    return terms.some((term) => text.includes(normalizeText(term)));
+  return terms.some((term) => text.includes(normalizeText(term)));
 }
 
 function getHeader(req, name) {
-    const value = req.headers[name.toLowerCase()];
-    if (Array.isArray(value)) return value[0];
-    return value || "";
+  const value = req.headers?.[name.toLowerCase()];
+  return Array.isArray(value) ? value[0] : value || "";
 }
 
 function isAuthorized(req) {
-    const expectedSecret = process.env.WEBHOOK_SECRET;
-    if (!expectedSecret) return true;
-
-  const headerSecret = getHeader(req, "x-webhook-secret");
-    const authHeader = getHeader(req, "authorization");
-    const bearer = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : "";
-
-  return headerSecret === expectedSecret || bearer === expectedSecret;
+  const expected = process.env.WEBHOOK_SECRET;
+  if (!expected) return true;
+  const direct = getHeader(req, "x-webhook-secret");
+  const auth = getHeader(req, "authorization");
+  const bearer = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : "";
+  return direct === expected || bearer === expected;
 }
 
 function extractMessage(body) {
-    return safeText(
-          body?.message ||
-          body?.text ||
-          body?.input ||
-          body?.query ||
-          body?.question ||
+  return safeText(
+    body?.message ||
+      body?.text ||
+      body?.input ||
+      body?.query ||
+      body?.question ||
       body?.user_message ||
-          body?.last_input_text ||
-          body?.last_text_input ||
-          body?.last_text ||
-          body?.comment ||
-          body?.comment_text ||
-          body?.caption ||
-          body?.story_text ||
-          body?.trigger_text ||
-          body?.event_text ||
-          body?.custom_fields?.message ||
-          body?.custom_fields?.text ||
-          body?.custom_fields?.input ||
-          body?.custom_fields?.last_input_text ||
-          body?.custom_fields?.last_text_input ||
-          body?.custom_fields?.last_text ||
-          body?.custom_fields?.comment_text ||
-          body?.custom_fields?.story_text ||
-          ""
-        );
+      body?.last_input_text ||
+      body?.last_text_input ||
+      body?.last_text ||
+      body?.comment ||
+      body?.comment_text ||
+      body?.caption ||
+      body?.story_text ||
+      body?.trigger_text ||
+      body?.event_text ||
+      body?.custom_fields?.message ||
+      body?.custom_fields?.text ||
+      body?.custom_fields?.input ||
+      body?.custom_fields?.last_input_text ||
+      body?.custom_fields?.last_text_input ||
+      body?.custom_fields?.last_text ||
+      body?.custom_fields?.comment_text ||
+      body?.custom_fields?.story_text ||
+      ""
+  );
 }
 
 function bodyContains(body, terms) {
-    let raw = "";
-    try {
-          raw = JSON.stringify(body || {}).slice(0, 12000);
-    } catch {
-          raw = "";
-    }
-    const text = normalizeText(raw);
-    return includesAny(text, terms);
+  let raw = "";
+  try {
+    raw = JSON.stringify(body || {}).slice(0, 16000);
+  } catch {
+    raw = "";
+  }
+  return includesAny(normalizeText(raw), terms);
 }
 
 function inferMessageFromEvent(body) {
-    const eventText = safeText(
-          body?.event_type ||
-          body?.event ||
-          body?.trigger ||
-          body?.source ||
-          body?.flow_trigger ||
-          body?.custom_fields?.event_type ||
-          body?.custom_fields?.event ||
-          body?.custom_fields?.trigger ||
-          ""
-        );
+  const eventText = safeText(
+    body?.event_type ||
+      body?.event ||
+      body?.trigger ||
+      body?.source ||
+      body?.flow_trigger ||
+      body?.custom_fields?.event_type ||
+      body?.custom_fields?.event ||
+      body?.custom_fields?.trigger ||
+      ""
+  );
 
-  if (includesAny(eventText, ["marcacao_story", "story_mention", "story mention", "mentioned in story", "mencionou", "marcou no story"]) ||
-          bodyContains(body, ["marcacao_story", "story_mention", "story mention", "mentioned in story", "mencionou voce no proprio story", "mencionou você no próprio story", "marcou no story"])) {
-        return "mencionou você no próprio story";
+  if (
+    includesAny(eventText, ["marcacao story", "story mention", "mentioned in story", "mencionou", "marcou no story"]) ||
+    bodyContains(body, ["story mention", "mencionou voce no proprio story", "marcou no story"])
+  ) {
+    return "mencionou você no próprio story";
   }
 
-  if (includesAny(eventText, ["comment", "comentario", "comentário"]) || bodyContains(body, ["instagram_comment", "comentario no post", "comentário no post"])) {
-        return safeText(body?.comment_text || body?.comment || body?.custom_fields?.comment_text || body?.custom_fields?.comment || "comentário no post");
+  if (includesAny(eventText, ["comment", "comentario"]) || bodyContains(body, ["instagram comment", "comentario no post"])) {
+    return safeText(body?.comment_text || body?.comment || body?.custom_fields?.comment_text || "comentário no post");
   }
 
   return "";
 }
 
 function extractCustomer(body) {
-    return {
-          id: safeText(String(body?.subscriber_id || body?.id || body?.contact_id || "")),
-          first_name: safeText(body?.first_name || body?.name || body?.profile?.first_name || ""),
-          username: safeText(body?.username || body?.ig_username || body?.profile?.username || ""),
-          channel: safeText(body?.channel || "instagram")
-    };
+  const rawFirstName = safeText(body?.first_name || body?.name || body?.profile?.first_name || "", 80);
+  const firstName = rawFirstName.replace(/[{}\[\]<>$]/g, "").trim().slice(0, 50);
+  return {
+    id: safeText(body?.subscriber_id || body?.id || body?.contact_id || "", 120),
+    first_name: firstName,
+    username: safeText(body?.username || body?.ig_username || body?.profile?.username || "", 100),
+    channel: safeText(body?.channel || "instagram", 30)
+  };
 }
 
 function extractConversationContext(body) {
-    return {
-          last_intent: safeText(
-                  body?.last_intent ||
-                  body?.intent ||
-                  body?.ai_intent ||
-                  body?.custom_fields?.last_intent ||
-                  body?.custom_fields?.ai_intent ||
-                  ""
-                ),
-          last_topic: safeText(
-                  body?.last_topic ||
-                  body?.topic ||
-                  body?.custom_fields?.last_topic ||
-                  body?.custom_fields?.ai_topic ||
-                  ""
-                )
-    };
+  return {
+    last_intent: safeText(
+      body?.last_intent || body?.intent || body?.ai_intent || body?.custom_fields?.last_intent || body?.custom_fields?.ai_intent || "",
+      80
+    ),
+    last_topic: safeText(
+      body?.last_topic || body?.topic || body?.ai_topic || body?.custom_fields?.last_topic || body?.custom_fields?.ai_topic || "",
+      120
+    ),
+    last_bot_reply: safeText(body?.last_bot_reply || body?.custom_fields?.last_bot_reply || "", 1000)
+  };
 }
 
 async function loadKnowledge() {
-    try {
-          const filePath = path.join(process.cwd(), "data", "knowledge.json");
-          const raw = await readFile(filePath, "utf8");
-          return JSON.parse(raw);
-    } catch {
-          return {
-                  empresa: {
-                            nome: process.env.BUSINESS_NAME || "Sr. Boteco Limeira",
-                            whatsapp: "5519997858351",
-                            whatsapp_link: "https://wa.me/5519997858351",
-                            endereco: "Pátio Limeira Shopping"
-                  },
-                  resposta_fallback: DEFAULT_FALLBACK
-          };
-    }
+  const filePath = path.join(process.cwd(), "data", "knowledge.json");
+  try {
+    return JSON.parse(await readFile(filePath, "utf8"));
+  } catch (error) {
+    console.error("KNOWLEDGE_LOAD_ERROR", error?.message || error);
+    return {
+      empresa: { nome: process.env.BUSINESS_NAME || "Sr. Boteco Limeira", whatsapp_link: DEFAULT_WHATSAPP_LINK, endereco: "Pátio Limeira Shopping" },
+      links: { cardapio_pedido: DEFAULT_MENU_LINK, whatsapp: DEFAULT_WHATSAPP_LINK, ifood: DEFAULT_IFOOD_LINK, food99: DEFAULT_99FOOD_LINK },
+      respostas_base: { fallback: DEFAULT_FALLBACK },
+      catalogo: []
+    };
+  }
+}
+
+function getLinks(knowledge) {
+  return {
+    menu: knowledge?.links?.cardapio_pedido || DEFAULT_MENU_LINK,
+    whatsapp: knowledge?.links?.whatsapp || knowledge?.empresa?.whatsapp_link || DEFAULT_WHATSAPP_LINK,
+    ifood: knowledge?.links?.ifood || DEFAULT_IFOOD_LINK,
+    food99: knowledge?.links?.food99 || DEFAULT_99FOOD_LINK,
+    jobs: knowledge?.links?.whatsapp_vagas || "https://wa.me/5517991034703"
+  };
 }
 
 function isPriceQuestion(text) {
-    return includesAny(text, [
-          "valor",
-          "preco",
-          "preço",
-          "quanto custa",
-          "quanto esta",
-          "quanto está",
-          "quanto ta",
-          "quanto tá",
-          "qual valor",
-          "qual o valor",
-          "tem valor"
-        ]);
+  return includesAny(text, ["valor", "preco", "quanto custa", "quanto ta", "quanto esta", "qual valor", "tem valor"]);
 }
 
-function isPriceOnlyQuestion(text) {
-    return [
-          "valor",
-          "preco",
-          "preço",
-          "qual valor",
-          "qual o valor",
-          "quanto",
-          "quanto custa"
-        ].includes(text);
+function isServingQuestion(text) {
+  return includesAny(text, ["serve quant", "para quantas pessoas", "quantas pessoas", "serve 2", "serve duas", "individual", "por pessoa", "casal"]);
 }
 
-function mentionsOpenChopp(text) {
-    return (
-          includesAny(text, ["open chopp", "open chop", "open de chopp", "open do chopp", "chopp livre", "open bar de chopp", "open bar chopp"]) ||
-          (text.includes("open") && text.includes("chopp"))
-        );
+function isGreetingOnly(text) {
+  return includesAny(text, ["oi", "ola", "bom dia", "boa tarde", "boa noite", "tem alguem", "alguem ai", "oi tem alguem"]) && text.split(" ").length <= 7;
 }
 
-function mentionsFondue(text) {
-    return includesAny(text, [
-          "fondue",
-          "fundi",
-          "fundue",
-          "fondi",
-          "fondue salgado",
-          "fondue doce",
-          "noite de fondue"
-        ]);
+function isRemovedTopic(text) {
+  const removedCampaign = text.includes("open") && includesAny(text, ["chopp", "chope"]);
+  const removedSweetFondue = includesAny(text, ["fondue", "fundi", "fundue", "fondi"]) && text.includes("doce");
+  return removedCampaign || removedSweetFondue;
 }
 
-function isFonduePortionQuestion(text) {
-    return includesAny(text, [
-          "valor por pessoa ou casal",
-          "valor por pessoa ou o casal",
-          "preco por pessoa ou casal",
-          "preco por pessoa ou o casal",
-          "preço por pessoa ou casal",
-          "preço por pessoa ou o casal",
-          "esse valor e pro casal",
-          "esse valor é pro casal",
-          "valor e pro casal",
-          "valor é pro casal",
-          "valor pro casal",
-          "valor para casal",
-          "e para casal",
-          "é para casal",
-          "e pro casal",
-          "é pro casal",
-          "por pessoa ou casal",
-          "e por pessoa",
-          "é por pessoa",
-          "serve 2 pessoas",
-          "serve duas pessoas",
-          "serve para 2 pessoas",
-          "serve para duas pessoas",
-          "2 pessoas e isso",
-          "2 pessoas é isso",
-          "duas pessoas e isso",
-          "duas pessoas é isso",
-          "para quantas pessoas",
-          "quantas pessoas serve",
-          "serve quantos",
-          "serve quantas",
-          "prato para 2",
-          "prato para duas",
-          "individual",
-          "para os dois",
-          "serve os dois",
-          "serve para os dois"
-        ]);
+function findCatalogItemById(id, knowledge) {
+  const target = safeText(id, 120);
+  if (!target) return null;
+  return (Array.isArray(knowledge?.catalogo) ? knowledge.catalogo : []).find((item) => item?.id === target) || null;
 }
 
-function mentionsZeroAlcohol(text) {
-    return includesAny(text, [
-          "chopp zero",
-          "chope zero",
-          "open chopp zero",
-          "open zero",
-          "zero alcool",
-          "zero álcool",
-          "sem alcool",
-          "sem álcool",
-          "cerveja zero",
-          "heineken zero",
-          "bebida zero",
-          "bebida sem alcool",
-          "bebida sem álcool",
-          "alcool free",
-          "álcool free",
-          "nao alcoolico",
-          "não alcoólico",
-          "sem teor alcoolico",
-          "sem teor alcoólico"
-        ]);
+function findCatalogItem(message, knowledge) {
+  const text = normalizeText(message);
+  const items = Array.isArray(knowledge?.catalogo) ? knowledge.catalogo : [];
+  let best = null;
+
+  for (const item of items) {
+    const candidates = [item?.nome, ...(Array.isArray(item?.aliases) ? item.aliases : [])].filter(Boolean);
+    for (const candidate of candidates) {
+      const normalized = normalizeText(candidate);
+      if (!normalized || !text.includes(normalized)) continue;
+      const score = normalized.length + (text === normalized ? 200 : 0);
+      if (!best || score > best.score) best = { item, score, matched: normalized };
+    }
+  }
+  return best?.item || null;
 }
 
-function mentionsPaymentOrVoucher(text) {
-    const terms = [
-        "aceita cartao",
-        "aceita cartão",
-        "passa cartao",
-        "passa cartão",
-        "credito",
-        "crédito",
-        "debito",
-        "débito",
-        "pix",
-        "forma de pagamento",
-        "formas de pagamento",
-        "vale refeicao",
-        "vale refeição",
-        "vale alimentacao",
-        "vale alimentação",
-        "alelo",
-        "pluxee",
-        "sodexo",
-        "ticket restaurante",
-        "ticket alimentacao",
-        "ticket"
-    ];
-    if (includesAny(text, terms)) return true;
-    return /\bvr\b/.test(text);
+function selectVariations(item, message) {
+  const vars = Array.isArray(item?.variacoes) ? item.variacoes : [];
+  if (!vars.length) return [];
+  const text = normalizeText(message);
+  const exactSizeMatches = vars.filter((v) => {
+    const n = normalizeText(v?.nome || "");
+    const numbers = n.match(/\b\d+(?:\s\d+)?\b/g) || [];
+    return numbers.some((num) => text.includes(num));
+  });
+  return exactSizeMatches.length ? exactSizeMatches : vars;
 }
 
-function looksLikeScoreGuess(text) {
-    return /\b\d+\s*x\s*\d+\b/.test(text) || /\bbrasil\b.*\d+.*\d+/.test(text);
-}
+function formatCatalogItem(item, message, links) {
+  const lines = [item.nome];
+  if (item.descricao) lines.push(item.descricao);
 
-function getAdReply(knowledge, key, fallback = DEFAULT_FALLBACK) {
-    return knowledge?.respostas_anuncio_open_chopp?.[key] || knowledge?.respostas_rapidas?.[`anuncio_${key}`] || fallback;
-}
+  if (item.valor) lines.push(`Valor: ${item.valor}`);
 
-function normalizePriceString(value) {
-    return String(value || "").replace(/\s+/g, "").toUpperCase();
-}
+  const variations = selectVariations(item, message);
+  if (variations.length) {
+    lines.push(variations.map((v) => `${v.nome} — ${v.valor}`).join("\n"));
+  }
 
-function collectAllowedPrices(knowledge) {
-    const allowed = new Set();
-    const walk = (node) => {
-          if (typeof node === "string") {
-                  const matches = node.match(/R\$\s?\d{1,3}(?:\.\d{3})*,\d{2}/g);
-                  if (matches) matches.forEach((match) => allowed.add(normalizePriceString(match)));
-          } else if (Array.isArray(node)) {
-                  node.forEach(walk);
-          } else if (node && typeof node === "object") {
-                  Object.values(node).forEach(walk);
-          }
-    };
-    walk(knowledge);
-    return allowed;
-}
+  if (item.serve_texto) lines.push(item.serve_texto);
+  if (item.disponibilidade) lines.push(item.disponibilidade);
 
-function extractPricesFromText(text) {
-    const matches = String(text || "").match(/R\$\s?\d{1,3}(?:\.\d{3})*,\d{2}/g);
-    return matches ? matches.map(normalizePriceString) : [];
-}
+  const missingServing = isServingQuestion(normalizeText(message)) && item.serve_pessoas == null && !item.serve_texto;
+  const missingPrice = isPriceQuestion(normalizeText(message)) && !item.valor && !variations.length;
 
-function containsInventedPrice(text, allowedPrices) {
-    const pricesInText = extractPricesFromText(text);
-    return pricesInText.some((price) => !allowedPrices.has(price));
-}
+  if (missingPrice || missingServing) {
+    const missing = [missingPrice ? "o valor" : "", missingServing ? "quantas pessoas serve" : ""].filter(Boolean).join(" e ");
+    lines.push(`Não tenho ${missing} validado aqui e não vou arriscar. Para confirmar com a equipe no WhatsApp: ${links.whatsapp}`);
+  }
 
-function getWhatsappLink(knowledge) {
-        return (
-                    knowledge?.empresa?.whatsapp_link ||
-                    knowledge?.links?.whatsapp ||
-                    DEFAULT_WHATSAPP_LINK
-                );
-}
+  lines.push(`Cardápio/pedido para retirada ou entrega: ${links.menu}\nDelivery também pelo iFood: ${links.ifood}\n99Food: ${links.food99} — procure por Sr. Boteco Limeira no app.`);
 
-function hasWhatsappLink(text) {
-        return /wa\.me\//i.test(String(text || ""));
-}
-
-function ensureWhatsappHandoff(text, knowledge) {
-        const base = String(text || "").trim();
-        if (hasWhatsappLink(base)) return base;
-        const link = getWhatsappLink(knowledge);
-        const linha = `Para um atendimento mais rápido, com mais atenção ou para confirmar disponibilidade, fala com a nossa equipe no WhatsApp: ${link}`;
-        return base ? `${base}\n\n📲 ${linha}` : `📲 ${linha}`;
-}
-
-function splitForInstagram(text, maxLen = INSTAGRAM_MAX_MESSAGE_LENGTH, maxParts = INSTAGRAM_MAX_MESSAGE_PARTS) {
-    const clean = String(text || "").trim();
-    if (!clean) return [];
-
-  const paragraphs = clean.split(/\n{2,}/);
-    const parts = [];
-    let current = "";
-
-  const pushCurrent = () => {
-        if (current) {
-                parts.push(current.trim());
-                current = "";
-        }
+  return {
+    facts: lines.join("\n\n"),
+    needs_human: missingPrice || missingServing,
+    missing_fields: [missingPrice ? "preco_validado" : null, missingServing ? "serve_pessoas_validado" : null].filter(Boolean)
   };
+}
 
-  for (const paragraph of paragraphs) {
-        const candidate = current ? `${current}\n\n${paragraph}` : paragraph;
-        if (candidate.length <= maxLen) {
-                current = candidate;
-                continue;
-        }
+function inferUnknownItemTopic(text) {
+  if (includesAny(text, ["tabua mista", "tábua mista"])) return "item:tabua_mista";
+  if (includesAny(text, ["picanha"])) return "item:picanha";
+  if (includesAny(text, ["burger", "burgers", "hamburguer", "hambúrguer"])) return "item:burgers";
+  if (includesAny(text, ["porcao", "porção"])) return "item:porcoes";
+  return "cardapio";
+}
 
-      pushCurrent();
-
-      if (paragraph.length <= maxLen) {
-              current = paragraph;
-              continue;
-      }
-
-      let remaining = paragraph;
-        while (remaining.length > maxLen) {
-                let cut = remaining.lastIndexOf(" ", maxLen);
-                if (cut <= 0) cut = maxLen;
-                parts.push(remaining.slice(0, cut).trim());
-                remaining = remaining.slice(cut).trim();
-        }
-        current = remaining;
-  }
-
-  pushCurrent();
-
-  if (parts.length > maxParts) {
-        const head = parts.slice(0, maxParts - 1);
-        const tail = parts.slice(maxParts - 1).join("\n\n");
-        head.push(tail.length <= maxLen ? tail : `${tail.slice(0, maxLen - 1).trim()}…`);
-        return head;
-  }
-
-  return parts;
+function makeResolution({ facts, intent, topic = intent, needs_human = false, lead_temperature = "morno", missing_fields = [], next_action = "responder" }) {
+  return { facts, intent, topic, needs_human, lead_temperature, missing_fields, next_action };
 }
 
 function resolveIntent(message, knowledge, context = {}) {
-    const text = normalizeText(message);
-    const lastIntent = normalizeText(context.last_intent || "");
-    const lastTopic = normalizeText(context.last_topic || "");
-    const respostas = knowledge.respostas_rapidas || {};
-    const priceQuestion = isPriceQuestion(text);
-    const priceOnlyQuestion = isPriceOnlyQuestion(text);
-    const openContext = includesAny(lastIntent, ["open_chopp", "open chopp", "anuncio_open_chopp"]) || includesAny(lastTopic, ["open_chopp", "open chopp", "anuncio_open_chopp", "jogo", "placar"]);
-    const fondueContext = mentionsFondue(text) || includesAny(lastIntent, ["fondue", "fondue_valor_porcoes"]) || includesAny(lastTopic, ["fondue", "fondue_valor_porcoes"]);
+  const text = normalizeText(message);
+  const links = getLinks(knowledge);
+  const base = knowledge?.respostas_base || {};
 
-  const saudacaoInicial = [
-        "oi", "ola", "olá", "oii", "oie", "opa", "eae", "e ai", "e aí",
-        "bom dia", "boa tarde", "boa noite", "tudo bem", "tudo bom",
-        "oi tudo bem", "ola tudo bem", "oi bom dia", "oi boa tarde", "oi boa noite"
-      ];
-    if (saudacaoInicial.includes(text)) {
-          return { facts: respostas.saudacao_inicial || DEFAULT_FALLBACK, intent: "saudacao", needs_human: false, lead_temperature: "morno", missing_fields: [] };
-    }
-
-  const despedida = [
-        "obrigado", "obrigada", "muito obrigado", "muito obrigada", "valeu",
-        "falou", "tchau", "ate mais", "até mais", "ok obrigado", "ok obrigada",
-        "blz", "beleza obrigado", "obrigado viu", "obrigada viu"
-      ];
-    if (despedida.includes(text)) {
-          return { facts: respostas.despedida || DEFAULT_FALLBACK, intent: "despedida", needs_human: false, lead_temperature: "morno", missing_fields: [] };
-    }
-
-  // Respostas específicas da campanha de tráfego pago: Open Chopp + jogo/desafio.
-  // Essas regras ficam antes das regras genéricas para evitar fatos fora do contexto.
-  // IMPORTANTE: os textos abaixo NÃO são mais enviados diretamente ao cliente. Eles agora
-  // servem como "facts" (fatos oficiais) que serão passados como contexto para a IA, que
-  // escreve a resposta final de forma humana, natural e variada.
-  if (looksLikeScoreGuess(text)) {
-        return { facts: getAdReply(knowledge, "comentario_palpite"), intent: "palpite_placar", needs_human: false, lead_temperature: "quente", missing_fields: [] };
+  if (includesAny(text, ["mencionou voce no proprio story", "marcou no story"])) {
+    return makeResolution({ facts: base.story_mention || "Obrigado pela marcação. Adoramos fazer parte desse momento.", intent: "story_mention", topic: "relacionamento", lead_temperature: "morno", next_action: "relacionar" });
   }
 
-  if (includesAny(text, ["como funciona o desafio", "desafio do placar", "como funciona o placar", "como participa", "como participar", "palpite", "acertar o placar", "placar do jogo"])) {
-        return { facts: getAdReply(knowledge, "desafio_placar"), intent: "desafio_placar", needs_human: false, lead_temperature: "quente", missing_fields: [] };
+  if (isRemovedTopic(text)) {
+    return makeResolution({
+      facts: `Essa opção ou condição não está nas informações ativas que tenho aqui. Para conferir o que está disponível hoje, acesse o cardápio: ${links.menu}\n\nSe quiser confirmar direto com a equipe: ${links.whatsapp}`,
+      intent: "item_inativo",
+      topic: "cardapio",
+      needs_human: true,
+      lead_temperature: "morno",
+      next_action: "cardapio_ou_whatsapp"
+    });
   }
 
-  if (includesAny(text, ["pode comentar mais de uma vez", "mais de uma vez", "quantos palpites", "1 palpite", "um palpite", "varios palpites", "vários palpites"])) {
-        return { facts: getAdReply(knowledge, "um_palpite_por_perfil"), intent: "regra_desafio", needs_human: false, lead_temperature: "quente", missing_fields: [] };
+  if (includesAny(text, ["falar com atendente", "atendente humano", "falar com alguem", "falar com alguém", "humano", "pessoa da equipe", "chamar atendente"])) {
+    return makeResolution({ facts: base.humano || `Claro. Fale direto com a equipe: ${links.whatsapp}`, intent: "humano", topic: "atendimento_humano", needs_human: true, lead_temperature: "quente", next_action: "whatsapp" });
   }
 
-  if (includesAny(text, ["duas pessoas acertarem", "duas pessoas acertar", "mais de uma pessoa acertar", "se empatar", "quem ganha se", "ordem dos comentarios", "ordem dos comentários"])) {
-        return { facts: getAdReply(knowledge, "duas_pessoas_acertarem"), intent: "regra_desafio", needs_human: false, lead_temperature: "quente", missing_fields: [] };
+  if (includesAny(text, ["vaga", "emprego", "curriculo", "currículo", "freelance", "garcom", "garçom", "garconete", "garçonete", "cumim", "trabalhar com voces", "trabalhar com vocês"])) {
+    return makeResolution({ facts: `Para oportunidades de trabalho, envie seu currículo direto para a gerente pelo WhatsApp: ${links.jobs}`, intent: "vaga", topic: "rh", needs_human: true, lead_temperature: "morno", next_action: "whatsapp_vagas" });
   }
 
-  if (includesAny(text, ["ate que horas posso comentar", "até que horas posso comentar", "posso comentar ate", "posso comentar até", "comentarios ate", "comentários até", "palpite ate", "palpite até", "inicio do jogo", "início do jogo"])) {
-        return { facts: getAdReply(knowledge, "ate_quando_comentar"), intent: "regra_desafio", needs_human: false, lead_temperature: "quente", missing_fields: [] };
+  if (includesAny(text, ["cardapio", "menu", "opcoes", "opções", "o que tem", "comidas", "pratos", "ver cardapio", "ver o cardapio"])) {
+    return makeResolution({ facts: base.cardapio || `Cardápio/pedido: ${links.menu}`, intent: "cardapio", topic: "cardapio", lead_temperature: "quente", next_action: "abrir_cardapio" });
   }
 
-  if (includesAny(text, ["premio", "prêmio", "ganhador", "ganha o que", "vale para quando", "open gratis", "open grátis", "open chopp gratis", "open chopp grátis"])) {
-        return { facts: getAdReply(knowledge, "premio_quando"), intent: "regra_desafio", needs_human: false, lead_temperature: "quente", missing_fields: [] };
+  if (includesAny(text, ["fazer pedido", "quero pedir", "queria fazer um pedido", "pedido", "pedir para retirar", "retirada", "retirar no local", "take away"])) {
+    return makeResolution({ facts: base.pedido || `Faça seu pedido por aqui: ${links.menu}`, intent: "pedido", topic: "pedido", lead_temperature: "quente", next_action: "fazer_pedido" });
   }
 
-  // Mantém o contexto do Fondue quando o cliente pergunta se o valor é por pessoa/casal
-  // ou para quantas pessoas o prato serve. Essa regra evita puxar fatos de Open Chopp, jogo ou combo.
-  if (isFonduePortionQuestion(text) && (fondueContext || (!openContext && !includesAny(text, ["open", "chopp", "combo", "frango", "calabresa", "jogo", "placar"])))) {
-        return {
-                facts: respostas.fondue_valor_porcoes || DEFAULT_FALLBACK,
-                intent: "fondue_valor_porcoes",
-                needs_human: false,
-                lead_temperature: "quente",
-                missing_fields: []
-        };
+  if (includesAny(text, ["delivery", "entrega", "ifood", "i food", "99food", "99 food", "entregam", "faz entrega", "pedir em casa"])) {
+    return makeResolution({ facts: base.delivery || `Pedido direto: ${links.menu}\niFood: ${links.ifood}\n99Food: ${links.food99}`, intent: "delivery", topic: "pedido", lead_temperature: "quente", next_action: "delivery" });
   }
 
-  if ((priceQuestion || includesAny(text, ["valor do fondue", "preco do fondue", "preço do fondue", "qual valor do fondue", "quanto custa o fondue"])) && fondueContext) {
-        return {
-                facts: respostas.fondue_valores || respostas.fondue_valor_porcoes || respostas.fondue || DEFAULT_FALLBACK,
-                intent: "fondue_valor_porcoes",
-                needs_human: false,
-                lead_temperature: "quente",
-                missing_fields: []
-        };
+  if (includesAny(text, ["reservar", "reserva", "mesa", "aniversario", "aniversário", "grupo", "evento", "confraternizacao", "confraternização"])) {
+    return makeResolution({
+      facts: `${base.reserva || "Para organizar sua reserva, preciso de nome, telefone, data, horário e quantidade de pessoas."}\n\nPara confirmação final com a equipe no WhatsApp: ${links.whatsapp}`,
+      intent: "reserva",
+      topic: "reserva",
+      needs_human: true,
+      lead_temperature: "quente",
+      missing_fields: ["nome", "telefone", "data", "horario", "quantidade_pessoas"],
+      next_action: "coletar_reserva"
+    });
   }
 
-  if (includesAny(text, ["o que vem no combo", "combo", "frango a passarinho", "calabresa", "frango com calabresa"])) {
-        return { facts: getAdReply(knowledge, "combo_itens"), intent: "combo_jogo", needs_human: false, lead_temperature: "quente", missing_fields: [] };
+  if (includesAny(text, ["pagamento", "aceita cartao", "cartao", "pix", "vale refeicao", "vale alimentação", "vale alimentacao", "alelo", "pluxee", "vr", "ticket"])) {
+    const p = knowledge?.formas_pagamento;
+    const facts = `Aceitamos dinheiro, cartão de crédito, cartão de débito e Pix. Também aceitamos vale refeição Alelo, Pluxee, VR e Ticket. Não aceitamos vale alimentação.`;
+    return makeResolution({ facts: p?.regra ? facts : facts, intent: "pagamento", topic: "pagamento", lead_temperature: "morno", next_action: "responder" });
   }
 
-  if (includesAny(text, ["serve quantas pessoas", "serve quantos", "serve quantas", "da para quantas pessoas", "dá para quantas pessoas", "quantas pessoas serve"])) {
-        return { facts: getAdReply(knowledge, "serve_quantas_pessoas"), intent: "combo_jogo", needs_human: false, lead_temperature: "quente", missing_fields: [] };
+  if (includesAny(text, ["onde fica", "localizacao", "localização", "endereco", "endereço", "shopping", "como chegar"])) {
+    return makeResolution({ facts: `${base.localizacao || "Ficamos no Pátio Limeira Shopping."}\n\nSe quiser falar com a equipe: ${links.whatsapp}`, intent: "localizacao", topic: "localizacao", lead_temperature: "quente", next_action: "visita" });
   }
 
-  if (includesAny(text, ["outras porcoes", "outras porções", "tem porcoes", "tem porções", "mais porcoes", "mais porções"])) {
-        return { facts: getAdReply(knowledge, "outras_porcoes"), intent: "cardapio", needs_human: false, lead_temperature: "morno", missing_fields: [] };
+  if (includesAny(text, ["horario", "horário", "que horas abre", "que horas fecha", "funcionamento", "aberto hoje", "fecha que horas", "cozinha fecha"])) {
+    return makeResolution({ facts: base.horario || knowledge?.horarios?.funcionamento || "Funcionamos todos os dias das 11h às 22h.", intent: "horario", topic: "horario", lead_temperature: "quente", next_action: "visita" });
   }
 
-  if (includesAny(text, ["crianca pode ir", "criança pode ir", "pode ir crianca", "pode ir criança", "leva crianca", "levar criança", "levar filho", "levar meu filho", "levar minha filha", "ir com filho", "ir com minha filha", "ir com criança", "ir com a criança", "familia com crianca", "família com criança"])) {
-        return { facts: getAdReply(knowledge, "crianca"), intent: "familia", needs_human: false, lead_temperature: "morno", missing_fields: [] };
+  const contextItem = findCatalogItemById(context?.last_topic, knowledge);
+  const isShortFollowUp = isPriceQuestion(text) || isServingQuestion(text) || includesAny(text, ["o que acompanha", "acompanha o que", "o que vem", "vem o que", "qual tamanho", "e esse", "e essa", "quanto"]);
+  if (contextItem && isShortFollowUp) {
+    const itemFacts = formatCatalogItem(contextItem, message, links);
+    return makeResolution({ facts: itemFacts.facts, intent: "item_cardapio", topic: contextItem.id || "item_cardapio", needs_human: itemFacts.needs_human, lead_temperature: "quente", missing_fields: itemFacts.missing_fields, next_action: itemFacts.needs_human ? "whatsapp" : "fazer_pedido" });
   }
 
-  if (includesAny(text, ["familia", "família", "levar familia", "levar família", "com familia", "com família"])) {
-        return { facts: getAdReply(knowledge, "familia"), intent: "familia", needs_human: false, lead_temperature: "morno", missing_fields: [] };
+  if (safeText(context?.last_topic).startsWith("item:") && isShortFollowUp) {
+    const label = safeText(context.last_topic).replace(/^item:/, "").replace(/_/g, " ");
+    return makeResolution({
+      facts: `Sobre ${label}: não tenho preço, composição ou porção validados na base e não vou arriscar. Confira o cardápio atualizado em ${links.menu}. Para confirmar esse detalhe com a equipe no WhatsApp: ${links.whatsapp}`,
+      intent: "item_nao_encontrado",
+      topic: context.last_topic,
+      needs_human: true,
+      lead_temperature: "quente",
+      missing_fields: ["item_validado"],
+      next_action: "cardapio_ou_whatsapp"
+    });
   }
 
-  if (includesAny(text, ["casal ou turma", "casal", "turma", "amigos", "grupo de amigos"]) && !includesAny(text, ["empresa", "reserva", "mesa", "levar", "vou levar", "quero levar"])) {
-        return { facts: getAdReply(knowledge, "casal_ou_turma"), intent: "perfil_publico", needs_human: false, lead_temperature: "morno", missing_fields: [] };
+  if (includesAny(text, ["hamburguer em dobro", "hambúrguer em dobro", "burger em dobro", "double burger", "compre 1 ganhe 1", "compra 1 ganha outro"])) {
+    const c = knowledge?.campanhas_ativas?.hamburguer_em_dobro;
+    return makeResolution({ facts: `${c?.descricao || "Toda terça-feira, compra 1 hambúrguer e ganha outro."}\n${c?.validade || "Terças-feiras, das 16h às 21h."}\n\nAs opções participantes devem ser conferidas no cardápio: ${links.menu}`, intent: "promocao_burger", topic: "burger", lead_temperature: "quente", next_action: "abrir_cardapio" });
   }
 
-  if (includesAny(text, ["aniversario", "aniversário", "comemorar aniversario", "comemorar aniversário", "niver", "festa de aniversario", "festa de aniversário"])) {
-        return { facts: getAdReply(knowledge, "aniversario"), intent: "aniversario", needs_human: true, lead_temperature: "quente", missing_fields: ["data", "quantidade_pessoas"] };
+  if (includesAny(text, ["feijoada"])) {
+    const c = knowledge?.campanhas_ativas?.feijoada;
+    return makeResolution({ facts: `${c?.descricao || "Temos feijoada às quartas e sábados."}\n\nPara preço, composição ou disponibilidade do dia, confira o cardápio ${links.menu} ou fale com a equipe: ${links.whatsapp}`, intent: "feijoada", topic: "feijoada", needs_human: isPriceQuestion(text), lead_temperature: "quente", next_action: "abrir_cardapio" });
   }
 
-  if (includesAny(text, ["precisa reservar", "tem que reservar", "preciso reservar", "reserva obrigatoria", "reserva obrigatória"])) {
-        return { facts: getAdReply(knowledge, "precisa_reservar"), intent: "reserva", needs_human: true, lead_temperature: "quente", missing_fields: ["quantidade_pessoas"] };
+  if (includesAny(text, ["happy hour"])) {
+    const c = knowledge?.campanhas_ativas?.happy_hour;
+    return makeResolution({ facts: `${c?.descricao || "Happy hour das 16h às 21h."}\n\nCardápio/pedido: ${links.menu}`, intent: "happy_hour", topic: "happy_hour", lead_temperature: "quente", next_action: "visita" });
   }
 
-  if (includesAny(text, ["tem mesa para hoje", "mesa para hoje", "tem mesa hoje", "mesa hoje", "disponibilidade hoje", "lugar para hoje"])) {
-        return { facts: getAdReply(knowledge, "mesa_hoje"), intent: "reserva", needs_human: true, lead_temperature: "quente", missing_fields: [] };
+  const item = findCatalogItem(message, knowledge);
+  if (item) {
+    const itemFacts = formatCatalogItem(item, message, links);
+    return makeResolution({ facts: itemFacts.facts, intent: "item_cardapio", topic: item.id || "item_cardapio", needs_human: itemFacts.needs_human, lead_temperature: "quente", missing_fields: itemFacts.missing_fields, next_action: itemFacts.needs_human ? "whatsapp" : "fazer_pedido" });
   }
 
-      if (mentionsPaymentOrVoucher(text)) {
-        return { facts: getAdReply(knowledge, "aceita_cartao"), intent: "pagamento", needs_human: false, lead_temperature: "morno", missing_fields: [] };
+  if (includesAny(text, ["almoco", "almoço", "executivo", "prato do dia"])) {
+    return makeResolution({ facts: `${base.almoco || knowledge?.horarios?.almoco || "Almoço de segunda a sexta, das 11h às 15h."}\n\nCardápio/pedido: ${links.menu}`, intent: "almoco", topic: "almoco", lead_temperature: "quente", next_action: "abrir_cardapio" });
   }
 
-  if (includesAny(text, ["tem taxa", "taxa", "10%", "dez por cento", "taxa de servico", "taxa de serviço"])) {
-        return { facts: getAdReply(knowledge, "tem_taxa"), intent: "taxa", needs_human: false, lead_temperature: "morno", missing_fields: [] };
+  if (includesAny(text, ["burger", "burgers", "hamburguer", "hambúrguer", "porcao", "porção", "tabua", "tábua", "picanha", "carne", "frango", "kids", "sobremesa", "suco", "bebida", "cerveja", "chopp", "chope", "drinks", "drink"])) {
+    return makeResolution({ facts: base.item_nao_encontrado || DEFAULT_FALLBACK, intent: "item_nao_encontrado", topic: inferUnknownItemTopic(text), needs_human: true, lead_temperature: "quente", missing_fields: ["item_validado"], next_action: "cardapio_ou_whatsapp" });
   }
 
-  if (includesAny(text, ["open individual", "open chopp individual", "e individual", "é individual", "por pessoa"])) {
-        return { facts: getAdReply(knowledge, "open_individual"), intent: "open_chopp", needs_human: false, lead_temperature: "quente", missing_fields: [] };
+  if (includesAny(text, ["tchau", "obrigado", "obrigada", "valeu", "ate mais", "até mais"])) {
+    return makeResolution({ facts: base.despedida || "Foi um prazer te atender. Quando quiser, é só chamar.", intent: "despedida", topic: "relacionamento", lead_temperature: "frio", next_action: "encerrar" });
   }
 
-  if (includesAny(text, ["pode dividir o open", "dividir o open", "compartilhar open", "dividir open chopp", "pode compartilhar"])) {
-        return { facts: getAdReply(knowledge, "pode_dividir_open"), intent: "open_chopp", needs_human: false, lead_temperature: "quente", missing_fields: [] };
+  if (isGreetingOnly(text)) {
+    return makeResolution({ facts: base.saudacao || "Que bom falar com você. Como posso te ajudar hoje?", intent: "saudacao", topic: "inicio", lead_temperature: "morno", next_action: "descobrir_interesse" });
   }
 
-  if (includesAny(text, ["so quero comer", "só quero comer", "posso so comer", "posso só comer", "ir so para comer", "ir só para comer", "nao vou beber", "não vou beber"])) {
-        return { facts: getAdReply(knowledge, "so_comer"), intent: "cardapio", needs_human: false, lead_temperature: "morno", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["open vale no almoco", "open vale no almoço", "open no almoco", "open no almoço", "open chopp no almoco", "open chopp no almoço"])) {
-        return { facts: getAdReply(knowledge, "open_no_almoco"), intent: "open_chopp", needs_human: false, lead_temperature: "morno", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["quero levar uma turma", "levar turma", "vou levar uma turma", "ir em grupo", "grupo grande", "mesa para grupo"])) {
-        return { facts: getAdReply(knowledge, "levar_turma"), intent: "grupo", needs_human: true, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["happy hour da empresa", "happy hour de empresa", "happy hour para empresa", "equipe da empresa", "empresa no happy", "confraternizacao da empresa", "confraternização da empresa"])) {
-        return { facts: getAdReply(knowledge, "happy_hour_empresa"), intent: "empresa_b2b", needs_human: true, lead_temperature: "quente", missing_fields: ["nome_empresa", "quantidade_pessoas"] };
-  }
-
-  if (includesAny(text, ["chegando mais tarde", "chegar mais tarde", "se chegar mais tarde", "ate as 21", "até as 21", "ate 21h", "até 21h"])) {
-        return { facts: getAdReply(knowledge, "chegar_mais_tarde"), intent: "open_chopp", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["open comeca", "open começa", "que horas comeca o open", "que horas começa o open", "open começa que horas", "open chopp começa", "horario do open", "horário do open"]) || (includesAny(text, ["que horas", "horario", "horário"]) && openContext)) {
-        return { facts: getAdReply(knowledge, "open_comeca"), intent: "open_chopp", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (["eu vou", "vou", "to indo", "tô indo", "estou indo"].includes(text)) {
-        return { facts: getAdReply(knowledge, "comentario_eu_vou"), intent: "comentario_anuncio", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["partiu", "bora", "bora boteco", "partiu boteco"])) {
-        return { facts: getAdReply(knowledge, "comentario_partiu"), intent: "comentario_anuncio", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["mencionou voce no proprio story", "mencionou você no próprio story", "mencionou no story", "marcou no story", "marcou voce", "marcou você", "marcacao", "marcação", "story", "stories", "repost", "foto marcada", "marcou a gente"])) {
-        return { facts: respostas.marcacao_story || DEFAULT_FALLBACK, intent: "marcacao_story", needs_human: false, lead_temperature: "morno", missing_fields: [] };
-  }
-
-  if (mentionsZeroAlcohol(text)) {
-        return { facts: respostas.bebida_sem_alcool || respostas.bebidas || DEFAULT_FALLBACK, intent: "bebida_sem_alcool", needs_human: false, lead_temperature: "morno", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["long neck", "longneck", "cerveja long neck", "cerveja heineken", "heineken long neck", "heineken zero long neck"])) {const cervejaFacts = (priceQuestion || priceOnlyQuestion) ? (respostas.cervejas_valor || DEFAULT_FALLBACK) : (respostas.cervejas || DEFAULT_FALLBACK);return { facts: cervejaFacts, intent: "cervejas", needs_human: false, lead_temperature: "quente", missing_fields: [] };}if (includesAny(text, ["chopp de vinho", "chopp vinho", "vinho chopp"])) {const vinhoFacts = (priceQuestion || priceOnlyQuestion) ? (respostas.chopp_vinho_valor || DEFAULT_FALLBACK) : (respostas.chopp_vinho || DEFAULT_FALLBACK);return { facts: vinhoFacts, intent: "chopp_vinho", needs_human: false, lead_temperature: "quente", missing_fields: [] };}if (includesAny(text, ["caipirinha", "caipirinhas", "caipivodka", "caipisaque", "caipi de vodka", "caipi de cachaca", "caipi de saque", "caipi de vinho"])) {const caipiFacts = (priceQuestion || priceOnlyQuestion) ? (respostas.caipirinhas_valor || DEFAULT_FALLBACK) : (respostas.caipirinhas || DEFAULT_FALLBACK);return { facts: caipiFacts, intent: "caipirinhas", needs_human: false, lead_temperature: "quente", missing_fields: [] };}if (includesAny(text, ["dose", "doses", "campari", "licor 43", "licor43", "tequila", "velho barreiro", "whisky", "whiskey", "red label", "black label", "jack daniels"])) {const doseFacts = (priceQuestion || priceOnlyQuestion) ? (respostas.doses_valor || DEFAULT_FALLBACK) : (respostas.doses || DEFAULT_FALLBACK);return { facts: doseFacts, intent: "doses", needs_human: false, lead_temperature: "quente", missing_fields: [] };}if (mentionsOpenChopp(text) && includesAny(text, ["marca", "qual cerveja", "que cerveja", "cerveja do open", "marca do chopp", "marca do open"])) {    return { facts: respostas.open_chopp_marca || DEFAULT_FALLBACK, intent: "open_chopp_marca", needs_human: true, lead_temperature: "quente", missing_fields: [] };  }  if (includesAny(text, ["heineken", "brahma", "ashby", "canecao", "canecão", "caneca", "chopp individual", "chopp avulso", "chopp unitario", "chopp unitário", "marcas de chopp", "qual chopp voces tem", "qual chopp vocês tem", "chopp voces tem", "chopp vocês tem", "tipos de chopp"]) && !mentionsOpenChopp(text)) {    const chopMarcaFacts = (priceQuestion || priceOnlyQuestion) ? (respostas.chopp_marcas_valor || DEFAULT_FALLBACK) : (respostas.chopp_marcas || DEFAULT_FALLBACK);    return { facts: chopMarcaFacts, intent: "chopp_marca", needs_human: false, lead_temperature: "quente", missing_fields: [] };  }  if (mentionsOpenChopp(text) || (priceOnlyQuestion && openContext)) {
-        const asksToday = includesAny(text, ["hoje", "tem hoje", "open hoje"]);
-        const facts = asksToday
-          ? getAdReply(knowledge, "open_chopp_hoje")
-                : (priceQuestion || priceOnlyQuestion ? getAdReply(knowledge, "valor_open_chopp") : getAdReply(knowledge, "primeiro_contato_manychat"));
-        return {
-                facts,
-                intent: "open_chopp",
-                needs_human: false,
-                lead_temperature: "quente",
-                missing_fields: []
-        };
-  }
-
-  if (includesAny(text, ["happy hour", "happy", "after", "fim de tarde", "depois do trabalho", "equipe no happy", "porcao no happy", "porção no happy"])) {
-        return { facts: respostas.happy_hour || DEFAULT_FALLBACK, intent: "happy_hour", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["hamburguer em dobro", "hambúrguer em dobro", "double burger", "burger em dobro", "lanche em dobro", "compre 1 ganhe 1", "compra 1 ganha outro", "terca burger", "terça burger"])) {
-        return { facts: respostas.double_burger || DEFAULT_FALLBACK, intent: "double_burger", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (mentionsFondue(text) || includesAny(text, ["dia dos namorados", "namorados"])) {
-        return { facts: respostas.fondue || DEFAULT_FALLBACK, intent: "fondue", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["feijoada", "feijuca", "feijao", "feijão"])) {
-        return { facts: respostas.feijoada || DEFAULT_FALLBACK, intent: "feijoada", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["almoco", "almoço", "prato do dia", "pratos do dia", "executivo", "executivos", "pf", "refeicao", "refeição", "almoco hoje", "almoço hoje", "prato comercial"])) {
-        return { facts: respostas.almoco || DEFAULT_FALLBACK, intent: "almoco", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (priceQuestion) {
-        return { facts: respostas.preco_cardapio || DEFAULT_FALLBACK, intent: "preco", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["guarana proteico", "guaraná proteico", "pure up", "pureup", "bebida proteica", "refri proteico", "refrigerante proteico", "proteico bebida"])) {return { facts: respostas.guarana_proteico || respostas.proteicos || DEFAULT_FALLBACK, intent: "proteico", needs_human: false, lead_temperature: "quente", missing_fields: [] };}if (includesAny(text, ["proteico", "proteica", "fitness", "fit", "saudavel", "saudável", "low carb", "frango power", "executivo proteico", "tilapia premium", "tilápia premium", "low carb supreme", "salada proteica", "tilapia fresh", "tilápia fresh", "prato saudavel", "prato saudável", "pratos proteicos", "cardapio fitness", "cardápio fitness"])) {return { facts: respostas.proteicos || DEFAULT_FALLBACK, intent: "proteico", needs_human: false, lead_temperature: "quente", missing_fields: [] };}if (includesAny(text, ["cardapio", "cardápio", "menu", "opcoes", "opções", "comidas", "pratos", "tem o que", "o que tem", "cardapio completo", "cardápio completo"])) {
-        return { facts: respostas.cardapio || DEFAULT_FALLBACK, intent: "cardapio", needs_human: false, lead_temperature: "morno", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["onde fica", "aonde fica", "endereco", "endereço", "localizacao", "localização", "qual endereco", "qual endereço", "local", "shopping", "patio limeira", "pátio limeira"])) {
-        return { facts: respostas.localizacao || DEFAULT_FALLBACK, intent: "localizacao", needs_human: false, lead_temperature: "morno", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["empresa", "empresas", "equipe", "colaboradores", "funcionarios", "funcionários", "corporativo", "almoço para empresa", "almoco para empresa", "happy hour para empresa", "servico para empresa", "serviço para empresa", "confraternizacao", "confraternização"])) {
-        return { facts: respostas.empresa_b2b || DEFAULT_FALLBACK, intent: "empresa_b2b", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["estacionamento", "parking", "free parking", "estacionamento free", "estacionamento gratis", "estacionamento grátis"])) {
-        return { facts: respostas.estacionamento || DEFAULT_FALLBACK, intent: "estacionamento", needs_human: false, lead_temperature: "morno", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["guarana", "guaraná", "coca", "coca cola", "refrigerante", "suco", "bebida", "agua", "água"]) && !includesAny(text, ["proteico", "proteica", "pure up", "pureup"])) {
-        return { facts: respostas.bebidas || respostas.preco_cardapio || DEFAULT_FALLBACK, intent: "bebidas", needs_human: false, lead_temperature: "morno", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["entrega", "delivery", "ifood", "i food", "pedido", "pedir", "entregam", "faz entrega"])) {
-        return { facts: respostas.delivery || DEFAULT_FALLBACK, intent: "ifood", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["atendente", "humano", "falar com atendente", "quero um atendente", "atendimento humano", "falar com humano", "quero falar com humano", "falar com uma pessoa", "falar com alguem", "falar com alguém", "atendente humano", "quero atendente", "quero falar com uma pessoa"]) && !includesAny(text, ["vaga", "vagas", "emprego", "trabalho", "trabalhar", "curriculo", "currículo", "contratacao", "contratação", "contratando", "processo seletivo", "freelance", "garcom", "garçom", "garconete", "garçonete", "cumim", "cumin"])) { return { facts: respostas.humano || DEFAULT_FALLBACK, intent: "humano", needs_human: true, lead_temperature: "morno", missing_fields: [] }; } if (includesAny(text, ["vaga", "vagas", "emprego", "trabalho", "trabalhar", "curriculo", "currículo", "contratacao", "contratação", "contratando", "processo seletivo", "vaga de emprego", "vaga de trabalho", "free lance", "freelance", "garcom", "garçom", "garconete", "garçonete", "cumim", "cumin"])) {
-        return { facts: respostas.vaga || DEFAULT_FALLBACK, intent: "vaga", needs_human: false, lead_temperature: "morno", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["guarana proteico", "guaraná proteico", "pure up", "pureup", "bebida proteica", "refri proteico", "refrigerante proteico", "proteico bebida"])) {
-        return { facts: respostas.guarana_proteico || respostas.proteicos || DEFAULT_FALLBACK, intent: "proteico", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["proteico", "proteica", "fitness", "fit", "saudavel", "saudável", "low carb", "frango power", "executivo proteico", "tilapia premium", "tilápia premium", "low carb supreme", "salada proteica", "tilapia fresh", "tilápia fresh", "prato saudavel", "prato saudável", "pratos proteicos", "cardapio fitness", "cardápio fitness"])) {
-        return { facts: respostas.proteicos || DEFAULT_FALLBACK, intent: "proteico", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["rodizio", "rodízio", "rodisio", "rodizio de boteco", "rodízio de boteco", "como é esse rodizio", "como e esse rodizio", "como funciona o rodizio", "como é esse rodízio", "como funciona o rodízio"])) {
-        return { facts: respostas.rodizio || respostas.rodizio_open_em_campo || DEFAULT_FALLBACK, intent: "rodizio", needs_human: false, lead_temperature: "quente", missing_fields: [] };
-  }
-
-  if (includesAny(text, ["reserva", "reservar", "mesa", "aniversario", "aniversário", "grupo", "pessoas", "guardar mesa"])) {
-        const facts = respostas.reserva || "O cliente quer reservar. É necessário coletar nome, telefone, data, horário e quantidade de pessoas para a equipe confirmar a disponibilidade.";
-        return { facts, intent: "reserva", needs_human: true, lead_temperature: "quente", missing_fields: ["nome", "telefone", "data", "horario", "quantidade_pessoas"] };
-  }
-
-  if (includesAny(text, ["horario", "horário", "funcionamento", "abre", "aberto", "fecha", "que horas", "cozinha"])) {
-        return { facts: respostas.horario || DEFAULT_FALLBACK, intent: "horario", needs_human: false, lead_temperature: "morno", missing_fields: [] };
-  }
-
-  return null;
+  const contextHint = context?.last_topic || context?.last_intent;
+  return makeResolution({
+    facts: `${base.fallback || DEFAULT_FALLBACK}${contextHint ? `\n\nSe sua dúvida continua sobre ${safeText(contextHint, 60)}, me diga o item ou detalhe que você quer confirmar.` : ""}`,
+    intent: "outro",
+    topic: "fallback",
+    needs_human: true,
+    lead_temperature: "morno",
+    missing_fields: ["informacao_validada"],
+    next_action: "cardapio_ou_whatsapp"
+  });
 }
 
-function buildSystemPrompt(knowledge) {
-    return `
-    Você é atendente oficial do ${knowledge.empresa?.nome || process.env.BUSINESS_NAME || "Sr. Boteco Limeira"} no Instagram/WhatsApp.
-
-    REGRAS:
-    1. Nunca invente preço, produto, item de cardápio, promoção, horário, data, evento ou disponibilidade que não esteja na BASE_DE_CONHECIMENTO.
-    2. Só informe preços existentes na BASE_DE_CONHECIMENTO, exatamente como estão escritos ali. Nunca calcule, arredonde ou estime um valor novo.
-    3. Se o cliente pedir valores dos itens do cardápio que não estão na base, direcione para o WhatsApp: https://wa.me/5519997858351.
-    4. Open Chopp tem preço autorizado: domingo a quinta R$ 29,90; sexta e sábado R$ 49,90; sempre das 16h às 21h.
-    5. Não relacione Open Chopp com jogo, futebol, transmissão ou Open em Campo.
-    5.1. Open Chopp Zero / bebidas sem álcool: não temos chopp zero; ofereça Heineken Zero long neck. Não invente preço.
-    5.2. Para perguntas do anúncio Open Chopp + jogo/desafio, use as informações em respostas_anuncio_open_chopp quando houver correspondência.
-    6. Se o cliente pedir almoço/prato do dia, use uma resposta humanizada e informe: segunda a sexta, 11h às 15h, pratos executivos a partir de R$ 19,90.
-    7. Fondue continua ativo, mas não é mais campanha de Dia dos Namorados. Não mencionar Dia dos Namorados na resposta final.
-    7.1. Se o cliente perguntar se o valor do fondue é por pessoa/casal, individual, se serve 2 pessoas ou para quantas pessoas serve, responda: o valor é do prato feito para servir 2 pessoas. Fondue Salgado R$ 99,90; Fondue Doce R$ 89,90.
-    8. Se o cliente marcar o restaurante em story/foto, agradeça de forma curta, humana e natural.
-    9. Se perguntar localização/endereço, informe Pátio Limeira Shopping.
-    10. Se perguntar sobre vaga, emprego, currículo, freelance, garçom, garçonete ou cumim, direcione para a gerente pelo WhatsApp (17) 99103-4703 e informe o link https://wa.me/5517991034703. IMPORTANTE: "cozinha" sozinho normalmente se refere a horário de funcionamento da cozinha (não é vaga de emprego) e "atendente" normalmente é pedido do cliente para falar com um humano da equipe (não é candidatura a vaga) — nunca confunda esses casos com vaga de emprego.
-    11. Nunca confirme reserva sozinho. Colete nome, telefone, quantidade de pessoas, data e horário.
-    12. Não mencione OpenAI, API, sistema, prompt, JSON, ManyChat ou automação.
-    13. Responda somente JSON válido.
-    14. A mensagem do usuário pode incluir um campo "fatos_para_esta_resposta" com a informação oficial e correta que você deve comunicar (já validada pela regra de negócio). Quando esse campo existir e não for nulo, baseie sua resposta nesse fato, mas escreva com suas próprias palavras, de forma humana, calorosa, natural e variada — nunca copie a frase literalmente e nunca repita sempre a mesma estrutura de frase. Quando "fatos_para_esta_resposta" for nulo, responda livremente com base na BASE_DE_CONHECIMENTO abaixo, seguindo todas as regras acima e SEM inventar nenhum item ou preço que não esteja lá.
-    15. Os campos "intent_detectado", "precisa_humano_sugerido", "temperatura_sugerida" e "campos_faltantes_sugeridos", quando vierem preenchidos na mensagem do usuário, já são a classificação oficial da conversa. Você não precisa se preocupar em acertar esses campos de saída (o sistema usa os valores oficiais automaticamente) — foque toda sua atenção em escrever apenas o texto de "reply" da forma mais humana, simpática e natural possível, como um atendente de verdade escreveria, variando saudações e construções de frase a cada resposta.
-    16. Nunca se refira a si mesmo como robô, IA ou sistema automático. Seja sempre caloroso, use emojis com moderação quando fizer sentido, e trate o cliente pelo primeiro nome quando disponível. Quando for citar o nome do cliente, use exatamente o valor real recebido no campo cliente.first_name (o nome de verdade da pessoa) — nunca escreva marcadores, variáveis ou placeholders como {{first_name}}, {nome}, [nome], $nome ou qualquer texto entre chaves ou colchetes. Se cliente.first_name estiver vazio ou ausente, não mencione nome nenhum, apenas cumprimente de forma genérica e calorosa.
-    17. Você é um atendente completo do restaurante: pode acolher saudações iniciais, tirar dúvidas sobre cardápio, horário, reservas, Open Chopp, fondue, delivery, vagas e despedidas, sempre com tom acolhedor, mas sempre restrito aos fatos da BASE_DE_CONHECIMENTO.
-    18. Se não tiver certeza sobre algo (preço, item, disponibilidade), nunca arrisque um palpite: direcione o cliente para o WhatsApp da equipe.
-    19. Sempre que a resposta envolver reserva de mesa, aniversário, grupo grande, evento corporativo, ou qualquer assunto fora da BASE_DE_CONHECIMENTO, o sistema já anexa automaticamente o link do WhatsApp da equipe ao final da mensagem. Você não precisa inserir o link manualmente nesses casos, apenas escreva a resposta normalmente.
-    20. Sobre formas de pagamento: aceitamos dinheiro, cartão de crédito, cartão de débito, Pix e vale refeição das bandeiras Alelo, Pluxee, VR e Ticket. NÃO aceitamos vale alimentação em nenhuma bandeira. Nunca diga que aceitamos vale alimentação e nunca cite outras bandeiras de vale além dessas quatro.
-21. Nunca repita a mesma frase, saudação ou estrutura de resposta em mensagens seguidas da mesma conversa. Se o cliente perguntar algo parecido de novo ou a conversa ficar repetitiva, varie as palavras, mude o ângulo da resposta ou direcione a conversa para outro canal (ex.: WhatsApp da equipe) para dar continuidade humana ao atendimento.
-22. Toda a conversa deve manter um espírito comercial estratégico, sem ser insistente ou chato: sempre que fizer sentido, retome a disponibilidade de mesa/reserva e convide o cliente para vir conhecer o Sr. Boteco pessoalmente, para não perder o interesse de quem veio do anúncio/tráfego pago. Conduza a conversa com leveza, aproximando o cliente de uma visita ou reserva, sem forçar ou repetir esse convite de forma cansativa.
-
-    FORMATO:
-    {
-      "reply": "mensagem final para o cliente, escrita de forma humana e natural",
-        "intent": "preco|reserva|cardapio|horario|localizacao|ifood|fondue|fondue_valor_porcoes|vaga|almoco|proteico|rodizio|open_chopp|happy_hour|double_burger|feijoada|marcacao_story|empresa_b2b|estacionamento|bebidas|bebida_sem_alcool|desafio_placar|regra_desafio|combo_jogo|familia|pagamento|grupo|comentario_anuncio|palpite_placar|saudacao|despedida|humano|outro",
-          "needs_human": false,
-            "lead_temperature": "frio|morno|quente",
-              "missing_fields": []
-              }
-
-              BASE_DE_CONHECIMENTO
-              ${JSON.stringify(knowledge, null, 2)}
-              `.trim();
+function collectAllowedPrices(knowledge) {
+  const raw = JSON.stringify(knowledge || {});
+  const matches = raw.match(/R\$\s*\d{1,4}(?:\.\d{3})*,\d{2}/g) || [];
+  return new Set(matches.map(canonicalizePrice));
 }
 
-function parseJsonModelOutput(text, fallback) {
-    try {
-          const cleaned = String(text || "").replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
-          const parsed = JSON.parse(cleaned);
-          return {
-                  reply: safeText(parsed.reply) || fallback,
-                  intent: safeText(parsed.intent) || "outro",
-                  needs_human: Boolean(parsed.needs_human),
-                  lead_temperature: safeText(parsed.lead_temperature) || "morno",
-                  missing_fields: Array.isArray(parsed.missing_fields) ? parsed.missing_fields.map(String) : []
-          };
-    } catch {
-          return { reply: safeText(text) || fallback, intent: "outro", needs_human: true, lead_temperature: "morno", missing_fields: [] };
-    }
+function canonicalizePrice(value) {
+  return String(value || "").toUpperCase().replace(/\s+/g, "").trim();
 }
 
-function buildMessagesPayload(replyText) {
-    const parts = splitForInstagram(replyText);
-    const safeParts = parts.length ? parts : [replyText];
-    return {
-          parts: safeParts,
-          messages: safeParts.map((part) => ({ type: "text", text: part }))
+function containsInventedPrice(text, allowed) {
+  const matches = String(text || "").match(/R\$\s*\d{1,4}(?:\.\d{3})*,\d{2}/gi) || [];
+  return matches.some((m) => !allowed.has(canonicalizePrice(m)));
+}
+
+function containsUnapprovedUrl(text, allowedUrls) {
+  const urls = String(text || "").match(/https:\/\/[^\s)\]}>]+/gi) || [];
+  const allowed = new Set((allowedUrls || []).filter(Boolean).map((url) => String(url).replace(/[.,;!?]+$/, "")));
+  return urls.some((url) => !allowed.has(url.replace(/[.,;!?]+$/, "")));
+}
+
+function containsRemovedInfo(text) {
+  const normalized = normalizeText(text);
+  const removedCampaign = normalized.includes("open") && includesAny(normalized, ["chopp", "chope"]);
+  const removedSweetFondue = includesAny(normalized, ["fondue", "fundi", "fundue", "fondi"]) && normalized.includes("doce");
+  return removedCampaign || removedSweetFondue;
+}
+
+function ensurePersonalized(reply, customer) {
+  const name = safeText(customer?.first_name || "", 50);
+  if (!name) return reply;
+  const nReply = normalizeText(reply);
+  const nName = normalizeText(name);
+  if (nName && nReply.includes(nName)) return reply;
+  return `${name}, ${reply.charAt(0).toLowerCase()}${reply.slice(1)}`;
+}
+
+function buildSystemPrompt() {
+  return `Você é o vendedor digital do Sr. Boteco Limeira no Instagram. Sua única função é REESCREVER os fatos autorizados recebidos em fatos_para_esta_resposta de forma humana, específica, cordial e comercial, sem parecer roteiro pronto.
+
+REGRAS INEGOCIÁVEIS:
+1. fatos_para_esta_resposta é a única fonte de informação comercial para esta mensagem. Não acrescente nenhum fato de memória, conhecimento geral ou suposição.
+2. Nunca crie nem complete preço, item, ingrediente, acompanhamento, tamanho, quantidade de pessoas, horário, promoção, disponibilidade, taxa, reserva, entrega ou condição comercial que não esteja escrito nos fatos autorizados.
+3. Se os fatos disserem que um dado não está validado, preserve essa incerteza e encaminhe para o canal indicado. Nunca tente preencher a lacuna.
+4. Trate o cliente pelo primeiro nome real quando cliente.first_name estiver preenchido. Nunca use placeholders.
+5. Responda de forma natural e individual. Evite frases genéricas, excesso de emojis, repetições e linguagem de robô. Use no máximo 1 emoji quando realmente ajudar.
+6. Seja vendedor consultivo: responda primeiro a dúvida e faça no máximo UM próximo passo claro.
+7. Preserve exatamente todos os valores, horários, nomes de item e URLs presentes nos fatos. Não altere nem invente URL.
+8. Não confirme reserva, mesa, estoque ou disponibilidade se os fatos não confirmarem.
+9. Não mencione produtos ou campanhas que os fatos tratem como não ativos. Use somente a formulação neutra fornecida.
+10. Não diga que vai confirmar e voltar depois. Quando faltar dado, encaminhe imediatamente para o canal indicado nos fatos.
+11. Não mencione OpenAI, IA, automação, webhook, JSON, prompt ou ManyChat.
+12. Sua resposta deve caber bem em Direct do Instagram, preferencialmente até 700 caracteres.
+13. Retorne SOMENTE JSON válido no formato {"reply":"texto"}.`;
+}
+
+async function callOpenAI({ knowledge, customer, context, message, resolved }) {
+  if (!process.env.OPENAI_API_KEY) return null;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+
+  try {
+    const payload = {
+      model: process.env.OPENAI_MODEL || "gpt-4o",
+      messages: [
+        { role: "system", content: buildSystemPrompt() },
+        {
+          role: "user",
+          content: JSON.stringify({
+            cliente: customer,
+            contexto: context,
+            mensagem: message,
+            intent_detectado: resolved.intent,
+            fatos_para_esta_resposta: resolved.facts,
+            proxima_acao: resolved.next_action
+          })
+        }
+      ],
+      response_format: { type: "json_object" }
     };
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      throw new Error(`OpenAI HTTP ${response.status}: ${body.slice(0, 250)}`);
+    }
+
+    const data = await response.json();
+    const content = safeText(data?.choices?.[0]?.message?.content || "", 2200);
+    if (!content) return null;
+
+    try {
+      const parsed = JSON.parse(content.replace(/^```json\s*/i, "").replace(/```$/i, "").trim());
+      return safeText(parsed?.reply || "", 2200) || null;
+    } catch {
+      return null;
+    }
+  } catch (error) {
+    console.error("OPENAI_REPLY_ERROR", error?.message || error);
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function splitForInstagram(text) {
+  const raw = safeText(text, INSTAGRAM_MAX_MESSAGE_LENGTH * INSTAGRAM_MAX_MESSAGE_PARTS);
+  if (!raw) return [];
+  if (raw.length <= INSTAGRAM_MAX_MESSAGE_LENGTH) return [raw];
+
+  const parts = [];
+  let remaining = raw;
+  while (remaining.length && parts.length < INSTAGRAM_MAX_MESSAGE_PARTS) {
+    if (remaining.length <= INSTAGRAM_MAX_MESSAGE_LENGTH) {
+      parts.push(remaining.trim());
+      break;
+    }
+
+    const slice = remaining.slice(0, INSTAGRAM_MAX_MESSAGE_LENGTH + 1);
+    const breakAt = Math.max(slice.lastIndexOf("\n\n"), slice.lastIndexOf("\n"), slice.lastIndexOf(". "), slice.lastIndexOf(" "));
+    const cut = breakAt > 350 ? breakAt + (slice[breakAt] === "." ? 1 : 0) : INSTAGRAM_MAX_MESSAGE_LENGTH;
+    parts.push(remaining.slice(0, cut).trim());
+    remaining = remaining.slice(cut).trim();
+  }
+
+  if (remaining && parts.length === INSTAGRAM_MAX_MESSAGE_PARTS) {
+    const last = parts.length - 1;
+    parts[last] = `${parts[last].slice(0, Math.max(0, INSTAGRAM_MAX_MESSAGE_LENGTH - 3)).trim()}...`;
+  }
+
+  return parts.filter(Boolean);
+}
+
+function buildStandardPayload({ reply, resolved, links, requestId }) {
+  const parts = splitForInstagram(reply);
+  return {
+    ok: true,
+    request_id: requestId,
+    reply,
+    intent: resolved.intent,
+    topic: resolved.topic,
+    last_topic: resolved.topic,
+    needs_human: resolved.needs_human,
+    lead_temperature: resolved.lead_temperature,
+    missing_fields: resolved.missing_fields,
+    next_action: resolved.next_action,
+    cardapio_link: links.menu,
+    whatsapp_link: links.whatsapp,
+    ifood_link: links.ifood,
+    food99_link: links.food99,
+    reply_part_1: parts[0] || "",
+    reply_part_2: parts[1] || "",
+    reply_part_3: parts[2] || "",
+    messages: parts.map((part) => ({ type: "text", text: part }))
+  };
+}
+
+function dynamicButtons(resolved, links) {
+  const buttons = [];
+  const add = (caption, url) => {
+    if (url && !buttons.some((b) => b.url === url) && buttons.length < 3) buttons.push({ type: "url", caption, url });
+  };
+
+  if (["abrir_cardapio", "fazer_pedido", "cardapio_ou_whatsapp", "delivery"].includes(resolved.next_action)) add("Cardápio / Pedir", links.menu);
+  if (resolved.next_action === "delivery") {
+    add("iFood", links.ifood);
+    add("99Food", links.food99);
+  }
+  if (resolved.needs_human || ["whatsapp", "cardapio_ou_whatsapp", "coletar_reserva"].includes(resolved.next_action)) add("Falar no WhatsApp", links.whatsapp);
+  return buttons;
+}
+
+function buildDynamicBlock({ reply, resolved, links }) {
+  const parts = splitForInstagram(reply);
+  const buttons = dynamicButtons(resolved, links);
+  const messages = parts.map((text, index) => ({
+    type: "text",
+    text,
+    ...(index === parts.length - 1 && buttons.length ? { buttons } : {})
+  }));
+
+  return {
+    version: "v2",
+    content: {
+      type: "instagram",
+      messages,
+      actions: [
+        { action: "set_field_value", field_name: "ai_intent", value: resolved.intent },
+        { action: "set_field_value", field_name: "ai_topic", value: resolved.topic },
+        { action: "set_field_value", field_name: "ai_lead_temperature", value: resolved.lead_temperature },
+        { action: "set_field_value", field_name: "ai_next_action", value: resolved.next_action },
+        { action: "set_field_value", field_name: "ai_needs_human", value: Boolean(resolved.needs_human) }
+      ],
+      quick_replies: []
+    }
+  };
+}
+
+function wantsDynamicMode(req, body) {
+  const mode = safeText(body?.response_mode || body?.mode || req?.query?.mode || "", 30).toLowerCase();
+  return ["dynamic", "dynamic_block", "manychat_dynamic"].includes(mode);
 }
 
 export default async function handler(req, res) {
-    try {
-          if (req.method === "OPTIONS") {
-                  setJsonHeaders(res);
-                  return res.status(204).end();
-          }
-
-      if (req.method === "GET") {
-              return send(res, 200, {
-                        ok: true,
-                        service: "bot-sr-boteco",
-                        message: "Webhook online. Use POST para conversar.",
-                        env: {
-                                    openai_key: Boolean(process.env.OPENAI_API_KEY),
-                                    model: process.env.OPENAI_MODEL || null,
-                                    webhook_secret: Boolean(process.env.WEBHOOK_SECRET),
-                                    business_name: process.env.BUSINESS_NAME || null
-                        }
-              });
-      }
-
-      if (req.method !== "POST") return send(res, 405, { ok: false, error: "Método não permitido. Use POST." });
-          if (!isAuthorized(req)) return send(res, 401, { ok: false, error: "Não autorizado. Verifique WEBHOOK_SECRET." });
-
-      const body = req.body || {};
-          const customerMessage = extractMessage(body) || inferMessageFromEvent(body);
-          const customer = extractCustomer(body);
-          const conversationContext = extractConversationContext(body);
-
-      if (!customerMessage) {
-              const noMsgReply = ensureWhatsappHandoff(DEFAULT_FALLBACK, null);
-          const fallbackPayload = buildMessagesPayload(noMsgReply);
-              return send(res, 200, {
-                        ok: true,
-                        reply: noMsgReply,
-                        intent: "humano",
-                        needs_human: true,
-                        lead_temperature: "morno",
-                        missing_fields: [],
-                        reply_part_1: fallbackPayload.parts[0] || "",
-                        reply_part_2: fallbackPayload.parts[1] || "",
-                        reply_part_3: fallbackPayload.parts[2] || "",
-                        messages: fallbackPayload.messages
-              });
-      }
-
-      const knowledge = await loadKnowledge();
-          const fallback = knowledge.resposta_fallback || DEFAULT_FALLBACK;
-          const allowedPrices = collectAllowedPrices(knowledge);
-
-      // "resolved" contém a detecção determinística de intenção/fatos (regras de negócio),
-      // mas o texto final (reply) enviado ao cliente é SEMPRE gerado pela IA a seguir,
-      // usando "resolved.facts" apenas como contexto/grounding — nunca como resposta pronta.
-      const resolved = resolveIntent(customerMessage, knowledge, conversationContext);
-
-      if (!process.env.OPENAI_API_KEY) {
-              if (resolved) {
-                        let degradedReply = resolved.facts;
-                                  if (resolved.needs_human) degradedReply = ensureWhatsappHandoff(degradedReply, knowledge);
-                                  const safePayload = buildMessagesPayload(degradedReply);
-                        return send(res, 200, {
-                                    ok: true,
-                                                        reply: degradedReply,
-                                    intent: resolved.intent,
-                                    needs_human: resolved.needs_human,
-                                    lead_temperature: resolved.lead_temperature,
-                                    missing_fields: resolved.missing_fields,
-                                    reply_part_1: safePayload.parts[0] || "",
-                                    reply_part_2: safePayload.parts[1] || "",
-                                    reply_part_3: safePayload.parts[2] || "",
-                                    messages: safePayload.messages
-                        });
-              }
-              return send(res, 500, { ok: false, error: "OPENAI_API_KEY não configurada na Vercel." });
-      }
-
-      const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-          const response = await client.chat.completions.create({
-                  model: process.env.OPENAI_MODEL || "gpt-4o",
-                  messages: [
-                    { role: "system", content: buildSystemPrompt(knowledge) },
-                    {
-                                role: "user",
-                                content: JSON.stringify({
-                                              cliente: customer,
-                                              contexto: conversationContext,
-                                              mensagem: customerMessage,
-                                              intent_detectado: resolved?.intent || null,
-                                              fatos_para_esta_resposta: resolved?.facts || null,
-                                              precisa_humano_sugerido: resolved ? resolved.needs_human : null,
-                                              temperatura_sugerida: resolved?.lead_temperature || null,
-                                              campos_faltantes_sugeridos: resolved?.missing_fields || []
-                                })
-                    }
-                          ],
-                  response_format: { type: "json_object" },
-                  temperature: 0.75
-          });
-
-      const parsed = parseJsonModelOutput(response.choices?.[0]?.message?.content, resolved?.facts || fallback);
-
-      // Trava de segurança: se a IA mencionar algum valor em R$ que não existe na base de
-      // conhecimento, a resposta é descartada e substituída por um fato oficial (ou fallback
-      // seguro), para nunca entregar um preço inventado ao cliente.
-      let finalReplyText = parsed.reply;
-          const invented = containsInventedPrice(finalReplyText, allowedPrices);
-                    if (invented) {
-                                        finalReplyText = (resolved && typeof resolved.facts === "string" && resolved.facts) || fallback;
-                    }
-
-                    const needsHumanFinal = resolved ? resolved.needs_human : true;
-                    if (needsHumanFinal || invented) {
-                                        finalReplyText = ensureWhatsappHandoff(finalReplyText, knowledge);
-                    }
-
-      const result = resolved
-            ? {
-                      reply: finalReplyText,
-                      intent: resolved.intent,
-                      needs_human: resolved.needs_human,
-                      lead_temperature: resolved.lead_temperature,
-                      missing_fields: resolved.missing_fields
-            }
-              : {
-                        reply: finalReplyText,
-                        intent: parsed.intent,
-                                            needs_human: true,
-                        lead_temperature: parsed.lead_temperature,
-                        missing_fields: parsed.missing_fields
-              };
-
-      const finalPayload = buildMessagesPayload(result.reply);
-
-      return send(res, 200, {
-              ok: true,
-              ...result,
-              reply_part_1: finalPayload.parts[0] || "",
-              reply_part_2: finalPayload.parts[1] || "",
-              reply_part_3: finalPayload.parts[2] || "",
-              messages: finalPayload.messages
-      });
-    } catch (error) {
-          console.error("ERRO_GERAL:", error);
-const errorReply = ensureWhatsappHandoff(DEFAULT_FALLBACK, null);
-                const errorPayload = buildMessagesPayload(errorReply);
-          return send(res, 200, {
-                  ok: false,
-                              reply: errorReply,
-                  intent: "humano",
-                  needs_human: true,
-                  lead_temperature: "quente",
-                  missing_fields: [],
-                  error_public: "Falha temporária no atendimento automático.",
-                  reply_part_1: errorPayload.parts[0] || "",
-                  reply_part_2: errorPayload.parts[1] || "",
-                  reply_part_3: errorPayload.parts[2] || "",
-                  messages: errorPayload.messages
-          });
+  const requestId = crypto.randomUUID();
+  try {
+    if (req.method === "OPTIONS") {
+      setJsonHeaders(res);
+      return res.status(204).end();
     }
+
+    if (req.method === "GET") {
+      return send(res, 200, {
+        ok: true,
+        service: "sdr-boteco",
+        version: "2.0.0",
+        message: "Webhook online. Use POST para conversar.",
+        openai_configured: Boolean(process.env.OPENAI_API_KEY),
+        model: process.env.OPENAI_MODEL || "gpt-4o"
+      });
+    }
+
+    if (req.method !== "POST") return send(res, 405, { ok: false, error: "Método não permitido. Use POST." });
+    if (!isAuthorized(req)) return send(res, 401, { ok: false, error: "Não autorizado. Verifique WEBHOOK_SECRET." });
+
+    const body = req.body || {};
+    const knowledge = await loadKnowledge();
+    const links = getLinks(knowledge);
+    const customer = extractCustomer(body);
+    const context = extractConversationContext(body);
+    const message = extractMessage(body) || inferMessageFromEvent(body);
+
+    const resolved = message
+      ? resolveIntent(message, knowledge, context)
+      : makeResolution({
+          facts: `Quero te ajudar sem te passar nada errado. Você pode me dizer o que deseja saber? Se preferir, veja o cardápio em ${links.menu} ou fale com a equipe: ${links.whatsapp}`,
+          intent: "sem_mensagem",
+          topic: "fallback",
+          needs_human: false,
+          lead_temperature: "morno",
+          next_action: "descobrir_interesse"
+        });
+
+    const allowedPrices = collectAllowedPrices(resolved.facts);
+    const aiReply = message ? await callOpenAI({ knowledge, customer, context, message, resolved }) : null;
+
+    let finalReply = aiReply || resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;
+    const allowedUrls = [links.menu, links.whatsapp, links.ifood, links.food99, links.jobs, knowledge?.links?.site_oficial].filter(Boolean);
+    if (containsInventedPrice(finalReply, allowedPrices) || containsUnapprovedUrl(finalReply, allowedUrls) || containsRemovedInfo(finalReply)) {
+      finalReply = resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;
+    }
+
+    finalReply = ensurePersonalized(safeText(finalReply, 2600), customer);
+
+    if (wantsDynamicMode(req, body)) {
+      return send(res, 200, buildDynamicBlock({ reply: finalReply, resolved, links }));
+    }
+
+    return send(res, 200, buildStandardPayload({ reply: finalReply, resolved, links, requestId }));
+  } catch (error) {
+    console.error("BOT_FATAL_ERROR", requestId, error);
+    const fallback = `Não quero te passar nenhuma informação errada. Confira o cardápio em ${DEFAULT_MENU_LINK} ou fale com a equipe: ${DEFAULT_WHATSAPP_LINK}`;
+    const parts = splitForInstagram(fallback);
+    return send(res, 200, {
+      ok: false,
+      request_id: requestId,
+      reply: fallback,
+      intent: "erro_seguro",
+      topic: "fallback",
+      last_topic: "fallback",
+      needs_human: true,
+      lead_temperature: "quente",
+      missing_fields: ["erro_temporario"],
+      next_action: "whatsapp",
+      cardapio_link: DEFAULT_MENU_LINK,
+      whatsapp_link: DEFAULT_WHATSAPP_LINK,
+      reply_part_1: parts[0] || "",
+      reply_part_2: parts[1] || "",
+      reply_part_3: parts[2] || "",
+      messages: parts.map((text) => ({ type: "text", text }))
+    });
+  }
 }

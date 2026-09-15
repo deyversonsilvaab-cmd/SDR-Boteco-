@@ -1,267 +1,252 @@
-# Bot Sr. Boteco — ManyChat + Vercel + OpenAI
+# SDR Boteco — ManyChat + Instagram + Vercel
 
-Webhook para responder mensagens do Instagram/WhatsApp via ManyChat usando OpenAI, com respostas rápidas para as principais campanhas e regra para não inventar preços.
+Versão 2.0.0 — revisão de produção em 15/09/2026.
 
-## 1. Arquivos principais
+Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estruturado para receber mensagens do ManyChat, identificar a intenção do cliente, consultar uma base fechada de informações comerciais e devolver uma resposta humanizada sem inventar preços, itens, composição, porções, horários ou disponibilidade.
 
-- `api/manychat.js` — endpoint que o ManyChat chama.
-- `data/knowledge.json` — base de conhecimento: campanhas, respostas, preços autorizados, horários e links.
-- `.env.example` — variáveis que devem ser cadastradas na Vercel.
-- `vercel.json` — configuração do deploy.
-- `audit-test.mjs` — simulação local das principais perguntas.
+## Objetivos da versão 2
 
-## 2. Melhorias incluídas nesta versão
+- Nenhuma mensagem recebida deve ficar sem resposta por falha de interpretação.
+- O cliente é chamado pelo primeiro nome quando o ManyChat envia `first_name`.
+- Perguntas curtas de continuidade, como `valor?`, `o que acompanha?` e `serve quantas pessoas?`, usam `last_topic` para manter o contexto.
+- Preços só podem aparecer quando existem na base `data/knowledge.json`.
+- Itens sem dados validados recebem cardápio + WhatsApp, em vez de uma resposta inventada.
+- Pedidos e oportunidades de envio do cardápio direcionam para o cardápio/pedido online.
+- Delivery oferece pedido direto, iFood e 99Food.
+- O atendimento continua funcionando mesmo sem OpenAI: a camada determinística é a fonte da verdade; a IA é usada apenas para humanizar a redação quando configurada.
+- Existe resposta segura mesmo se ocorrer um erro interno no webhook.
+- O endpoint pode responder no formato JSON tradicional ou no formato **Dynamic Block v2** do ManyChat.
 
-- Fondue atualizado sem relação com Dia dos Namorados.
-- Resposta de marcação em story/foto mais humana.
-- Open Chopp separado de rodízio, jogo e Open em Campo.
-- Valores do Open Chopp liberados:
-  - Domingo a quinta: R$ 29,90
-  - Sexta e sábado: R$ 49,90
-  - Horário: 16h às 21h
-- Almoço atualizado com texto mais orgânico e opções a partir de R$ 19,90.
-- Consulta de preços dos itens do cardápio direcionada para WhatsApp.
-- Correção para não classificar “free” e “serviço” como vaga.
-- Correção para “guaraná normal” não cair em bebida proteica.
-- Novas intenções: `open_chopp`, `happy_hour`, `double_burger`, `feijoada`, `marcacao_story`, `empresa_b2b`, `estacionamento`, `bebidas` e `bebida_sem_alcool`.
-- Opção sem álcool atualizada: não temos chopp zero; temos Heineken Zero long neck.
+## Links oficiais usados pela automação
 
-## 3. Como subir no GitHub
+- Cardápio/pedido: `https://botequimpatiolimeira.saipos.com/home`
+- WhatsApp: `https://wa.me/5519997858351`
+- iFood: `https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72`
+- 99Food: `https://99app.com/99food/food/`
+- Site: `https://srboteco.com.br/`
+- Vagas: `https://wa.me/5517991034703`
 
-1. Crie ou abra o repositório do bot.
-2. Substitua os arquivos antigos por estes arquivos atualizados.
-3. Envie as alterações para o GitHub.
-4. A Vercel deve fazer o deploy automaticamente se o repositório já estiver conectado.
+O 99Food está configurado com o link oficial do serviço. Como não há um deep link específico da loja validado nesta base, a resposta orienta o cliente a procurar por **Sr. Boteco Limeira** no aplicativo.
 
-Se for um projeto novo:
+## Estrutura
 
-1. Entre na Vercel e clique em **Add New Project**.
-2. Importe o repositório.
-3. Em **Environment Variables**, cadastre:
-
-```env
-OPENAI_API_KEY=sua_chave_da_openai
-OPENAI_MODEL=gpt-4o
-WEBHOOK_SECRET=uma_senha_forte_criada_por_voce
-BUSINESS_NAME=Sr. Boteco Limeira
+```text
+.
+├── api/
+│   └── manychat.js              # webhook principal
+├── data/
+│   └── knowledge.json           # fonte oficial de fatos, preços e regras
+├── audit-test.mjs               # auditoria de cenários críticos
+├── test-local.js                # teste simples do endpoint local
+├── MANYCHAT_COORDENADAS.md      # configuração detalhada no ManyChat
+├── PROMPT_CONFIGURACAO_ADICIONAL.md
+├── REVISAO_FINAL.md
+├── package.json
+├── vercel.json
+└── .env.example
 ```
 
-4. Clique em **Deploy**.
+## Endpoint
 
-## 4. URL que será usada no ManyChat
+Após publicar no Vercel:
 
-Depois do deploy, a Vercel vai gerar uma URL parecida com:
-
-```txt
-https://bot-sr-boteco.vercel.app/api/manychat
+```text
+POST https://SEU-PROJETO.vercel.app/api/manychat
 ```
 
-Abra essa URL no navegador. Se aparecer `Webhook online`, está funcionando.
+Health check:
 
-## 5. Configuração no ManyChat
-
-No Flow Builder:
-
-1. Crie ou abra o bloco que recebe mensagens do Instagram.
-2. Adicione uma ação **External Request**.
-3. Method: `POST`.
-4. URL: `https://SEU-PROJETO.vercel.app/api/manychat`.
-5. Headers:
-
-```txt
-Content-Type: application/json
-x-webhook-secret: sua_senha_do_WEBHOOK_SECRET
+```text
+GET https://SEU-PROJETO.vercel.app/api/manychat
 ```
 
-6. Body JSON recomendado:
+## Corpo recomendado enviado pelo ManyChat
 
 ```json
 {
-  "subscriber_id": "{{subscriber.id}}",
+  "subscriber_id": "{{id}}",
   "first_name": "{{first_name}}",
   "username": "{{username}}",
-  "message": "{{last_input_text}}",
-  "last_intent": "{{ai_intent}}"
+  "message": "{{last_text_input}}",
+  "last_intent": "{{ai_intent}}",
+  "last_topic": "{{ai_topic}}",
+  "channel": "instagram"
 }
 ```
 
-O campo `last_intent` ajuda o bot a responder quando o cliente manda só “valor” depois de perguntar sobre Open Chopp.
+Os nomes exatos das variáveis de sistema podem variar conforme a interface/conta do ManyChat. O ponto essencial é enviar o **primeiro nome**, a **mensagem recebida** e os campos de contexto salvos após a resposta anterior.
 
-7. Salve a resposta `$.reply` em um campo personalizado, por exemplo: `ai_reply`.
-8. Salve também:
+O webhook aceita também diversos nomes alternativos de campo (`text`, `input`, `comment_text`, `story_text`, etc.) para reduzir o risco de uma integração quebrar por pequenas diferenças no payload.
 
-```txt
-$.intent → ai_intent
-$.needs_human → ai_needs_human
-$.lead_temperature → ai_lead_temperature
+## Resposta JSON padrão
+
+Exemplo resumido:
+
+```json
+{
+  "ok": true,
+  "reply": "Mariana, ...",
+  "intent": "cardapio",
+  "topic": "cardapio",
+  "last_topic": "cardapio",
+  "needs_human": false,
+  "lead_temperature": "quente",
+  "next_action": "abrir_cardapio",
+  "cardapio_link": "https://botequimpatiolimeira.saipos.com/home",
+  "whatsapp_link": "https://wa.me/5519997858351",
+  "reply_part_1": "Mariana, ...",
+  "reply_part_2": "",
+  "reply_part_3": ""
+}
 ```
 
-9. No próximo bloco, envie a mensagem:
+No ManyChat, salve no mínimo:
 
-```txt
-{{ai_reply}}
+- `$.reply` → `ai_reply`
+- `$.intent` → `ai_intent`
+- `$.topic` → `ai_topic`
+- `$.lead_temperature` → `ai_lead_temperature`
+- `$.next_action` → `ai_next_action`
+- `$.reply_part_1` → `ai_reply_part_1`
+- `$.reply_part_2` → `ai_reply_part_2`
+- `$.reply_part_3` → `ai_reply_part_3`
+
+Use `MANYCHAT_COORDENADAS.md` para a configuração completa.
+
+## Dynamic Block v2 — opcional
+
+Se o corpo do POST contiver:
+
+```json
+{
+  "response_mode": "dynamic_block"
+}
 ```
 
-## 6. Como editar preços
+o endpoint devolve o formato v2 do ManyChat com mensagens e, quando aplicável, botões de URL para cardápio/pedido, iFood e WhatsApp. Nesse modo, crie previamente no ManyChat os campos:
 
-Abra `data/knowledge.json` e altere somente os itens dentro de `produtos_precos` ou as campanhas aprovadas.
+- `ai_intent`
+- `ai_topic`
+- `ai_lead_temperature`
+- `ai_next_action`
+- `ai_needs_human` (True/False)
+
+A configuração tradicional por **External Request + Response Mapping** continua sendo a opção mais simples para implantação e depuração.
+
+## Regras de segurança da informação comercial
+
+`data/knowledge.json` é a única fonte de fatos comerciais da automação.
+
+A aplicação aplica quatro níveis de proteção:
+
+1. **roteamento determinístico:** identifica intenções críticas antes de chamar a IA;
+2. **base fechada:** dados ausentes são tratados como não validados;
+3. **trava de preço:** se a IA escrever um valor em `R$` que não existe na base, a resposta é descartada;
+4. **fallback seguro:** em erro de servidor ou de IA, o cliente recebe cardápio e WhatsApp, nunca silêncio.
+
+Nunca adicione preço por aproximação ou por memória. Atualize o item em `data/knowledge.json` e rode os testes.
+
+## Itens sem informação completa
+
+Alguns produtos citados por clientes podem existir no cardápio real, mas não possuem preço/composição/porção validados no material original deste projeto. Nesses casos a automação **não inventa**. Ela responde imediatamente com:
+
+- link do cardápio atualizado;
+- WhatsApp da equipe para confirmação específica;
+- contexto salvo para que uma pergunta seguinte não fique perdida.
+
+Isso é intencional e é mais seguro do que preencher lacunas com informação não confirmada.
+
+## Pedido e delivery
+
+Quando o cliente disser frases como:
+
+- `quero fazer um pedido`;
+- `manda o cardápio`;
+- `quero pedir para retirar`;
+- `faz entrega?`;
+- `delivery`;
+
+a automação encaminha para o cardápio/pedido online e informa as opções de retirada/entrega conforme o checkout. Para delivery, também apresenta iFood e 99Food.
+
+## Contexto de conversa
+
+Após cada resposta, salve `topic` no campo `ai_topic` do ManyChat e envie esse campo na próxima chamada como `last_topic`.
 
 Exemplo:
 
-```json
-{
-  "categoria": "Fondue",
-  "nome": "Fondue Salgado",
-  "aliases": ["fondue salgado", "fundi salgado"],
-  "valor": "R$ 99,90",
-  "validade": "Das 16h às 21h."
-}
+1. Cliente: `Tábua Mista`
+2. Bot: informa que os detalhes não estão validados e envia cardápio/WhatsApp; `topic = item:tabua_mista`
+3. Cliente: `O que acompanha o prato?`
+4. O webhook entende que a pergunta continua sendo sobre a Tábua Mista e não responde sobre outro produto.
+
+O mesmo mecanismo funciona para itens catalogados e perguntas como preço, composição e quantidade de pessoas servidas.
+
+## Personalização por nome
+
+O ManyChat deve enviar `first_name` em todas as chamadas possíveis. O webhook usa apenas o nome recebido do contato e nunca cria nome fictício.
+
+Se `first_name` estiver vazio, a resposta continua funcionando sem placeholder. Para cumprir a experiência de atendimento personalizada, confirme no ManyChat se o campo de sistema de primeiro nome está sendo passado no External Request.
+
+## OpenAI
+
+A chave é opcional:
+
+```env
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o
 ```
 
-Se um preço não estiver nessa base, o bot deve direcionar para o WhatsApp e não inventar valor.
+Com chave: a IA reescreve os fatos em tom humano/vendedor consultivo, sujeita às travas do código.
 
-## 7. Teste local opcional
+Sem chave ou se a API falhar: o webhook usa a resposta determinística já validada. Portanto, uma indisponibilidade da IA não deve deixar o cliente sem resposta.
+
+## Segurança do webhook
+
+Recomendado no Vercel:
+
+```env
+WEBHOOK_SECRET=uma-chave-forte-e-unica
+```
+
+E no ManyChat, no External Request:
+
+```text
+x-webhook-secret: a-mesma-chave
+```
+
+Se `WEBHOOK_SECRET` estiver vazio, o endpoint aceita chamadas sem autenticação. Para produção, não deixe vazio.
+
+## Deploy no Vercel
+
+1. Suba esta pasta para o repositório GitHub conectado ao Vercel.
+2. Confirme que a raiz do projeto contém `package.json`, `vercel.json`, `api/` e `data/`.
+3. Configure as variáveis de ambiente no Vercel.
+4. Faça o deploy.
+5. Abra `GET /api/manychat` e confirme `ok: true`.
+6. Teste o POST pelo ManyChat antes de publicar a automação para todos os contatos.
+
+## Testes
+
+Execute:
 
 ```bash
-npm install
-cp .env.example .env
-npm run dev
+npm run check
 ```
 
-Em outro terminal:
-
-```bash
-WEBHOOK_SECRET=sua_senha npm run test:local
-```
-
-Para rodar a varredura de intenções:
+ou:
 
 ```bash
 npm run audit
 ```
 
-## 8. Observação importante sobre modelo
+A auditoria cobre, entre outros, os casos que anteriormente podiam ficar sem resposta: saudação, cardápio, pedido, delivery, categorias genéricas, item não validado, continuação de contexto, reserva, forma de pagamento e encaminhamento humano.
 
-O modelo fica na variável `OPENAI_MODEL`. Se sua conta não tiver acesso ao modelo configurado, troque o valor por outro modelo disponível na sua conta OpenAI.
+## Regra para futuras alterações
 
-## Campanha Open Chopp — tráfego pago
+Antes de publicar qualquer mudança:
 
-As respostas prontas do anúncio ficam em `data/knowledge.json`, no bloco:
-
-```json
-respostas_anuncio_open_chopp
-```
-
-O webhook reconhece perguntas sobre:
-
-- valor do Open Chopp;
-- Open Chopp hoje;
-- localização;
-- reserva e mesa;
-- desafio do placar;
-- combo frango a passarinho + calabresa;
-- família, criança, casal, turma e aniversário;
-- horário, pagamento, taxa e regra individual;
-- bebida sem álcool / Heineken Zero long neck;
-- almoço;
-- grupos e happy hour de empresa;
-- comentários curtos e palpites de placar.
-
-Para mensagens curtas como `Valor?` ou `Que horas?` vindas do anúncio, envie no External Request um campo de contexto, por exemplo:
-
-```json
-{
-  "message": "{{last_text_input}}",
-  "last_intent": "open_chopp",
-  "last_topic": "anuncio_open_chopp"
-}
-```
-
-Isso ajuda o sistema a responder com o valor e horário do Open Chopp, em vez de tratar a pergunta como genérica do cardápio.
-
-## Fluxo Fondue — dúvida sobre valor por pessoa/casal
-
-Foi adicionada uma resposta direta para perguntas como:
-
-- “Valor por pessoa ou casal?”
-- “Esse valor é pro casal?”
-- “Serve 2 pessoas?”
-- “É individual?”
-- “Para quantas pessoas serve?”
-
-Resposta usada pelo sistema:
-
-```text
-Isso mesmo 😊
-
-O valor não é por pessoa, é do prato de fondue feito para servir 2 pessoas.
-
-🧀 O Fondue Salgado sai por R$ 99,90
-🍫 O Fondue Doce sai por R$ 89,90
-
-Ele fica disponível das 16h às 21h.
-```
-
-Para melhorar o contexto no ManyChat, envie no External Request:
-
-```json
-{
-  "message": "{{last text input}}",
-  "last_intent": "fondue",
-  "last_topic": "fondue"
-}
-```
-
-
-## Ajuste obrigatório no ManyChat para Instagram
-
-Para o robô responder conversas e marcações, o ManyChat precisa chamar o webhook em cada gatilho. Apenas a mensagem de boas-vindas não aciona a IA.
-
-### Conversas / Direct
-No fluxo de Direct, depois da mensagem inicial, adicione um bloco **External Request** apontando para `/api/manychat` e envie no body:
-
-```json
-{
-  "message": "{{last_text_input}}",
-  "first_name": "{{first_name}}",
-  "username": "{{username}}",
-  "last_intent": "{{last_intent}}",
-  "last_topic": "{{last_topic}}"
-}
-```
-
-Mapeie a resposta `$.reply` para o campo/resposta exibida no ManyChat.
-
-### Marcação em story
-Crie um gatilho de **Instagram Story Mention / Menção no Story**. Nesse gatilho, chame o mesmo webhook enviando:
-
-```json
-{
-  "message": "mencionou você no próprio story",
-  "event_type": "story_mention",
-  "first_name": "{{first_name}}",
-  "username": "{{username}}"
-}
-```
-
-Também é possível usar a mensagem fixa diretamente no ManyChat:
-
-```text
-Aaa que demais ver sua marcação 😍
-
-Obrigado por compartilhar esse momento com a gente.
-
-Ficamos felizes demais de fazer parte do seu passeio.
-
-Volta mais vezes, viu? 🍻
-```
-
-### Fondue
-
-A resposta de Fondue deve apresentar as duas opções completas com acompanhamentos:
-
-- Fondue Salgado — R$ 99,90: torradas, iscas de frango empanado, contrafilé, calabresa e batata frita.
-- Fondue Doce — R$ 89,90: morango, uva, banana, brownie e marshmallow.
-
-Regra: o valor é do prato feito para servir 2 pessoas, não é por pessoa. Disponível das 16h às 21h.
-
+1. altere os fatos em `data/knowledge.json`;
+2. não replique preços diretamente no código se puder evitá-lo;
+3. adicione/ajuste um teste em `audit-test.mjs`;
+4. execute `npm run check`;
+5. só então faça deploy.

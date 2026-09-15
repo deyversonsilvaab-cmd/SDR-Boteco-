@@ -1,18 +1,16 @@
 {
   "name": "sdr-boteco",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "engines": {
     "node": ">=18"
   },
-  "dependencies": {
-    "openai": "^6.42.0"
-  },
   "scripts": {
     "dev": "vercel dev",
     "test:local": "node test-local.js",
-    "audit": "node audit-test.mjs"
+    "audit": "node audit-test.mjs",
+    "check": "node --check api/manychat.js && node audit-test.mjs"
   },
   "devDependencies": {
     "vercel": "^44.2.10"

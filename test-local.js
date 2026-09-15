@@ -8,9 +8,12 @@ const response = await fetch(url, {
     ...(secret ? { "x-webhook-secret": secret } : {})
   },
   body: JSON.stringify({
-    first_name: "Cliente Teste",
+    subscriber_id: "teste-local",
+    first_name: "Cliente",
     username: "cliente_teste",
-    message: "quanto está o fundi salgado?"
+    message: "Queria o cardápio",
+    last_intent: "",
+    last_topic: ""
   })
 });
 
