@@ -1,5 +1,18 @@
 # Atualizações
 
+## 2.1.1 — Correção de handoff, guardrails e segurança
+
+- Corrigida a prioridade de reclamações no WhatsApp: mensagens como `oi quero estorno`, `boa noite preciso reclamar` e `valeu quero nota fiscal` agora fazem handoff mesmo quando a intenção determinística inicial seria saudação/despedida.
+- Mantidas exceções benignas como `sem problema, valeu`, `problema resolvido` e `deu tudo certo`, evitando falso handoff.
+- Handoff passou a substituir os fatos comerciais anteriores por uma resposta específica do motivo. Reclamação, negociação e pedido de atendente não recebem cardápio/iFood/99Food antes da equipe.
+- Quando o handoff é de reclamação ou negociação, `intent` e `topic` também são normalizados para `reclamacao`/`negociacao`, mantendo contexto e métricas coerentes no ManyChat.
+- `channel` é normalizado para `instagram` ou `whatsapp`, incluindo aliases como `wa` e `WhatsApp Business`.
+- `atendimento_humano`/`bot_pausado` aceita booleano e valores usuais como `1`, `yes`, `sim` e `on`.
+- Em produção, ausência de `WEBHOOK_SECRET` passa a negar o POST (fail-closed).
+- Camada de IA configurada com `temperature: 0.2` e guardrail adicional contra horários, números e marcadores objetivos não autorizados nos fatos.
+- Suíte de WhatsApp ampliada com casos de borda, conteúdo do handoff, segurança e simulação de IA inventando horário.
+- Regressão determinística do Instagram permanece idêntica à v2.0.2 nos 19 cenários auditados.
+
 ## 2.1.0 — WhatsApp com handoff humano
 
 - Adicionado canal `whatsapp` no mesmo endpoint `/api/manychat`, sem alterar a resolução do Instagram.

@@ -1,6 +1,6 @@
 # SDR Boteco — ManyChat + Instagram + WhatsApp + Vercel
 
-Versão 2.1.0 — Instagram preservado + canal WhatsApp com handoff humano em 15/09/2026.
+Versão 2.1.1 — correções de handoff, guardrails e segurança do WhatsApp, com Instagram preservado, em 15/09/2026.
 
 Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estruturado para receber mensagens do ManyChat, identificar a intenção do cliente, consultar uma base fechada de informações comerciais e devolver uma resposta humanizada sem inventar preços, itens, composição, porções, horários ou disponibilidade.
 
@@ -18,6 +18,9 @@ Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estr
 - O endpoint pode responder no formato JSON tradicional ou no formato **Dynamic Block v2** do ManyChat.
 - O WhatsApp usa a mesma base e o mesmo endpoint, com recepção automatizada, handoff para a equipe e silêncio quando um humano assume.
 - O comportamento do Instagram permanece isolado do ramo específico de WhatsApp.
+- Reclamações e negociações no WhatsApp recebem resposta específica de handoff, sem cardápio/iFood antes da equipe.
+- Em produção, `WEBHOOK_SECRET` é obrigatório; sem ele o POST falha fechado com 401.
+- A camada de IA usa temperatura baixa e uma validação adicional para horários, números e outros marcadores objetivos não autorizados.
 
 ## Links oficiais usados pela automação
 

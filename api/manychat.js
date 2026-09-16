@@ -11,6 +11,7 @@ const DEFAULT_FALLBACK = `Quero te passar a informação certa. Confira o cardá
 const INSTAGRAM_MAX_MESSAGE_LENGTH = 900;
 const INSTAGRAM_MAX_MESSAGE_PARTS = 3;
 const OPENAI_TIMEOUT_MS = 12000;
+const APP_VERSION = "2.1.1";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -49,9 +50,15 @@ function getHeader(req, name) {
   return Array.isArray(value) ? value[0] : value || "";
 }
 
+function isProductionRuntime() {
+  return process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production";
+}
+
 function isAuthorized(req) {
-  const expected = process.env.WEBHOOK_SECRET;
-  if (!expected) return true;
+  const expected = safeText(process.env.WEBHOOK_SECRET || "", 500);
+  // Em produção, ausência do segredo é erro de configuração: falha fechada.
+  // Em desenvolvimento/teste local, mantém compatibilidade para facilitar auditoria.
+  if (!expected) return !isProductionRuntime();
   const direct = getHeader(req, "x-webhook-secret");
   const auth = getHeader(req, "authorization");
   const bearer = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : "";
@@ -124,6 +131,12 @@ function inferMessageFromEvent(body) {
   return "";
 }
 
+function normalizeChannel(value) {
+  const raw = safeText(value || "instagram", 30).toLowerCase().replace(/[\s-]+/g, "_");
+  if (raw === "wa" || raw.includes("whatsapp")) return "whatsapp";
+  return "instagram";
+}
+
 function extractCustomer(body) {
   const rawFirstName = safeText(body?.first_name || body?.name || body?.profile?.first_name || "", 80);
   const firstName = rawFirstName.replace(/[{}\[\]<>$]/g, "").trim().slice(0, 50);
@@ -131,18 +144,22 @@ function extractCustomer(body) {
     id: safeText(body?.subscriber_id || body?.id || body?.contact_id || "", 120),
     first_name: firstName,
     username: safeText(body?.username || body?.ig_username || body?.profile?.username || "", 100),
-    channel: safeText(body?.channel || "instagram", 30).toLowerCase() || "instagram"
+    channel: normalizeChannel(body?.channel)
   };
 }
 
 function isWhatsapp(customer) {
-  const channel = safeText(customer?.channel || "", 30).toLowerCase();
-  return channel.includes("whatsapp") || channel === "wa";
+  return normalizeChannel(customer?.channel) === "whatsapp";
+}
+
+function isTruthyFlag(value) {
+  if (value === true || value === 1) return true;
+  return ["true", "1", "yes", "sim", "on"].includes(String(value ?? "").trim().toLowerCase());
 }
 
 function humanIsHandling(body) {
   const v = body?.atendimento_humano ?? body?.bot_pausado ?? body?.custom_fields?.atendimento_humano ?? body?.custom_fields?.bot_pausado;
-  return v === true || String(v ?? "").toLowerCase() === "true";
+  return isTruthyFlag(v);
 }
 
 function extractConversationContext(body) {
@@ -286,11 +303,50 @@ function makeResolution({ facts, intent, topic = intent, needs_human = false, le
 
 function whatsappHandoffReason(resolved, text) {
   if (resolved.intent === "vaga") return null;
-  if (includesAny(text, ["reclamacao", "reclamar", "problema", "atraso", "errado", "cancelar", "estorno", "reembolso", "nota fiscal", "cobranca indevida"])) return "reclamacao";
+
+  // Termos fortes vencem saudação/despedida. Assim, "oi, quero estorno" ou
+  // "obrigado, mas preciso reclamar" continuam indo para a equipe.
+  const strongComplaint = [
+    "reclamacao", "reclamar", "atraso", "cancelar", "cancelamento", "estorno", "reembolso",
+    "nota fiscal", "cobranca indevida", "cobranca duplicada", "cobrado duas vezes", "devolucao"
+  ];
+  if (includesAny(text, strongComplaint)) return "reclamacao";
+
+  // "problema" e "errado" são sinais úteis, mas possuem usos benignos.
+  const benignProblem = [
+    "sem problema", "sem problemas", "nenhum problema", "nao tive problema", "não tive problema",
+    "problema resolvido", "problema foi resolvido", "deu tudo certo", "esta tudo certo", "está tudo certo",
+    "nada errado", "nao tem nada errado", "não tem nada errado"
+  ];
+  const weakComplaint = ["problema", "errado", "erro", "faltou", "nao chegou", "não chegou", "veio frio"];
+  if (!includesAny(text, benignProblem) && includesAny(text, weakComplaint)) return "reclamacao";
+
   if (includesAny(text, ["orcamento", "encomenda", "fechar pedido", "negociar", "desconto", "atacado", "grande quantidade", "festa", "buffet", "evento corporativo", "fornecedor"])) return "negociacao";
   if (["reserva", "humano", "item_inativo", "item_nao_encontrado", "outro"].includes(resolved.intent)) return resolved.intent;
   if (resolved.needs_human) return "confirmar_com_equipe";
   return null;
+}
+
+function whatsappHandoffFacts(reason, resolved, knowledge) {
+  const base = knowledge?.respostas_base || {};
+  const generic = base.handoff_humano || "Vou chamar alguém da equipe pra continuar seu atendimento por aqui.";
+
+  if (reason === "reclamacao") {
+    return "Entendi. Vou chamar alguém da equipe pra continuar seu atendimento por aqui e cuidar disso certinho.";
+  }
+  if (reason === "negociacao") {
+    return "Certo. Esse tipo de pedido precisa ser alinhado com a equipe. Vou chamar alguém do time pra continuar com você por aqui.";
+  }
+  if (reason === "humano") {
+    return "Claro. Vou chamar alguém da equipe pra continuar seu atendimento por aqui.";
+  }
+  if (reason === "reserva") {
+    return "Para adiantar a reserva, me passe nome, dia/data, horário e quantas pessoas, se ainda não informou. Vou chamar alguém da equipe pra fazer a confirmação final.";
+  }
+  if (["item_inativo", "item_nao_encontrado", "confirmar_com_equipe", "outro"].includes(reason)) {
+    return `Esse detalhe precisa de confirmação pra eu não te passar nada errado. ${generic}`;
+  }
+  return generic;
 }
 
 function resolveIntent(message, knowledge, context = {}) {
@@ -474,6 +530,43 @@ function containsRemovedInfo(text) {
   return removedCampaign || removedSweetFondue;
 }
 
+function stripUrlsAndPrices(value) {
+  return String(value || "")
+    .replace(/https:\/\/[^\s)\]}>]+/gi, " ")
+    .replace(/R\$\s*\d{1,4}(?:\.\d{3})*,\d{2}/gi, " ");
+}
+
+function objectiveMarkers(value) {
+  const raw = stripUrlsAndPrices(value);
+  const normalized = normalizeText(raw);
+  const markers = new Set();
+
+  for (const match of raw.matchAll(/\b\d{1,2}(?::\d{2})\b|\b\d{1,2}h(?:\d{2})?\b/gi)) {
+    markers.add(`time:${normalizeText(match[0])}`);
+  }
+  for (const match of raw.matchAll(/\b\d+(?:[.,]\d+)?\b/g)) {
+    markers.add(`num:${match[0].replace(",", ".")}`);
+  }
+
+  const controlledTerms = [
+    "segunda", "terca", "quarta", "quinta", "sexta", "sabado", "domingo",
+    "pix", "dinheiro", "credito", "debito", "alelo", "pluxee", "ticket", "vale refeicao", "vale alimentacao",
+    "ifood", "99food", "retirada", "entrega", "delivery", "taxa", "desconto", "estoque", "disponivel", "indisponivel"
+  ];
+  for (const term of controlledTerms) {
+    const n = normalizeText(term);
+    if (normalized.includes(n)) markers.add(`term:${n}`);
+  }
+  return markers;
+}
+
+function containsUnsupportedObjectiveFact(reply, allowedFacts) {
+  const replyMarkers = objectiveMarkers(reply);
+  if (!replyMarkers.size) return false;
+  const allowedMarkers = objectiveMarkers(allowedFacts);
+  return [...replyMarkers].some((marker) => !allowedMarkers.has(marker));
+}
+
 function ensurePersonalized(reply, customer) {
   const name = safeText(customer?.first_name || "", 50);
   if (!name) return reply;
@@ -510,7 +603,8 @@ async function callOpenAI({ knowledge, customer, context, message, resolved, eve
           })
         }
       ],
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
+      temperature: 0.2
     };
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -575,8 +669,7 @@ function splitForInstagram(text) {
 }
 
 export function splitForChannel(text, channel) {
-  const normalizedChannel = safeText(channel || "instagram", 30).toLowerCase();
-  if (normalizedChannel.includes("whatsapp") || normalizedChannel === "wa") {
+  if (normalizeChannel(channel) === "whatsapp") {
     const single = safeText(text, 3500);
     return single ? [single] : [];
   }
@@ -674,7 +767,7 @@ export default async function handler(req, res) {
       return send(res, 200, {
         ok: true,
         service: "sdr-boteco",
-        version: "2.1.0",
+        version: APP_VERSION,
         channels: ["instagram", "whatsapp"],
         message: "Webhook online. Use POST para conversar.",
         openai_configured: Boolean(process.env.OPENAI_API_KEY),
@@ -741,10 +834,18 @@ export default async function handler(req, res) {
         handoffReason = reason;
         resolved.needs_human = true;
         resolved.next_action = "handoff_humano";
-        const handoffText = knowledge?.respostas_base?.handoff_humano || "Vou chamar alguém da equipe pra continuar seu atendimento por aqui.";
-        if (!normalizeText(resolved.facts).includes(normalizeText(handoffText))) {
-          resolved.facts = `${resolved.facts}\n\n${handoffText}`;
+        if (reason === "reclamacao") {
+          resolved.intent = "reclamacao";
+          resolved.topic = "reclamacao";
+          resolved.lead_temperature = "quente";
+        } else if (reason === "negociacao") {
+          resolved.intent = "negociacao";
+          resolved.topic = "negociacao";
+          resolved.lead_temperature = "quente";
         }
+        // No WhatsApp, o texto do handoff substitui fatos de venda anteriores.
+        // Evita, por exemplo, oferecer cardápio/iFood antes de tratar uma reclamação.
+        resolved.facts = whatsappHandoffFacts(reason, resolved, knowledge);
       }
     }
 
@@ -753,8 +854,15 @@ export default async function handler(req, res) {
     const aiReply = shouldHumanizeWithAI ? await callOpenAI({ knowledge, customer, context, message, resolved, eventType }) : null;
 
     let finalReply = aiReply || resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;
-    const allowedUrls = [links.menu, links.whatsapp, links.ifood, links.food99, links.jobs, knowledge?.links?.site_oficial].filter(Boolean);
-    if (containsInventedPrice(finalReply, allowedPrices) || containsUnapprovedUrl(finalReply, allowedUrls) || containsRemovedInfo(finalReply)) {
+    const allowedUrls = handoff
+      ? []
+      : [links.menu, links.whatsapp, links.ifood, links.food99, links.jobs, knowledge?.links?.site_oficial].filter(Boolean);
+    if (
+      containsInventedPrice(finalReply, allowedPrices) ||
+      containsUnapprovedUrl(finalReply, allowedUrls) ||
+      containsRemovedInfo(finalReply) ||
+      containsUnsupportedObjectiveFact(finalReply, resolved.facts)
+    ) {
       finalReply = resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;
     }
 

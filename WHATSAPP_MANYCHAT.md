@@ -1,4 +1,4 @@
-# WhatsApp no ManyChat — Sr. Boteco Limeira v2.1.0
+# WhatsApp no ManyChat — Sr. Boteco Limeira v2.1.1
 
 Este documento descreve como ligar o canal WhatsApp ao mesmo webhook já usado pelo Instagram, mantendo os fluxos separados.
 
@@ -8,7 +8,7 @@ Este documento descreve como ligar o canal WhatsApp ao mesmo webhook já usado p
 POST https://sdr-boteco.vercel.app/api/manychat
 ```
 
-Header obrigatório quando `WEBHOOK_SECRET` estiver configurado:
+Header obrigatório em produção (`WEBHOOK_SECRET` deve estar configurado na Vercel):
 
 ```text
 x-webhook-secret: <seu segredo>
@@ -31,7 +31,7 @@ x-webhook-secret: <seu segredo>
 }
 ```
 
-O campo `atendimento_humano` deve ser um campo de usuário booleano no ManyChat. O webhook também aceita `bot_pausado` com a mesma função.
+O campo `atendimento_humano` deve ser um campo de usuário booleano no ManyChat. O webhook também aceita `bot_pausado` com a mesma função. Para tolerar variações do ManyChat, valores `true`, `1`, `yes`, `sim` e `on` também são reconhecidos como ativo.
 
 ## Campos de resposta para mapear
 
@@ -64,7 +64,7 @@ ai_last_bot_reply = {{ai_reply}}
 
 ## Quando há handoff
 
-O WhatsApp passa para a equipe quando houver, entre outros:
+O WhatsApp passa para a equipe quando houver, entre outros. Na v2.1.1, termos fortes de reclamação vencem saudações/despedidas; por exemplo, `oi quero estorno` e `obrigado quero reembolso` fazem handoff. Expressões benignas como `sem problema, valeu` não fazem handoff:
 
 - reserva, aniversário, grupo ou evento;
 - reclamação, atraso, erro, cancelamento, estorno, reembolso ou cobrança indevida;
@@ -97,7 +97,7 @@ Enquanto esse campo estiver verdadeiro, o bot não responde naquela conversa. Ao
 
 ## Checklist pós-deploy
 
-1. `GET /api/manychat` deve retornar `version: "2.1.0"` e `channels: ["instagram","whatsapp"]`.
+1. `GET /api/manychat` deve retornar `version: "2.1.1"` e `channels: ["instagram","whatsapp"]`.
 2. Instagram: teste uma DM pedindo o cardápio e confirme que o comportamento continua igual.
 3. WhatsApp: `me manda o cardápio` → sem handoff.
 4. WhatsApp: `quero reservar mesa pra 8` → handoff humano.
