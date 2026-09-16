@@ -1,5 +1,18 @@
 # Atualizações
 
+## 2.2.1 — Comentários do Instagram → Direct
+
+- Corrige placeholder literal `first_name` / `{{first_name}}`.
+- Prioriza `comment_text` real quando `event_type = instagram_comment`.
+- Comentário sem texto recebe fallback curto, sem cardápio/WhatsApp.
+- Elogios e reações não recebem CTA de venda.
+- Perguntas de preço/item usam o cardápio e respondem sem checkout automático.
+- Reclamações em comentários não herdam lógica de pedido.
+- Mantém link de pedido apenas quando há intenção explícita de pedir/cardápio/delivery.
+- Adiciona `comment-tests.mjs` e inclui esses testes em `npm run check`.
+- Documenta a remoção do botão fixo `Faça o seu pedido!` no fluxo de comentários do ManyChat.
+
+
 ## 2.2.0 — Cardápio completo + busca aproximada
 
 - Catálogo substituído pelo cardápio atual enviado em PDF (9 páginas), com 122 itens e 15 categorias.
@@ -50,7 +63,20 @@
 - Dynamic Block usa botão **Enviar currículo** apontando ao WhatsApp do RH, sem misturar com o WhatsApp geral do restaurante.
 - Testes de regressão atualizados.
 
-# Atualizações — versão 2.0.0
+# Atualizações
+
+## 2.2.1 — Comentários do Instagram → Direct
+
+- Corrige placeholder literal `first_name` / `{{first_name}}`.
+- Prioriza `comment_text` real quando `event_type = instagram_comment`.
+- Comentário sem texto recebe fallback curto, sem cardápio/WhatsApp.
+- Elogios e reações não recebem CTA de venda.
+- Perguntas de preço/item usam o cardápio e respondem sem checkout automático.
+- Reclamações em comentários não herdam lógica de pedido.
+- Mantém link de pedido apenas quando há intenção explícita de pedir/cardápio/delivery.
+- Adiciona `comment-tests.mjs` e inclui esses testes em `npm run check`.
+- Documenta a remoção do botão fixo `Faça o seu pedido!` no fluxo de comentários do ManyChat.
+ — versão 2.0.0
 
 Data da revisão: 15/09/2026
 

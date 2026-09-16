@@ -1,6 +1,6 @@
 # SDR Boteco — ManyChat + Instagram + WhatsApp + Vercel
 
-Versão 2.2.0 — cardápio completo atualizado, busca aproximada por nome/erro de digitação e categorias com valores, em 16/09/2026.
+Versão 2.2.1 — cardápio completo + busca aproximada + correção do fluxo de comentários do Instagram, em 16/09/2026.
 
 Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estruturado para receber mensagens do ManyChat, identificar a intenção do cliente, consultar uma base fechada de informações comerciais e devolver uma resposta humanizada sem inventar preços, itens, composição, porções, horários ou disponibilidade.
 
@@ -25,6 +25,7 @@ Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estr
 - Reclamações e negociações no WhatsApp recebem resposta específica de handoff, sem cardápio/iFood antes da equipe.
 - Em produção, `WEBHOOK_SECRET` é obrigatório; sem ele o POST falha fechado com 401.
 - A camada de IA usa temperatura baixa e uma validação adicional para horários, números e outros marcadores objetivos não autorizados.
+- Comentários do Instagram que abrem o Direct são tratados sem placeholders, sem CTA forçado e com fallback seguro quando o texto real do comentário não chega.
 
 ## Links oficiais usados pela automação
 
@@ -52,10 +53,12 @@ O 99Food está configurado com o link oficial do serviço. Como não há um deep
 ├── audit-test.mjs               # auditoria de cenários críticos
 ├── menu-tests.mjs               # integridade do cardápio + busca aproximada
 ├── whatsapp-tests.mjs           # testes de WhatsApp + regressão estrutural
+├── comment-tests.mjs            # testes de comentários/Direct + placeholders
 ├── test-local.js                # teste simples do endpoint local
 ├── MANYCHAT_COORDENADAS.md      # configuração detalhada no ManyChat
 ├── WHATSAPP_MANYCHAT.md         # configuração do canal WhatsApp e handoff
 ├── PROMPT_CONFIGURACAO_ADICIONAL.md
+├── PROMPT_CORRECAO_E_TESTES_2026-09-16.md
 ├── PERSONA_E_PROMPT_VERCEL.md   # referência da atualização da persona
 ├── REVISAO_FINAL.md
 ├── package.json
@@ -136,6 +139,34 @@ No ManyChat, salve no mínimo:
 - `$.reply_part_3` → `ai_reply_part_3`
 
 Use `MANYCHAT_COORDENADAS.md` para a configuração completa.
+
+
+## Comentários do Instagram → Direct
+
+Na v2.2.1, `event_type: "instagram_comment"` é tratado como **mensagem privada enviada no Direct após um comentário em post/Reel**. O webhook não considera esse evento uma resposta pública.
+
+Regras principais:
+
+- se o ManyChat enviar o texto real do comentário, o bot responde ao conteúdo;
+- elogios/reação (`Top`, `Amei`, emojis, etc.) recebem agradecimento curto, sem cardápio ou WhatsApp;
+- perguntas de item/preço usam o cardápio interno e respondem o valor sem empurrar checkout;
+- pedido explícito, cardápio ou delivery continuam podendo receber o link correto;
+- reclamações não recebem CTA comercial; o bot pede detalhes para encaminhar corretamente;
+- se o texto do comentário não chegar ao webhook, a resposta é apenas `Vi seu comentário no nosso post. Como posso te ajudar por aqui?`, sem links;
+- placeholders literais como `first_name`, `{{first_name}}` e `comment_text` são descartados e nunca devem aparecer para o cliente.
+
+No ManyChat, o fluxo de comentários deve enviar **variáveis reais**, não texto digitado literalmente. Exemplo:
+
+```json
+{
+  "first_name": "CAMPO_REAL_DE_PRIMEIRO_NOME",
+  "comment_text": "CAMPO_REAL_COM_TEXTO_DO_COMENTARIO",
+  "event_type": "instagram_comment",
+  "channel": "instagram"
+}
+```
+
+Se o workspace não disponibilizar o texto do comentário, deixe `comment_text` vazio; o fallback seguro cuidará da conversa. Remova do fluxo qualquer mensagem ou botão fixo como **“Faça o seu pedido!”**. Envie somente `{{ai_reply}}` e deixe o webhook decidir quando existe intenção de venda.
 
 ## WhatsApp e handoff humano
 

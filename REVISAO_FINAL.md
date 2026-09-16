@@ -1,8 +1,8 @@
-# Revisão final de produção — SDR Boteco v2.2.0
+# Revisão final de produção — SDR Boteco v2.2.1
 
 ## Status
 
-Projeto revisado para Instagram + WhatsApp no mesmo webhook, agora com o cardápio atual incorporado à base interna. A v2.2.0 preserva handoff, guardrails e segurança da v2.1.1 e amplia a resolução determinística de itens e preços.
+Projeto revisado para Instagram + WhatsApp no mesmo webhook, com cardápio atual completo e correção do fluxo disparado por comentários. A v2.2.1 preserva handoff, guardrails e segurança das versões anteriores, mantém os 122 itens do cardápio e evita placeholders/CTAs indevidos quando um comentário abre conversa no Direct.
 
 ## Cardápio
 
@@ -44,7 +44,7 @@ Exemplos validados:
 {
   "ok": true,
   "service": "sdr-boteco",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "channels": ["instagram", "whatsapp"]
 }
 ```
@@ -56,3 +56,12 @@ npm run check
 ```
 
 Regenerar `MANIFEST_SHA256.txt` após qualquer alteração antes do empacotamento final.
+
+
+### Comentários / Direct
+
+- `instagram_comment` é tratado como mensagem privada de continuidade.
+- Sem texto real do comentário: resposta neutra, sem links.
+- `first_name`, `{{first_name}}` e placeholders semelhantes não são exibidos.
+- Elogio não dispara venda; preço/item usa o cardápio; reclamação não recebe checkout.
+- O ManyChat deve remover o CTA fixo “Faça o seu pedido!” do fluxo de comentários.

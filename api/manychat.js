@@ -11,7 +11,7 @@ const DEFAULT_FALLBACK = `Quero te passar a informação certa. Confira o cardá
 const INSTAGRAM_MAX_MESSAGE_LENGTH = 900;
 const INSTAGRAM_MAX_MESSAGE_PARTS = 3;
 const OPENAI_TIMEOUT_MS = 12000;
-const APP_VERSION = "2.2.0";
+const APP_VERSION = "2.2.1";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -65,33 +65,92 @@ function isAuthorized(req) {
   return direct === expected || bearer === expected;
 }
 
+function isUnresolvedTemplateValue(value) {
+  const raw = safeText(value, 300);
+  if (!raw) return true;
+  if (/\{\{|\}\}|\$\{|\[\[|\]\]/.test(raw)) return true;
+  const normalized = normalizeText(raw);
+  return new Set([
+    "first name", "firstname", "nome", "name",
+    "comment", "comment text", "comentario", "texto do comentario",
+    "message", "mensagem", "user message", "trigger text", "event text"
+  ]).has(normalized);
+}
+
+function cleanInboundText(value, max = 1800) {
+  const text = safeText(value, max);
+  return isUnresolvedTemplateValue(text) ? "" : text;
+}
+
 function extractMessage(body) {
-  return safeText(
-    body?.message ||
-      body?.text ||
-      body?.input ||
-      body?.query ||
-      body?.question ||
-      body?.user_message ||
-      body?.last_input_text ||
-      body?.last_text_input ||
-      body?.last_text ||
-      body?.comment ||
-      body?.comment_text ||
-      body?.caption ||
-      body?.story_text ||
-      body?.trigger_text ||
-      body?.event_text ||
-      body?.custom_fields?.message ||
-      body?.custom_fields?.text ||
-      body?.custom_fields?.input ||
-      body?.custom_fields?.last_input_text ||
-      body?.custom_fields?.last_text_input ||
-      body?.custom_fields?.last_text ||
-      body?.custom_fields?.comment_text ||
-      body?.custom_fields?.story_text ||
-      ""
-  );
+  const candidates = [
+    body?.message,
+    body?.text,
+    body?.input,
+    body?.query,
+    body?.question,
+    body?.user_message,
+    body?.last_input_text,
+    body?.last_text_input,
+    body?.last_text,
+    body?.comment,
+    body?.comment_text,
+    body?.caption,
+    body?.story_text,
+    body?.trigger_text,
+    body?.event_text,
+    body?.custom_fields?.message,
+    body?.custom_fields?.text,
+    body?.custom_fields?.input,
+    body?.custom_fields?.last_input_text,
+    body?.custom_fields?.last_text_input,
+    body?.custom_fields?.last_text,
+    body?.custom_fields?.comment_text,
+    body?.custom_fields?.comment,
+    body?.custom_fields?.story_text,
+    body?.custom_fields?.trigger_text,
+    body?.custom_fields?.event_text
+  ];
+  for (const candidate of candidates) {
+    const cleaned = cleanInboundText(candidate);
+    if (cleaned) return cleaned;
+  }
+  return "";
+}
+
+function isInstagramCommentEvent(eventType) {
+  const event = normalizeText(eventType);
+  return event.includes("comment") || event.includes("comentario");
+}
+
+function extractCommentMessage(body) {
+  // Em fluxos disparados por comentário, prioriza explicitamente o texto do comentário.
+  // O ManyChat pode mapear o valor em nomes diferentes; cobrimos os nomes mais comuns.
+  const candidates = [
+    body?.comment_text,
+    body?.comment,
+    body?.instagram_comment,
+    body?.post_comment,
+    body?.comment_message,
+    body?.trigger_text,
+    body?.event_text,
+    body?.custom_fields?.comment_text,
+    body?.custom_fields?.comment,
+    body?.custom_fields?.instagram_comment,
+    body?.custom_fields?.post_comment,
+    body?.custom_fields?.comment_message,
+    body?.custom_fields?.trigger_text,
+    body?.custom_fields?.event_text,
+    body?.message,
+    body?.text,
+    body?.input,
+    body?.user_message
+  ];
+  for (const candidate of candidates) {
+    const cleaned = cleanInboundText(candidate);
+    if (cleaned) return cleaned;
+  }
+  return "";
 }
 
 function bodyContains(body, terms) {
@@ -125,7 +184,9 @@ function inferMessageFromEvent(body) {
   }
 
   if (includesAny(eventText, ["comment", "comentario"]) || bodyContains(body, ["instagram comment", "comentario no post"])) {
-    return safeText(body?.comment_text || body?.comment || body?.custom_fields?.comment_text || "comentário no post");
+    // Não inventa um texto sintético para comentário. Se o ManyChat não enviou o
+    // conteúdo real, o handler usa um fallback específico, curto e sem links.
+    return extractCommentMessage(body);
   }
 
   return "";
@@ -137,9 +198,17 @@ function normalizeChannel(value) {
   return "instagram";
 }
 
+function sanitizeFirstName(value) {
+  const raw = safeText(value, 80);
+  if (!raw || isUnresolvedTemplateValue(raw)) return "";
+  const cleaned = raw.replace(/[{}\[\]<>$]/g, "").trim().slice(0, 50);
+  const normalized = normalizeText(cleaned);
+  if (["first name", "firstname", "nome", "name"].includes(normalized)) return "";
+  return cleaned;
+}
+
 function extractCustomer(body) {
-  const rawFirstName = safeText(body?.first_name || body?.name || body?.profile?.first_name || "", 80);
-  const firstName = rawFirstName.replace(/[{}\[\]<>$]/g, "").trim().slice(0, 50);
+  const firstName = sanitizeFirstName(body?.first_name || body?.name || body?.profile?.first_name || "");
   return {
     id: safeText(body?.subscriber_id || body?.id || body?.contact_id || "", 120),
     first_name: firstName,
@@ -460,25 +529,27 @@ function makeResolution({ facts, intent, topic = intent, needs_human = false, le
   return { facts, intent, topic, needs_human, lead_temperature, missing_fields, next_action };
 }
 
-function whatsappHandoffReason(resolved, text) {
-  if (resolved.intent === "vaga") return null;
-
+function isComplaintText(text) {
   // Termos fortes vencem saudação/despedida. Assim, "oi, quero estorno" ou
-  // "obrigado, mas preciso reclamar" continuam indo para a equipe.
+  // "obrigado, mas preciso reclamar" continuam sendo entendidos como problema real.
   const strongComplaint = [
     "reclamacao", "reclamar", "atraso", "cancelar", "cancelamento", "estorno", "reembolso",
     "nota fiscal", "cobranca indevida", "cobranca duplicada", "cobrado duas vezes", "devolucao"
   ];
-  if (includesAny(text, strongComplaint)) return "reclamacao";
+  if (includesAny(text, strongComplaint)) return true;
 
-  // "problema" e "errado" são sinais úteis, mas possuem usos benignos.
   const benignProblem = [
     "sem problema", "sem problemas", "nenhum problema", "nao tive problema", "não tive problema",
     "problema resolvido", "problema foi resolvido", "deu tudo certo", "esta tudo certo", "está tudo certo",
     "nada errado", "nao tem nada errado", "não tem nada errado"
   ];
   const weakComplaint = ["problema", "errado", "erro", "faltou", "nao chegou", "não chegou", "veio frio"];
-  if (!includesAny(text, benignProblem) && includesAny(text, weakComplaint)) return "reclamacao";
+  return !includesAny(text, benignProblem) && includesAny(text, weakComplaint);
+}
+
+function whatsappHandoffReason(resolved, text) {
+  if (resolved.intent === "vaga") return null;
+  if (isComplaintText(text)) return "reclamacao";
 
   if (includesAny(text, ["orcamento", "encomenda", "fechar pedido", "negociar", "desconto", "atacado", "grande quantidade", "festa", "buffet", "evento corporativo", "fornecedor"])) return "negociacao";
   if (["reserva", "humano", "item_inativo", "item_nao_encontrado", "outro"].includes(resolved.intent)) return resolved.intent;
@@ -506,6 +577,105 @@ function whatsappHandoffFacts(reason, resolved, knowledge) {
     return `Esse detalhe precisa de confirmação pra eu não te passar nada errado. ${generic}`;
   }
   return generic;
+}
+
+function stripSalesLinksFromFacts(facts, links) {
+  const urls = [links?.menu, links?.whatsapp, links?.ifood, links?.food99].filter(Boolean);
+  return String(facts || "")
+    .split("\n")
+    .filter((line) => !urls.some((url) => line.includes(url)))
+    .filter((line) => !/^\s*(card[aá]pio digital\/pedido|card[aá]pio\/pedido|pedido direto|ifood|99food)\s*:?\s*$/i.test(line.trim()))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function isSocialComment(message) {
+  const raw = safeText(message, 500);
+  const text = normalizeText(raw);
+  const commercial = [
+    "valor", "preco", "preço", "quanto", "cardapio", "menu", "pedido", "pedir", "entrega", "delivery",
+    "reserva", "mesa", "horario", "horário", "onde fica", "vaga", "emprego", "atendente", "reclamar",
+    "problema", "cancelar", "estorno", "reembolso"
+  ];
+  if (includesAny(text, commercial)) return false;
+  const positive = ["top", "show", "amei", "delicia", "delícia", "maravilhoso", "muito bom", "bom demais", "parabens", "parabéns", "sensacional", "perfeito"];
+  if (includesAny(text, positive)) return true;
+  if (/[😍🔥👏❤❤️😋🤤]/u.test(raw) && text.split(/\s+/).filter(Boolean).length <= 8) return true;
+  return false;
+}
+
+function commentHasExplicitSalesIntent(message) {
+  const text = normalizeText(message);
+  return includesAny(text, [
+    "cardapio", "menu", "fazer pedido", "quero pedir", "quero fazer um pedido", "onde pedir", "como pedir",
+    "delivery", "entrega", "ifood", "99food", "retirada", "retirar"
+  ]);
+}
+
+function resolveInstagramComment(message, knowledge, context = {}) {
+  const links = getLinks(knowledge);
+  const text = cleanInboundText(message, 1800);
+
+  if (!text) {
+    return makeResolution({
+      facts: "Opa! Vi seu comentário no nosso post. Como posso te ajudar por aqui?",
+      intent: "comentario_sem_texto",
+      topic: "instagram_comment",
+      needs_human: false,
+      lead_temperature: "morno",
+      next_action: "aguardar_mensagem"
+    });
+  }
+
+  if (isComplaintText(normalizeText(text))) {
+    return makeResolution({
+      facts: "Vi seu comentário e quero entender isso direitinho. Me conta por aqui o que aconteceu que eu te ajudo a encaminhar da forma certa.",
+      intent: "comentario_reclamacao",
+      topic: "reclamacao",
+      needs_human: false,
+      lead_temperature: "quente",
+      next_action: "coletar_detalhes"
+    });
+  }
+
+  if (isSocialComment(text)) {
+    return makeResolution({
+      facts: "Valeu pelo carinho! Bom demais ter você por aqui 😄",
+      intent: "comentario_social",
+      topic: "relacionamento",
+      needs_human: false,
+      lead_temperature: "morno",
+      next_action: "relacionar"
+    });
+  }
+
+  const resolved = resolveIntent(text, knowledge, context);
+
+  // Se o comentário contém uma pergunta útil do cardápio, responde a pergunta no
+  // próprio Direct sem empurrar checkout/link, a menos que a pessoa tenha pedido
+  // explicitamente cardápio, entrega ou como fazer o pedido.
+  if (["item_cardapio", "categoria_cardapio", "opcoes_cardapio"].includes(resolved.intent) && !commentHasExplicitSalesIntent(text)) {
+    resolved.facts = stripSalesLinksFromFacts(resolved.facts, links);
+    resolved.next_action = "responder";
+  }
+
+  // Um comentário que o classificador geral não entendeu não deve virar venda forçada.
+  if (["outro", "item_nao_encontrado"].includes(resolved.intent)) {
+    const asksPrice = isPriceQuestion(normalizeText(text));
+    return makeResolution({
+      facts: asksPrice
+        ? "Vi sua pergunta sobre valor lá no post. Me fala qual item você quer saber que eu te passo o preço certinho."
+        : "Vi seu comentário lá no post. Me conta por aqui o que você quer saber que eu te ajudo.",
+      intent: asksPrice ? "comentario_valor_sem_item" : "comentario_generico",
+      topic: "instagram_comment",
+      needs_human: false,
+      lead_temperature: "morno",
+      next_action: "aguardar_mensagem"
+    });
+  }
+
+  return resolved;
 }
 
 function resolveIntent(message, knowledge, context = {}) {
@@ -991,18 +1161,21 @@ export default async function handler(req, res) {
     const links = getLinks(knowledge);
     const context = extractConversationContext(body);
     const eventType = safeText(body?.event_type || body?.custom_fields?.event_type || "direct", 50).toLowerCase() || "direct";
-    const message = extractMessage(body) || inferMessageFromEvent(body);
+    const commentEvent = isInstagramCommentEvent(eventType) && !isWhatsapp(customer);
+    const message = (commentEvent ? extractCommentMessage(body) : extractMessage(body)) || inferMessageFromEvent(body);
 
-    const resolved = message
-      ? resolveIntent(message, knowledge, context)
-      : makeResolution({
-          facts: `Quero te ajudar sem te passar nada errado. Você pode me dizer o que deseja saber? Se preferir, veja o cardápio em ${links.menu} ou fale com a equipe: ${links.whatsapp}`,
-          intent: "sem_mensagem",
-          topic: "fallback",
-          needs_human: false,
-          lead_temperature: "morno",
-          next_action: "descobrir_interesse"
-        });
+    const resolved = commentEvent
+      ? resolveInstagramComment(message, knowledge, context)
+      : message
+        ? resolveIntent(message, knowledge, context)
+        : makeResolution({
+            facts: `Quero te ajudar sem te passar nada errado. Você pode me dizer o que deseja saber? Se preferir, veja o cardápio em ${links.menu} ou fale com a equipe: ${links.whatsapp}`,
+            intent: "sem_mensagem",
+            topic: "fallback",
+            needs_human: false,
+            lead_temperature: "morno",
+            next_action: "descobrir_interesse"
+          });
 
     let handoff = false;
     let handoffReason = "";
@@ -1034,7 +1207,11 @@ export default async function handler(req, res) {
     }
 
     const allowedPrices = collectAllowedPrices(resolved.facts);
-    const shouldHumanizeWithAI = message && !["vaga", "item_cardapio", "categoria_cardapio", "opcoes_cardapio"].includes(resolved.intent);
+    const deterministicIntents = [
+      "vaga", "item_cardapio", "categoria_cardapio", "opcoes_cardapio",
+      "comentario_sem_texto", "comentario_social", "comentario_generico", "comentario_valor_sem_item", "comentario_reclamacao"
+    ];
+    const shouldHumanizeWithAI = message && !deterministicIntents.includes(resolved.intent);
     const aiReply = shouldHumanizeWithAI ? await callOpenAI({ knowledge, customer, context, message, resolved, eventType }) : null;
 
     let finalReply = aiReply || resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;

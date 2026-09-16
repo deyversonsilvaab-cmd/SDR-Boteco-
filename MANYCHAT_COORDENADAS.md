@@ -176,23 +176,36 @@ Use o gatilho de menção em Story. Se não houver texto aproveitável, envie:
 
 O webhook reconhece o evento e gera uma resposta de relacionamento.
 
-## 10. Comentários de posts e Reels
+## 10. Comentários de posts e Reels → mensagem privada no Direct
 
-Para comentários, use o gatilho de comentários do Instagram e envie o texto do comentário ao mesmo endpoint.
+Use uma automação separada de comentários. O webhook considera `event_type = instagram_comment` como a **mensagem privada enviada no Direct depois do comentário**, não como resposta pública.
+
+Envie o texto real do comentário quando o ManyChat disponibilizar esse campo:
 
 ```json
 {
-  "first_name": "CAMPO_PRIMEIRO_NOME",
+  "first_name": "CAMPO_REAL_PRIMEIRO_NOME",
   "username": "CAMPO_USERNAME_INSTAGRAM",
-  "comment_text": "TEXTO_DO_COMENTARIO",
+  "comment_text": "CAMPO_REAL_TEXTO_DO_COMENTARIO",
   "event_type": "instagram_comment",
   "last_intent": "CAMPO_ai_intent",
   "last_topic": "CAMPO_ai_topic",
+  "last_bot_reply": "CAMPO_ai_last_bot_reply",
   "channel": "instagram"
 }
 ```
 
-Quando o objetivo for vender/conversar, prefira continuar no Direct em vez de expor informações comerciais extensas na resposta pública.
+**Não digite literalmente** `first_name`, `{{first_name}}`, `comment_text` ou `TEXTO_DO_COMENTARIO` se esses textos não forem variáveis reais do seu workspace. Se o texto do comentário não estiver disponível, envie o campo vazio: a v2.2.1 responde de forma neutra, sem cardápio e sem WhatsApp.
+
+No bloco que envia a mensagem ao cliente:
+
+1. mapeie `$.reply` → `ai_reply`;
+2. envie **somente** `{{ai_reply}}`;
+3. remova qualquer rodapé, botão ou texto fixo `Faça o seu pedido!`;
+4. não acrescente cardápio/WhatsApp por fora do webhook;
+5. mantenha a automação separada de Direct, Story Reply e Story Mention.
+
+Comportamento esperado: elogio → agradece; pergunta de preço → responde preço do cardápio; pedido explícito → pode enviar checkout; reclamação → pede detalhes sem CTA comercial; comentário sem texto → abre a conversa de forma curta.
 
 ## 11. Dynamic Block v2 — modo opcional
 
