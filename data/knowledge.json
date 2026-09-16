@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "versao": "2.0.2",
+    "versao": "2.1.0",
     "revisado_em": "2026-09-15",
     "politica": "Base fechada: o bot só afirma preço, composição, porção, horário, promoção ou disponibilidade quando a informação estiver registrada aqui."
   },
@@ -648,7 +648,8 @@
     "story_mention": "Adorei ver sua marcação. Obrigado por dividir esse momento com a gente — esperamos te receber de novo em breve.",
     "despedida": "Foi um prazer te atender. Quando quiser voltar ou fazer um pedido, é só chamar.",
     "fallback": "Quero te passar a informação certa. Como esse detalhe não está validado na minha base, consulte o cardápio em https://botequimpatiolimeira.saipos.com/home ou fale com a equipe no WhatsApp: https://wa.me/5519997858351",
-    "vaga": "Para oportunidades de trabalho no Sr. Boteco, envie seu currículo diretamente para o RH do restaurante pelo WhatsApp:\n\n📲 https://wa.me/5517996022567\n\nEla fará a análise do seu perfil e entrará em contato caso surja uma oportunidade compatível com sua experiência.\n\nAgradecemos o seu interesse em fazer parte da equipe do Sr. Boteco!"
+    "vaga": "Para oportunidades de trabalho no Sr. Boteco, envie seu currículo diretamente para o RH do restaurante pelo WhatsApp:\n\n📲 https://wa.me/5517996022567\n\nEla fará a análise do seu perfil e entrará em contato caso surja uma oportunidade compatível com sua experiência.\n\nAgradecemos o seu interesse em fazer parte da equipe do Sr. Boteco!",
+    "handoff_humano": "Vou chamar alguém da equipe pra continuar seu atendimento por aqui."
   },
   "regras_atendimento": [
     "Nunca inventar preço, produto, promoção, composição, quantidade de pessoas servidas, horário, evento, disponibilidade de mesa ou condição de entrega.",

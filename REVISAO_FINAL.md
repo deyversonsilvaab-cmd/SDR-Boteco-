@@ -1,72 +1,99 @@
-# Revisão final de produção — SDR Boteco v2.0.2
+# Revisão final de produção — SDR Boteco v2.1.0
 
 Data: 15/09/2026
 
 ## Resultado
 
-Projeto revisado para uso como webhook de atendimento do Instagram via ManyChat + Vercel, mantendo o contrato da API e adicionando a persona humanizada solicitada.
+Projeto revisado para operar **Instagram + WhatsApp** no mesmo webhook do ManyChat/Vercel. A versão 2.1.0 adiciona o caminho de WhatsApp com recepção automatizada e handoff para atendimento humano, preservando o comportamento funcional do Instagram 2.0.2.
 
-### Validações concluídas
+## Validações concluídas
 
-- `api/manychat.js`: sintaxe Node.js válida e integração preservada.
-- `lib/persona.js`: persona/system prompt isolado do handler para manutenção segura.
-- `data/knowledge.json`: JSON válido; base comercial continua fechada e sem criação de fatos.
-- 19 cenários críticos automatizados: **19/19 aprovados**.
-- 2 testes adicionais de integração do Dynamic Block v2: **aprovados** (cardápio e vaga/RH).
-- Campos mínimos do contrato mantidos: `reply`, `intent`, `topic`, `lead_temperature`, `needs_human`, `next_action`.
+- `api/manychat.js`: sintaxe Node.js válida, contrato existente preservado e canal normalizado.
+- `lib/persona.js`: persona do Instagram preservada e persona específica de WhatsApp adicionada.
+- `data/knowledge.json`: JSON válido, base comercial fechada e versão atualizada para 2.1.0.
+- 19 cenários críticos legados do Instagram: **19/19 aprovados**.
+- Dynamic Block v2 do Instagram: **aprovado** para cardápio e vaga/RH.
+- Testes específicos do WhatsApp: **todos aprovados**.
+- Comparação de regressão entre v2.0.2 e v2.1.0: respostas e campos funcionais do Instagram ficaram iguais nos 19 cenários auditados.
 - `x-webhook-secret` / `WEBHOOK_SECRET` mantidos sem alteração.
-- `event_type` passa a ser informado ao prompt da IA para adaptar Direct, resposta a Story, menção em Story e comentário.
-- `last_intent`, `last_topic` e `last_bot_reply` continuam disponíveis para manter o contexto e reduzir repetição.
-- Proteções contra preço inventado, URL não autorizada e conteúdo comercial removido continuam ativas.
+- Guardrails contra preço inventado, URL não autorizada e conteúdo comercial removido continuam ativos nos dois canais.
 
-## Casos de aceite da atualização de persona
+## WhatsApp — comportamento validado
 
-### Fora de contexto / troll
+### Cardápio
 
-Entrada de teste:
+Entrada:
 
 ```text
-Consegue me doar robux?
+me manda o cardápio
 ```
 
-Resultado determinístico: intenção `fora_contexto`, tom leve, sem cardápio e sem WhatsApp forçados. Com OpenAI configurada, a persona pode reescrever mantendo a mesma restrição factual.
-
-### Pedido
-
-Mensagens de intenção clara de pedido continuam com `intent=pedido` e direcionamento para o cardápio/pedido oficial. A persona foi instruída a responder de forma curta e calorosa, sem encerrar com `Faça o seu pedido!`.
+Resultado: o bot resolve sozinho, devolve o link oficial, `handoff=false` e mantém a resposta em uma única parte.
 
 ### Reserva
 
-A resposta coleta:
+Entrada:
 
-- nome;
-- dia/data;
-- horário;
-- número de pessoas.
+```text
+quero reservar mesa pra 8 sábado
+```
 
-O bot não confirma a reserva sozinho. `needs_human=true` e `next_action=coletar_reserva` continuam disponíveis para o ManyChat.
+Resultado: `handoff=true`, `handoff_reason=reserva`, `needs_human=true` e `next_action=handoff_humano`. A mensagem informa que a equipe continuará o atendimento; o bot não confirma a reserva sozinho.
 
-## Persona por evento
+### Reclamação
 
-- `direct`: conversa normal, objetiva e natural.
-- `story_reply`: responde ao conteúdo/reação do Story sem transformar tudo em venda.
-- `story_mention`: agradece a marcação sem CTA forçado.
-- `instagram_comment`: resposta pública mais curta; continuidade individual pode ser levada ao Direct.
+Entrada:
 
-## Segurança comercial preservada
+```text
+tive um problema com meu pedido
+```
 
-A IA continua funcionando somente como camada de redação. A aplicação determina intenção e fornece `fatos_para_esta_resposta`. A resposta gerada é descartada se trouxer preço não permitido, URL não autorizada ou informação comercial removida.
+Resultado: `handoff=true`, `handoff_reason=reclamacao` e `next_action=handoff_humano`.
 
-O arquivo `data/knowledge.json` continua sendo a fonte de fatos comerciais. Dados ausentes não devem ser completados por memória ou suposição.
+### Humano já atendendo
 
-## Arquivos principais da versão 2.0.2
+Com `atendimento_humano=true`, o webhook retorna:
 
-- `api/manychat.js` — roteamento, contrato, travas e integração.
-- `lib/persona.js` — voz/persona da IA.
+```json
+{
+  "reply": "",
+  "handoff": true,
+  "needs_human": true,
+  "next_action": "silencio_humano",
+  "messages": []
+}
+```
+
+A IA não é chamada e o bot não fala por cima do atendente.
+
+### Vaga de emprego
+
+No WhatsApp, `intent=vaga` continua direcionando ao canal exclusivo do RH (`https://wa.me/5517996022567`) e **não** entra no handoff do atendimento geral.
+
+## Regressão Instagram
+
+A lógica do Instagram mantém a mesma resolução de intenção, `next_action`, resposta determinística, links e divisão em até três partes da versão 2.0.2. Os campos `channel`, `handoff` e `handoff_reason` foram acrescentados ao payload padrão sem alterar o conteúdo dos campos antigos.
+
+## Health check
+
+`GET /api/manychat` retorna:
+
+```json
+{
+  "version": "2.1.0",
+  "channels": ["instagram", "whatsapp"]
+}
+```
+
+## Arquivos principais da versão 2.1.0
+
+- `api/manychat.js` — roteamento, contrato, handoff, silêncio humano, travas e integração.
+- `lib/persona.js` — personas do Instagram e WhatsApp.
 - `data/knowledge.json` — fatos comerciais validados.
-- `PERSONA_E_PROMPT_VERCEL.md` — documento de referência da solicitação.
-- `audit-test.mjs` — testes de regressão, incluindo o caso Robux.
-- `MANYCHAT_COORDENADAS.md` — configuração operacional do ManyChat.
+- `audit-test.mjs` — regressão dos cenários críticos existentes.
+- `whatsapp-tests.mjs` — testes do novo canal e regressão por formatação.
+- `WHATSAPP_MANYCHAT.md` — implantação do fluxo do WhatsApp no ManyChat.
+- `MANYCHAT_COORDENADAS.md` — configuração existente do Instagram.
 
 ## Comando obrigatório antes de cada deploy futuro
 

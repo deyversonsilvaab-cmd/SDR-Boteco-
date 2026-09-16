@@ -131,8 +131,18 @@ function extractCustomer(body) {
     id: safeText(body?.subscriber_id || body?.id || body?.contact_id || "", 120),
     first_name: firstName,
     username: safeText(body?.username || body?.ig_username || body?.profile?.username || "", 100),
-    channel: safeText(body?.channel || "instagram", 30)
+    channel: safeText(body?.channel || "instagram", 30).toLowerCase() || "instagram"
   };
+}
+
+function isWhatsapp(customer) {
+  const channel = safeText(customer?.channel || "", 30).toLowerCase();
+  return channel.includes("whatsapp") || channel === "wa";
+}
+
+function humanIsHandling(body) {
+  const v = body?.atendimento_humano ?? body?.bot_pausado ?? body?.custom_fields?.atendimento_humano ?? body?.custom_fields?.bot_pausado;
+  return v === true || String(v ?? "").toLowerCase() === "true";
 }
 
 function extractConversationContext(body) {
@@ -272,6 +282,15 @@ function inferUnknownItemTopic(text) {
 
 function makeResolution({ facts, intent, topic = intent, needs_human = false, lead_temperature = "morno", missing_fields = [], next_action = "responder" }) {
   return { facts, intent, topic, needs_human, lead_temperature, missing_fields, next_action };
+}
+
+function whatsappHandoffReason(resolved, text) {
+  if (resolved.intent === "vaga") return null;
+  if (includesAny(text, ["reclamacao", "reclamar", "problema", "atraso", "errado", "cancelar", "estorno", "reembolso", "nota fiscal", "cobranca indevida"])) return "reclamacao";
+  if (includesAny(text, ["orcamento", "encomenda", "fechar pedido", "negociar", "desconto", "atacado", "grande quantidade", "festa", "buffet", "evento corporativo", "fornecedor"])) return "negociacao";
+  if (["reserva", "humano", "item_inativo", "item_nao_encontrado", "outro"].includes(resolved.intent)) return resolved.intent;
+  if (resolved.needs_human) return "confirmar_com_equipe";
+  return null;
 }
 
 function resolveIntent(message, knowledge, context = {}) {
@@ -474,7 +493,7 @@ async function callOpenAI({ knowledge, customer, context, message, resolved, eve
     const payload = {
       model: process.env.OPENAI_MODEL || "gpt-4o",
       messages: [
-        { role: "system", content: buildSystemPrompt({ eventType }) },
+        { role: "system", content: buildSystemPrompt({ eventType, channel: customer.channel }) },
         {
           role: "user",
           content: JSON.stringify({
@@ -482,6 +501,7 @@ async function callOpenAI({ knowledge, customer, context, message, resolved, eve
             contexto: context,
             mensagem: message,
             event_type: eventType,
+            canal: customer.channel,
             intent_detectado: resolved.intent,
             topico_detectado: resolved.topic,
             fatos_para_esta_resposta: resolved.facts,
@@ -554,11 +574,23 @@ function splitForInstagram(text) {
   return parts.filter(Boolean);
 }
 
-function buildStandardPayload({ reply, resolved, links, requestId }) {
-  const parts = splitForInstagram(reply);
+export function splitForChannel(text, channel) {
+  const normalizedChannel = safeText(channel || "instagram", 30).toLowerCase();
+  if (normalizedChannel.includes("whatsapp") || normalizedChannel === "wa") {
+    const single = safeText(text, 3500);
+    return single ? [single] : [];
+  }
+  return splitForInstagram(text);
+}
+
+function buildStandardPayload({ reply, resolved, links, requestId, customer, handoff = false, handoffReason = "" }) {
+  const parts = splitForChannel(reply, customer?.channel);
   return {
     ok: true,
     request_id: requestId,
+    channel: customer?.channel || "instagram",
+    handoff: Boolean(handoff),
+    handoff_reason: handoffReason || "",
     reply,
     intent: resolved.intent,
     topic: resolved.topic,
@@ -631,6 +663,7 @@ function wantsDynamicMode(req, body) {
 
 export default async function handler(req, res) {
   const requestId = crypto.randomUUID();
+  let customer = null;
   try {
     if (req.method === "OPTIONS") {
       setJsonHeaders(res);
@@ -641,7 +674,8 @@ export default async function handler(req, res) {
       return send(res, 200, {
         ok: true,
         service: "sdr-boteco",
-        version: "2.0.2",
+        version: "2.1.0",
+        channels: ["instagram", "whatsapp"],
         message: "Webhook online. Use POST para conversar.",
         openai_configured: Boolean(process.env.OPENAI_API_KEY),
         model: process.env.OPENAI_MODEL || "gpt-4o"
@@ -652,9 +686,32 @@ export default async function handler(req, res) {
     if (!isAuthorized(req)) return send(res, 401, { ok: false, error: "Não autorizado. Verifique WEBHOOK_SECRET." });
 
     const body = req.body || {};
+    customer = extractCustomer(body);
+
+    if (isWhatsapp(customer) && humanIsHandling(body)) {
+      return send(res, 200, {
+        ok: true,
+        request_id: requestId,
+        channel: "whatsapp",
+        reply: "",
+        intent: "humano_ativo",
+        topic: "atendimento_humano",
+        last_topic: "atendimento_humano",
+        handoff: true,
+        handoff_reason: "humano_ativo",
+        needs_human: true,
+        lead_temperature: "quente",
+        missing_fields: [],
+        next_action: "silencio_humano",
+        messages: [],
+        reply_part_1: "",
+        reply_part_2: "",
+        reply_part_3: ""
+      });
+    }
+
     const knowledge = await loadKnowledge();
     const links = getLinks(knowledge);
-    const customer = extractCustomer(body);
     const context = extractConversationContext(body);
     const eventType = safeText(body?.event_type || body?.custom_fields?.event_type || "direct", 50).toLowerCase() || "direct";
     const message = extractMessage(body) || inferMessageFromEvent(body);
@@ -670,6 +727,27 @@ export default async function handler(req, res) {
           next_action: "descobrir_interesse"
         });
 
+    let handoff = false;
+    let handoffReason = "";
+    if (isWhatsapp(customer)) {
+      if (resolved.intent === "vaga") {
+        // No WhatsApp, vaga é resolvida pelo link dedicado do RH e não entra na fila do atendimento geral.
+        resolved.needs_human = false;
+      }
+
+      const reason = whatsappHandoffReason(resolved, normalizeText(message));
+      if (reason) {
+        handoff = true;
+        handoffReason = reason;
+        resolved.needs_human = true;
+        resolved.next_action = "handoff_humano";
+        const handoffText = knowledge?.respostas_base?.handoff_humano || "Vou chamar alguém da equipe pra continuar seu atendimento por aqui.";
+        if (!normalizeText(resolved.facts).includes(normalizeText(handoffText))) {
+          resolved.facts = `${resolved.facts}\n\n${handoffText}`;
+        }
+      }
+    }
+
     const allowedPrices = collectAllowedPrices(resolved.facts);
     const shouldHumanizeWithAI = message && resolved.intent !== "vaga";
     const aiReply = shouldHumanizeWithAI ? await callOpenAI({ knowledge, customer, context, message, resolved, eventType }) : null;
@@ -682,18 +760,22 @@ export default async function handler(req, res) {
 
     finalReply = ensurePersonalized(safeText(finalReply, 2600), customer);
 
-    if (wantsDynamicMode(req, body)) {
+    if (!isWhatsapp(customer) && wantsDynamicMode(req, body)) {
       return send(res, 200, buildDynamicBlock({ reply: finalReply, resolved, links }));
     }
 
-    return send(res, 200, buildStandardPayload({ reply: finalReply, resolved, links, requestId }));
+    return send(res, 200, buildStandardPayload({ reply: finalReply, resolved, links, requestId, customer, handoff, handoffReason }));
   } catch (error) {
     console.error("BOT_FATAL_ERROR", requestId, error);
     const fallback = `Não quero te passar nenhuma informação errada. Confira o cardápio em ${DEFAULT_MENU_LINK} ou fale com a equipe: ${DEFAULT_WHATSAPP_LINK}`;
-    const parts = splitForInstagram(fallback);
+    const channel = customer?.channel || "instagram";
+    const parts = splitForChannel(fallback, channel);
     return send(res, 200, {
       ok: false,
       request_id: requestId,
+      channel,
+      handoff: false,
+      handoff_reason: "",
       reply: fallback,
       intent: "erro_seguro",
       topic: "fallback",

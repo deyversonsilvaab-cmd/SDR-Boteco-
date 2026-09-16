@@ -1,3 +1,19 @@
+# Atualizações
+
+## 2.1.0 — WhatsApp com handoff humano
+
+- Adicionado canal `whatsapp` no mesmo endpoint `/api/manychat`, sem alterar a resolução do Instagram.
+- `channel` passa a ser normalizado e retornado no payload padrão.
+- Criado handoff humano com `handoff`, `handoff_reason` e `next_action=handoff_humano`.
+- Reclamações, negociações, reservas, pedido por atendente e informações não validadas passam para a equipe no WhatsApp.
+- Vagas continuam sendo resolvidas pelo WhatsApp exclusivo do RH, sem handoff para o atendimento geral.
+- Quando `atendimento_humano=true` ou `bot_pausado=true`, o webhook retorna `reply=""`, `messages=[]` e `next_action=silencio_humano`.
+- Respostas do WhatsApp são mantidas em uma única mensagem; o Instagram preserva a divisão original em até 3 partes.
+- Persona do WhatsApp adicionada em `lib/persona.js`, com as mesmas travas comerciais e de segurança do Instagram.
+- GET de health atualizado para `version: 2.1.0` e `channels: ["instagram","whatsapp"]`.
+- Adicionado `whatsapp-tests.mjs` cobrindo handoff, silêncio humano, cardápio, vaga/RH, formatação por canal e regressão do Instagram.
+- `npm run check`: 19/19 testes legados + Dynamic Block + testes de WhatsApp/regressão aprovados.
+
 
 ## 2.0.1 — RH / vagas
 

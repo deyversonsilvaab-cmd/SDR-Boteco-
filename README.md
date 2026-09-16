@@ -1,6 +1,6 @@
-# SDR Boteco — ManyChat + Instagram + Vercel
+# SDR Boteco — ManyChat + Instagram + WhatsApp + Vercel
 
-Versão 2.0.2 — persona humanizada e revisão de produção em 15/09/2026.
+Versão 2.1.0 — Instagram preservado + canal WhatsApp com handoff humano em 15/09/2026.
 
 Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estruturado para receber mensagens do ManyChat, identificar a intenção do cliente, consultar uma base fechada de informações comerciais e devolver uma resposta humanizada sem inventar preços, itens, composição, porções, horários ou disponibilidade.
 
@@ -16,6 +16,8 @@ Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estr
 - O atendimento continua funcionando mesmo sem OpenAI: a camada determinística é a fonte da verdade; a IA é usada apenas para humanizar a redação quando configurada.
 - Existe resposta segura mesmo se ocorrer um erro interno no webhook.
 - O endpoint pode responder no formato JSON tradicional ou no formato **Dynamic Block v2** do ManyChat.
+- O WhatsApp usa a mesma base e o mesmo endpoint, com recepção automatizada, handoff para a equipe e silêncio quando um humano assume.
+- O comportamento do Instagram permanece isolado do ramo específico de WhatsApp.
 
 ## Links oficiais usados pela automação
 
@@ -41,8 +43,10 @@ O 99Food está configurado com o link oficial do serviço. Como não há um deep
 ├── lib/
 │   └── persona.js               # persona/system prompt da IA
 ├── audit-test.mjs               # auditoria de cenários críticos
+├── whatsapp-tests.mjs           # testes de WhatsApp + regressão do Instagram
 ├── test-local.js                # teste simples do endpoint local
 ├── MANYCHAT_COORDENADAS.md      # configuração detalhada no ManyChat
+├── WHATSAPP_MANYCHAT.md         # configuração do canal WhatsApp e handoff
 ├── PROMPT_CONFIGURACAO_ADICIONAL.md
 ├── PERSONA_E_PROMPT_VERCEL.md   # referência da atualização da persona
 ├── REVISAO_FINAL.md
@@ -81,6 +85,8 @@ GET https://SEU-PROJETO.vercel.app/api/manychat
 }
 ```
 
+Para o fluxo separado do WhatsApp, use `"channel": "whatsapp"` e envie também o campo `atendimento_humano`.
+
 Os nomes exatos das variáveis de sistema podem variar conforme a interface/conta do ManyChat. O ponto essencial é enviar o **primeiro nome**, a **mensagem recebida** e os campos de contexto salvos após a resposta anterior.
 
 O webhook aceita também diversos nomes alternativos de campo (`text`, `input`, `comment_text`, `story_text`, etc.) para reduzir o risco de uma integração quebrar por pequenas diferenças no payload.
@@ -92,6 +98,9 @@ Exemplo resumido:
 ```json
 {
   "ok": true,
+  "channel": "instagram",
+  "handoff": false,
+  "handoff_reason": "",
   "reply": "Mariana, ...",
   "intent": "cardapio",
   "topic": "cardapio",
@@ -119,6 +128,14 @@ No ManyChat, salve no mínimo:
 - `$.reply_part_3` → `ai_reply_part_3`
 
 Use `MANYCHAT_COORDENADAS.md` para a configuração completa.
+
+## WhatsApp e handoff humano
+
+No WhatsApp, o bot resolve sozinho saudações, cardápio, horário, localização, pagamentos, delivery e itens validados. Assuntos particulares — como reserva, reclamação, negociação, pedido especial, item não validado ou pedido explícito por atendente — retornam `handoff: true` e `next_action: "handoff_humano"`.
+
+Quando o ManyChat enviar `atendimento_humano: true` (ou `bot_pausado: true`), o webhook retorna `reply: ""`, `messages: []` e `next_action: "silencio_humano"`. Assim, o bot não responde por cima da equipe.
+
+As respostas do WhatsApp são entregues em uma única mensagem (`reply_part_1`); `reply_part_2` e `reply_part_3` ficam vazios. Consulte `WHATSAPP_MANYCHAT.md` para montar o fluxo separado no ManyChat.
 
 ## Dynamic Block v2 — opcional
 
