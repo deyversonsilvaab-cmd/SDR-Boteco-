@@ -11,7 +11,7 @@ const DEFAULT_FALLBACK = `Quero te passar a informação certa. Confira o cardá
 const INSTAGRAM_MAX_MESSAGE_LENGTH = 900;
 const INSTAGRAM_MAX_MESSAGE_PARTS = 3;
 const OPENAI_TIMEOUT_MS = 12000;
-const APP_VERSION = "2.2.1";
+const APP_VERSION = "2.3.0";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -284,6 +284,30 @@ function isGreetingOnly(text) {
 
 function isPlayfulOffTopic(text) {
   return includesAny(text, ["robux", "v bucks", "vbucks", "free fire diamante", "diamante free fire", "skin de jogo", "moeda de jogo"]);
+}
+
+function isChoppPromotionQuery(text, knowledge) {
+  const normalized = applyMenuCorrections(text, knowledge).corrected || normalizeText(text);
+  const hasChopp = includesAny(normalized, [
+    "chopp", "chope", "chopinho", "choppinho", "chopp brahma", "chopp ashby", "ashby", "brahma"
+  ]);
+  const hasHappyHour = includesAny(normalized, ["happy hour", "happyhour"]);
+  const hasPromo = includesAny(normalized, ["promocao", "promo", "tem promocao", "qual promocao", "promocoes"]);
+  const burgerSpecific = hasPromo && includesAny(normalized, ["hamburguer", "hamburger", "burger", "burguer"]);
+  return hasChopp || hasHappyHour || (hasPromo && !burgerSpecific);
+}
+
+function choppPromotionFacts(knowledge) {
+  const campaign = knowledge?.campanhas_ativas?.promocao_chopp || {};
+  const base = knowledge?.respostas_base?.promocao_chopp;
+  if (base) return base;
+  const daily = campaign?.preco_base_diario || "a partir de R$ 9,90";
+  const window = campaign?.horario_promocional || "das 16h às 20h";
+  const volume = campaign?.volume || "340 ml";
+  const promoPrice = campaign?.preco_promocional || "R$ 3,99";
+  const items = Array.isArray(campaign?.itens) && campaign.itens.length ? campaign.itens.join(" e/ou ") : "Chopp Ashby e/ou Chopp Brahma";
+  const warning = campaign?.aviso || "consultar disponibilidade no local";
+  return `Nossa promoção de chopp funciona assim:\n• Todos os dias: chopp ${daily}.\n• Sábado e domingo, ${window}: caneca de ${volume} de ${items} por ${promoPrice} a caneca.\n${warning.charAt(0).toUpperCase()}${warning.slice(1)}.`;
 }
 
 function isRemovedTopic(text) {
@@ -776,14 +800,20 @@ function resolveIntent(message, knowledge, context = {}) {
     return makeResolution({ facts: `${c?.descricao || "Toda terça-feira, compra 1 hambúrguer e ganha outro."}\n${c?.validade || "Terças-feiras, das 16h às 21h."}\n\nAs opções participantes devem ser conferidas no cardápio: ${links.menu}`, intent: "promocao_burger", topic: "burger", lead_temperature: "quente", next_action: "abrir_cardapio" });
   }
 
+  if (isChoppPromotionQuery(text, knowledge)) {
+    return makeResolution({
+      facts: choppPromotionFacts(knowledge),
+      intent: "promocao_chopp",
+      topic: "chopp",
+      needs_human: false,
+      lead_temperature: "quente",
+      next_action: "responder"
+    });
+  }
+
   if (includesAny(text, ["feijoada"])) {
     const c = knowledge?.campanhas_ativas?.feijoada;
     return makeResolution({ facts: `${c?.descricao || "Temos feijoada às quartas e sábados."}\n\nPara preço, composição ou disponibilidade do dia, confira o cardápio ${links.menu} ou fale com a equipe: ${links.whatsapp}`, intent: "feijoada", topic: "feijoada", needs_human: isPriceQuestion(text), lead_temperature: "quente", next_action: "abrir_cardapio" });
-  }
-
-  if (includesAny(text, ["happy hour"])) {
-    const c = knowledge?.campanhas_ativas?.happy_hour;
-    return makeResolution({ facts: `${c?.descricao || "Happy hour das 16h às 21h."}\n\nCardápio/pedido: ${links.menu}`, intent: "happy_hour", topic: "happy_hour", lead_temperature: "quente", next_action: "visita" });
   }
 
   const itemMatch = findCatalogMatch(message, knowledge);

@@ -1,8 +1,17 @@
 # SDR Boteco — ManyChat + Instagram + WhatsApp + Vercel
 
-Versão 2.2.1 — cardápio completo + busca aproximada + correção do fluxo de comentários do Instagram, em 16/09/2026.
+Versão 2.3.0 — cardápio completo + busca aproximada + comentários corrigidos + promoção oficial de chopp, em 16/09/2026.
 
 Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estruturado para receber mensagens do ManyChat, identificar a intenção do cliente, consultar uma base fechada de informações comerciais e devolver uma resposta humanizada sem inventar preços, itens, composição, porções, horários ou disponibilidade.
+
+## Promoção oficial de chopp — v2.3.0
+
+- Todos os dias: chopp a partir de **R$ 9,90**.
+- Sábado e domingo, das **16h às 20h**: caneca de **340 ml** de **Chopp Ashby e/ou Chopp Brahma** por **R$ 3,99**.
+- O bot sempre informa: **consultar disponibilidade no local**.
+- `chopp`, `chope`, `chopinho`, `happy hour`, `promoção`, `Brahma` e `Ashby` usam a intenção `promocao_chopp`.
+- O webhook não calcula se a promoção está ativa no momento; apenas informa a janela cadastrada.
+
 
 ## Objetivos da versão 2
 

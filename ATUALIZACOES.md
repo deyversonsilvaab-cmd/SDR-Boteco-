@@ -1,5 +1,19 @@
 # Atualizações
 
+## 2.3.0 — Promoção oficial de chopp
+
+- Cadastrada promoção oficial em `data/knowledge.json`.
+- Todos os dias: chopp a partir de **R$ 9,90**.
+- Sábado e domingo, das **16h às 20h**: caneca de **340 ml** de **Chopp Ashby e/ou Chopp Brahma** por **R$ 3,99 a caneca**.
+- Toda resposta da promoção inclui **consultar disponibilidade no local**.
+- `chopp`, `chope`, `chopinho`, `promoção`, `happy hour`, `Brahma` e `Ashby` passam pela intenção `promocao_chopp`.
+- Correções comuns como `choop`, `brama` e `asby` também são reconhecidas.
+- A promoção de hambúrguer em dobro mantém prioridade própria.
+- Nenhuma lógica de relógio foi adicionada: o bot não afirma que a promoção está ativa “agora”.
+- Catálogo preservado byte a byte: **122 itens / 15 categorias**, sem alteração de preços ou descrições.
+- Nova suíte `promo-tests.mjs`, incluindo teste de guardrail contra dia/horário inventado pela IA.
+- GET health e `package.json` atualizados para **2.3.0**.
+
 ## 2.2.1 — Comentários do Instagram → Direct
 
 - Corrige placeholder literal `first_name` / `{{first_name}}`.

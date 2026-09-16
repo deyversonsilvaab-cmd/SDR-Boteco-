@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "versao": "2.2.0",
+    "versao": "2.3.0",
     "revisado_em": "2026-09-16",
     "politica": "Base fechada: preço, composição, peso e item do cardápio só podem ser afirmados quando estiverem registrados nesta base.",
     "fonte_cardapio": "Cardápio Sr boteco atual.pdf (9 páginas) enviado em 16/09/2026.",
@@ -1641,6 +1641,38 @@
     "happy_hour": {
       "descricao": "Happy hour das 16h às 21h.",
       "regra": "Não inventar promoções ou preços não cadastrados."
+    },
+    "promocao_chopp": {
+      "nome": "Promoção de Chopp",
+      "descricao": "Todos os dias, chopp a partir de R$ 9,90. Aos sábados e domingos, das 16h às 20h, a caneca de 340 ml de Chopp Ashby e/ou Chopp Brahma sai por R$ 3,99 a caneca.",
+      "preco_base_diario": "a partir de R$ 9,90",
+      "dias_promocionais": [
+        "sábado",
+        "domingo"
+      ],
+      "horario_promocional": "das 16h às 20h",
+      "volume": "340 ml",
+      "itens": [
+        "Chopp Ashby",
+        "Chopp Brahma"
+      ],
+      "preco_promocional": "R$ 3,99",
+      "aviso": "consultar disponibilidade no local",
+      "aliases": [
+        "chopp",
+        "chope",
+        "chopinho",
+        "choppinho",
+        "promoção",
+        "promocao",
+        "promo",
+        "happy hour",
+        "chopp brahma",
+        "chopp ashby",
+        "ashby",
+        "brahma"
+      ],
+      "regra": "Não afirmar que a promoção está ativa agora. Apenas informar a janela cadastrada e sempre orientar a consultar disponibilidade no local. Não prometer estoque."
     }
   },
   "respostas_base": {
@@ -1658,7 +1690,8 @@
     "despedida": "Foi um prazer te atender. Quando quiser voltar ou fazer um pedido, é só chamar.",
     "fallback": "Quero te passar a informação certa. Posso procurar pelo nome do item, mesmo com erro de digitação, ou pela categoria. Cardápio digital atualizado: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0. Se ainda precisar confirmar algo com a equipe: https://wa.me/5519997858351",
     "vaga": "Para oportunidades de trabalho no Sr. Boteco, envie seu currículo diretamente para o RH do restaurante pelo WhatsApp:\n\n📲 https://wa.me/5517996022567\n\nEla fará a análise do seu perfil e entrará em contato caso surja uma oportunidade compatível com sua experiência.\n\nAgradecemos o seu interesse em fazer parte da equipe do Sr. Boteco!",
-    "handoff_humano": "Vou chamar alguém da equipe pra continuar seu atendimento por aqui."
+    "handoff_humano": "Vou chamar alguém da equipe pra continuar seu atendimento por aqui.",
+    "promocao_chopp": "Nossa promoção de chopp funciona assim:\n• Todos os dias: chopp a partir de R$ 9,90.\n• Sábado e domingo, das 16h às 20h: caneca de 340 ml de Chopp Ashby e/ou Chopp Brahma por R$ 3,99 a caneca.\nConsultar disponibilidade no local."
   },
   "regras_atendimento": [
     "Nunca inventar preço, produto, promoção, composição, quantidade de pessoas servidas, horário, evento, disponibilidade de mesa ou condição de entrega.",
@@ -1803,6 +1836,15 @@
     "filet": "file",
     "fille": "file",
     "manjoca": "mandioca",
-    "mandioca": "mandioca"
+    "mandioca": "mandioca",
+    "chope": "chopp",
+    "chop": "chopp",
+    "choop": "chopp",
+    "chopinho": "chopp",
+    "choppinho": "chopp",
+    "asby": "ashby",
+    "ashiby": "ashby",
+    "brama": "brahma",
+    "braama": "brahma"
   }
 }

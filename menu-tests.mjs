@@ -53,7 +53,7 @@ await test("Link oficial atualizado com UTM", async () => {
 
 await test("Itens antigos fora do cardápio não permanecem no catálogo", async () => {
   const raw = JSON.stringify(knowledge.catalogo).toLowerCase();
-  for (const stale of ["fondue salgado", "bisteca", "frango power", "chopp brahma", "chopp ashby"]) {
+  for (const stale of ["fondue salgado", "bisteca", "frango power"]) {
     assert(!raw.includes(stale), `item antigo presente: ${stale}`);
   }
 });
@@ -101,14 +101,17 @@ await test("suco genérico lista categoria; suco de laranja dá preço específi
   assert(item.reply.includes("R$ 11,30"), item.reply);
 });
 
-await test("chopp genérico lista opções atuais; Brahma antigo não é inventado", async () => {
+await test("chopp genérico e Brahma usam a promoção oficial", async () => {
   const group = await ask("qual valor do chopp");
-  assert(group.intent === "categoria_cardapio", group.intent);
-  assert(group.reply.includes("Caneca Pequena (340ml) — R$ 13,90"), group.reply);
-  assert(group.reply.includes("Canecão (1200ml) — R$ 39,90"), group.reply);
-  const stale = await ask("qual valor do chopp Brahma");
-  assert(stale.intent === "item_nao_encontrado", stale.intent);
-  assert(!stale.reply.toLowerCase().includes("brahma —"), stale.reply);
+  assert(group.intent === "promocao_chopp", group.intent);
+  assert(group.reply.includes("R$ 9,90"), group.reply);
+  assert(group.reply.includes("R$ 3,99"), group.reply);
+  assert(group.reply.toLowerCase().includes("consultar disponibilidade no local"), group.reply);
+
+  const brahma = await ask("qual valor do chopp Brahma");
+  assert(brahma.intent === "promocao_chopp", brahma.intent);
+  assert(brahma.reply.toLowerCase().includes("brahma"), brahma.reply);
+  assert(brahma.reply.includes("R$ 3,99"), brahma.reply);
 });
 
 await test("Executivos retornam lista completa e Instagram divide sem perder conteúdo", async () => {
