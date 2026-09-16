@@ -1,6 +1,6 @@
 {
   "name": "sdr-boteco",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -10,8 +10,9 @@
     "dev": "vercel dev",
     "test:local": "node test-local.js",
     "audit": "node audit-test.mjs",
-    "check": "node --check api/manychat.js && node --check lib/persona.js && node audit-test.mjs && node whatsapp-tests.mjs",
-    "test:whatsapp": "node whatsapp-tests.mjs"
+    "check": "node --check api/manychat.js && node --check lib/persona.js && node audit-test.mjs && node menu-tests.mjs && node whatsapp-tests.mjs",
+    "test:whatsapp": "node whatsapp-tests.mjs",
+    "test:menu": "node menu-tests.mjs"
   },
   "devDependencies": {
     "vercel": "^44.2.10"

@@ -4,14 +4,14 @@ import crypto from "node:crypto";
 import { buildSystemPrompt } from "../lib/persona.js";
 
 const DEFAULT_WHATSAPP_LINK = "https://wa.me/5519997858351";
-const DEFAULT_MENU_LINK = "https://botequimpatiolimeira.saipos.com/home";
+const DEFAULT_MENU_LINK = "https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0";
 const DEFAULT_IFOOD_LINK = "https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72";
 const DEFAULT_99FOOD_LINK = "https://99app.com/99food/food/";
 const DEFAULT_FALLBACK = `Quero te passar a informação certa. Confira o cardápio em ${DEFAULT_MENU_LINK} ou fale com a equipe no WhatsApp: ${DEFAULT_WHATSAPP_LINK}`;
 const INSTAGRAM_MAX_MESSAGE_LENGTH = 900;
 const INSTAGRAM_MAX_MESSAGE_PARTS = 3;
 const OPENAI_TIMEOUT_MS = 12000;
-const APP_VERSION = "2.1.1";
+const APP_VERSION = "2.2.0";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -229,21 +229,146 @@ function findCatalogItemById(id, knowledge) {
   return (Array.isArray(knowledge?.catalogo) ? knowledge.catalogo : []).find((item) => item?.id === target) || null;
 }
 
-function findCatalogItem(message, knowledge) {
-  const text = normalizeText(message);
+const MENU_QUERY_STOPWORDS = new Set([
+  "qual", "quais", "o", "a", "os", "as", "um", "uma", "uns", "umas", "do", "da", "dos", "das", "de",
+  "no", "na", "nos", "nas", "me", "manda", "mandar", "tem", "vcs", "voces", "voce", "quanto", "custa",
+  "custam", "valor", "valores", "preco", "precos", "queria", "quero", "saber", "ver", "pra", "pro", "para",
+  "por", "favor", "e", "eh", "é", "ai", "aí", "hoje", "desse", "dessa", "esse", "essa", "opcao", "opcoes", "tipo", "tipos"
+]);
+
+function menuTokens(value) {
+  return normalizeText(value).split(" ").filter((token) => token && !MENU_QUERY_STOPWORDS.has(token));
+}
+
+function levenshteinDistance(a, b) {
+  const x = String(a || "");
+  const y = String(b || "");
+  if (!x.length) return y.length;
+  if (!y.length) return x.length;
+  const prev = Array.from({ length: y.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= x.length; i++) {
+    let left = i;
+    for (let j = 1; j <= y.length; j++) {
+      const above = prev[j];
+      const diag = prev[j - 1];
+      const cost = x[i - 1] === y[j - 1] ? 0 : 1;
+      const next = Math.min(above + 1, left + 1, diag + cost);
+      prev[j - 1] = left;
+      left = next;
+    }
+    prev[y.length] = left;
+  }
+  return prev[y.length];
+}
+
+function tokenSimilarity(a, b) {
+  if (a === b) return 1;
+  if (!a || !b) return 0;
+  const maxLen = Math.max(a.length, b.length);
+  if (maxLen < 4) return 0;
+  return 1 - levenshteinDistance(a, b) / maxLen;
+}
+
+function applyMenuCorrections(message, knowledge) {
+  const original = normalizeText(message);
+  const corrections = knowledge?.correcoes_ortograficas || {};
+  const changed = [];
+  const corrected = original.split(" ").map((token) => {
+    const replacement = normalizeText(corrections[token] || "");
+    if (replacement && replacement !== token) {
+      changed.push({ from: token, to: replacement });
+      return replacement;
+    }
+    return token;
+  }).join(" ");
+  return { original, corrected, changed };
+}
+
+function containsNormalizedPhrase(text, phrase) {
+  if (!text || !phrase) return false;
+  return text === phrase || text.startsWith(`${phrase} `) || text.endsWith(` ${phrase}`) || text.includes(` ${phrase} `);
+}
+
+function catalogCandidates(item) {
+  return [item?.nome, ...(Array.isArray(item?.aliases) ? item.aliases : [])].filter(Boolean);
+}
+
+function findCatalogMatch(message, knowledge) {
+  const query = applyMenuCorrections(message, knowledge);
+  const text = query.corrected;
   const items = Array.isArray(knowledge?.catalogo) ? knowledge.catalogo : [];
   let best = null;
 
   for (const item of items) {
-    const candidates = [item?.nome, ...(Array.isArray(item?.aliases) ? item.aliases : [])].filter(Boolean);
-    for (const candidate of candidates) {
+    for (const candidate of catalogCandidates(item)) {
       const normalized = normalizeText(candidate);
-      if (!normalized || !text.includes(normalized)) continue;
+      if (!normalized || !containsNormalizedPhrase(text, normalized)) continue;
       const score = normalized.length + (text === normalized ? 200 : 0);
       if (!best || score > best.score) best = { item, score, matched: normalized };
     }
   }
-  return best?.item || null;
+  return best ? { ...best, corrected: query.changed.length > 0, corrections: query.changed } : null;
+}
+
+function categoryEntries(knowledge) {
+  const names = Array.isArray(knowledge?.categorias_cardapio) ? knowledge.categorias_cardapio : [];
+  const aliases = knowledge?.aliases_categorias || {};
+  return names.map((name) => ({ name, aliases: [name, ...(Array.isArray(aliases?.[name]) ? aliases[name] : [])] }));
+}
+
+function findCatalogCategory(message, knowledge) {
+  const text = normalizeText(message);
+  const queryTokens = menuTokens(message);
+  let best = null;
+  for (const category of categoryEntries(knowledge)) {
+    for (const alias of category.aliases) {
+      const normalized = normalizeText(alias);
+      if (!normalized || !containsNormalizedPhrase(text, normalized)) continue;
+      const aliasTokens = new Set(menuTokens(alias));
+      // Categoria genérica só entra quando a pergunta é realmente sobre a categoria.
+      // Evita responder "Chopps" para algo específico e ausente como "chopp Brahma".
+      if (queryTokens.some((token) => !aliasTokens.has(token))) continue;
+      const score = normalized.length + (text === normalized ? 100 : 0);
+      if (!best || score > best.score) best = { category: category.name, matched: normalized, score };
+    }
+  }
+  return best;
+}
+
+function itemSearchScore(messageTokens, item) {
+  if (!messageTokens.length) return 0;
+  let bestCandidateScore = 0;
+  for (const candidate of catalogCandidates(item)) {
+    const candidateTokens = menuTokens(candidate);
+    if (!candidateTokens.length) continue;
+    const perQuery = messageTokens.map((q) => Math.max(0, ...candidateTokens.map((c) => tokenSimilarity(q, c))));
+    const score = perQuery.reduce((sum, x) => sum + x, 0) / perQuery.length;
+    if (score > bestCandidateScore) bestCandidateScore = score;
+  }
+  return bestCandidateScore;
+}
+
+function findRelatedCatalogItems(message, knowledge) {
+  const q = menuTokens(message);
+  if (!q.length) return [];
+  const items = Array.isArray(knowledge?.catalogo) ? knowledge.catalogo : [];
+  const scored = [];
+  for (const item of items) {
+    const candidates = catalogCandidates(item).map((c) => menuTokens(c));
+    const exactCoverage = q.filter((token) => candidates.some((tokens) => tokens.includes(token))).length / q.length;
+    if (exactCoverage >= 0.8) scored.push({ item, score: exactCoverage });
+  }
+  scored.sort((a, b) => b.score - a.score || String(a.item?.categoria).localeCompare(String(b.item?.categoria)) || String(a.item?.nome).localeCompare(String(b.item?.nome)));
+  return scored.map((x) => x.item);
+}
+
+function findFuzzyCatalogMatches(message, knowledge) {
+  const q = menuTokens(message);
+  if (!q.length) return [];
+  const items = Array.isArray(knowledge?.catalogo) ? knowledge.catalogo : [];
+  const scored = items.map((item) => ({ item, score: itemSearchScore(q, item) })).filter((x) => x.score >= 0.70);
+  scored.sort((a, b) => b.score - a.score);
+  return scored;
 }
 
 function selectVariations(item, message) {
@@ -258,8 +383,10 @@ function selectVariations(item, message) {
   return exactSizeMatches.length ? exactSizeMatches : vars;
 }
 
-function formatCatalogItem(item, message, links) {
-  const lines = [item.nome];
+function formatCatalogItem(item, message, links, options = {}) {
+  const lines = [];
+  if (options.approximate) lines.push(`Você quis dizer ${item.nome}?`);
+  else lines.push(item.nome);
   if (item.descricao) lines.push(item.descricao);
 
   if (item.valor) lines.push(`Valor: ${item.valor}`);
@@ -270,6 +397,7 @@ function formatCatalogItem(item, message, links) {
   }
 
   if (item.serve_texto) lines.push(item.serve_texto);
+  else if (Number.isFinite(item.serve_pessoas)) lines.push(`Serve até ${item.serve_pessoas} pessoas.`);
   if (item.disponibilidade) lines.push(item.disponibilidade);
 
   const missingServing = isServingQuestion(normalizeText(message)) && item.serve_pessoas == null && !item.serve_texto;
@@ -278,15 +406,46 @@ function formatCatalogItem(item, message, links) {
   if (missingPrice || missingServing) {
     const missing = [missingPrice ? "o valor" : "", missingServing ? "quantas pessoas serve" : ""].filter(Boolean).join(" e ");
     lines.push(`Não tenho ${missing} validado aqui e não vou arriscar. Para confirmar com a equipe no WhatsApp: ${links.whatsapp}`);
+  } else {
+    lines.push(`Cardápio digital/pedido: ${links.menu}`);
   }
-
-  lines.push(`Cardápio/pedido para retirada ou entrega: ${links.menu}\nDelivery também pelo iFood: ${links.ifood}\n99Food: ${links.food99} — procure por Sr. Boteco Limeira no app.`);
 
   return {
     facts: lines.join("\n\n"),
     needs_human: missingPrice || missingServing,
     missing_fields: [missingPrice ? "preco_validado" : null, missingServing ? "serve_pessoas_validado" : null].filter(Boolean)
   };
+}
+
+function formatCatalogList(items, title, links, note = "") {
+  const unique = [];
+  const seen = new Set();
+  for (const item of items || []) {
+    if (!item?.id || seen.has(item.id)) continue;
+    seen.add(item.id);
+    unique.push(item);
+  }
+  const lines = [title];
+  if (note) lines.push(note);
+  for (const item of unique.slice(0, 24)) {
+    lines.push(`• ${item.nome} — ${item.valor || "valor a confirmar"}`);
+  }
+  if (unique.length > 24) lines.push(`E mais ${unique.length - 24} opção(ões) no cardápio digital.`);
+  lines.push(`Cardápio digital/pedido: ${links.menu}`);
+  return lines.join("\n");
+}
+
+function formatCatalogCategory(category, knowledge, links, matched = "") {
+  const items = (Array.isArray(knowledge?.catalogo) ? knowledge.catalogo : []).filter((item) => item?.categoria === category);
+  const categoryName = normalizeText(matched) && normalizeText(matched) !== normalizeText(category)
+    ? `Se você quis dizer ${category}, estas são as opções:`
+    : `${category}:`;
+  return { facts: formatCatalogList(items, categoryName, links), items };
+}
+
+function formatRelatedCatalog(items, message, links) {
+  const label = menuTokens(message).join(" ") || "esse termo";
+  return formatCatalogList(items, `Encontrei mais de uma opção relacionada a “${label}”:`, links, "Se quiser, me diga o nome completo que eu detalho composição e valor.");
 }
 
 function inferUnknownItemTopic(text) {
@@ -384,7 +543,7 @@ function resolveIntent(message, knowledge, context = {}) {
     });
   }
 
-  if (includesAny(text, ["cardapio", "menu", "opcoes", "opções", "o que tem", "comidas", "pratos", "ver cardapio", "ver o cardapio"])) {
+  if (includesAny(text, ["cardapio", "menu", "o que tem", "comidas", "pratos", "ver cardapio", "ver o cardapio"])) {
     return makeResolution({ facts: base.cardapio || `Cardápio/pedido: ${links.menu}`, intent: "cardapio", topic: "cardapio", lead_temperature: "quente", next_action: "abrir_cardapio" });
   }
 
@@ -457,10 +616,35 @@ function resolveIntent(message, knowledge, context = {}) {
     return makeResolution({ facts: `${c?.descricao || "Happy hour das 16h às 21h."}\n\nCardápio/pedido: ${links.menu}`, intent: "happy_hour", topic: "happy_hour", lead_temperature: "quente", next_action: "visita" });
   }
 
-  const item = findCatalogItem(message, knowledge);
-  if (item) {
-    const itemFacts = formatCatalogItem(item, message, links);
-    return makeResolution({ facts: itemFacts.facts, intent: "item_cardapio", topic: item.id || "item_cardapio", needs_human: itemFacts.needs_human, lead_temperature: "quente", missing_fields: itemFacts.missing_fields, next_action: itemFacts.needs_human ? "whatsapp" : "fazer_pedido" });
+  const itemMatch = findCatalogMatch(message, knowledge);
+  if (itemMatch?.item) {
+    const itemFacts = formatCatalogItem(itemMatch.item, message, links, { approximate: Boolean(itemMatch.corrected) });
+    return makeResolution({ facts: itemFacts.facts, intent: "item_cardapio", topic: itemMatch.item.id || "item_cardapio", needs_human: itemFacts.needs_human, lead_temperature: "quente", missing_fields: itemFacts.missing_fields, next_action: itemFacts.needs_human ? "whatsapp" : "fazer_pedido" });
+  }
+
+  const categoryMatch = findCatalogCategory(message, knowledge);
+  if (categoryMatch?.category) {
+    const categoryFacts = formatCatalogCategory(categoryMatch.category, knowledge, links, categoryMatch.matched);
+    return makeResolution({ facts: categoryFacts.facts, intent: "categoria_cardapio", topic: `categoria:${normalizeText(categoryMatch.category).replace(/\s+/g, "_")}`, needs_human: false, lead_temperature: "quente", next_action: "fazer_pedido" });
+  }
+
+  const relatedItems = findRelatedCatalogItems(message, knowledge);
+  if (relatedItems.length >= 2) {
+    return makeResolution({ facts: formatRelatedCatalog(relatedItems, message, links), intent: "opcoes_cardapio", topic: "cardapio_busca", needs_human: false, lead_temperature: "quente", next_action: "fazer_pedido" });
+  }
+
+  const fuzzyMatches = findFuzzyCatalogMatches(message, knowledge);
+  if (fuzzyMatches.length) {
+    const top = fuzzyMatches[0];
+    const second = fuzzyMatches[1];
+    if (!second || top.score - second.score >= 0.07) {
+      const itemFacts = formatCatalogItem(top.item, message, links, { approximate: true });
+      return makeResolution({ facts: itemFacts.facts, intent: "item_cardapio", topic: top.item.id || "item_cardapio", needs_human: itemFacts.needs_human, lead_temperature: "quente", missing_fields: itemFacts.missing_fields, next_action: itemFacts.needs_human ? "whatsapp" : "fazer_pedido" });
+    }
+    const fuzzyItems = fuzzyMatches.filter((x) => top.score - x.score <= 0.08).slice(0, 12).map((x) => x.item);
+    if (fuzzyItems.length >= 2) {
+      return makeResolution({ facts: formatRelatedCatalog(fuzzyItems, message, links), intent: "opcoes_cardapio", topic: "cardapio_busca", needs_human: false, lead_temperature: "quente", next_action: "fazer_pedido" });
+    }
   }
 
   if (includesAny(text, ["almoco", "almoço", "executivo", "prato do dia"])) {
@@ -573,7 +757,7 @@ function ensurePersonalized(reply, customer) {
   const nReply = normalizeText(reply);
   const nName = normalizeText(name);
   if (nName && nReply.includes(nName)) return reply;
-  return `${name}, ${reply.charAt(0).toLowerCase()}${reply.slice(1)}`;
+  return `${name}, ${reply}`;
 }
 
 async function callOpenAI({ knowledge, customer, context, message, resolved, eventType }) {
@@ -850,7 +1034,7 @@ export default async function handler(req, res) {
     }
 
     const allowedPrices = collectAllowedPrices(resolved.facts);
-    const shouldHumanizeWithAI = message && resolved.intent !== "vaga";
+    const shouldHumanizeWithAI = message && !["vaga", "item_cardapio", "categoria_cardapio", "opcoes_cardapio"].includes(resolved.intent);
     const aiReply = shouldHumanizeWithAI ? await callOpenAI({ knowledge, customer, context, message, resolved, eventType }) : null;
 
     let finalReply = aiReply || resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;

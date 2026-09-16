@@ -66,12 +66,12 @@ async function test(name, fn) {
   }
 }
 
-await test("GET health v2.1.1 + canais", async () => {
+await test("GET health v2.2.0 + canais", async () => {
   const req = makeReq("", {}, "GET");
   const res = makeRes();
   await handler(req, res);
   assert(res.statusCode === 200, `status=${res.statusCode}`);
-  assert(res.payload?.version === "2.1.1", `version=${res.payload?.version}`);
+  assert(res.payload?.version === "2.2.0", `version=${res.payload?.version}`);
   assert(JSON.stringify(res.payload?.channels) === JSON.stringify(["instagram", "whatsapp"]), `channels=${JSON.stringify(res.payload?.channels)}`);
 });
 
@@ -195,7 +195,7 @@ await test("Formatação por canal: WhatsApp uma parte, Instagram mantém split"
   assert(igParts.every((p) => p.length <= 900), `parte Instagram > 900`);
 });
 
-await test("Regressão Instagram mantém comportamento determinístico 2.0.2", async () => {
+await test("Regressão estrutural do Instagram continua preservada", async () => {
   const { payload } = await call("Queria o cardápio", { channel: "instagram" });
   assert(payload?.channel === "instagram", `channel=${payload?.channel}`);
   assert(payload?.intent === "cardapio", `intent=${payload?.intent}`);

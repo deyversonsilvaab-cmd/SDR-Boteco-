@@ -1,5 +1,18 @@
 # Atualizações
 
+## 2.2.0 — Cardápio completo + busca aproximada
+
+- Catálogo substituído pelo cardápio atual enviado em PDF (9 páginas), com 122 itens e 15 categorias.
+- Link principal atualizado para `https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0`.
+- Removidos do catálogo ativo itens antigos não presentes no cardápio atual, como Fondue Salgado, Bisteca, Frango Power, Chopp Brahma e Chopp Ashby.
+- Busca por item agora aceita correções e aproximação de escrita (`kibe` → `Quibe Frito`, `bruxeta` → `Brusqueta`, `torremo` → `Torresmo`) e similaridade para outros erros.
+- Categorias genéricas retornam opções com valores: `lanche` → os 3 Burgers, `suco` → sucos, `chopp` → chopps atuais, `executivos` → pratos executivos.
+- Termos ambíguos, como `picanha` e `batata frita`, retornam todas as opções relacionadas em vez de selecionar uma ao acaso.
+- Respostas de item passaram a priorizar conteúdo do cardápio e um único link do cardápio digital, evitando despejo de iFood/99Food em perguntas simples de preço.
+- Respostas de item/categoria são determinísticas e não passam pela humanização da IA, preservando nomes, preços e listas sem omissões.
+- Adicionado `menu-tests.mjs` com validação estrutural do catálogo, contagens por categoria, itens obsoletos, busca aproximada e cenários reais.
+- `npm run check` atualizado para rodar auditoria geral + testes de cardápio + WhatsApp/segurança.
+
 ## 2.1.1 — Correção de handoff, guardrails e segurança
 
 - Corrigida a prioridade de reclamações no WhatsApp: mensagens como `oi quero estorno`, `boa noite preciso reclamar` e `valeu quero nota fiscal` agora fazem handoff mesmo quando a intenção determinística inicial seria saudação/despedida.

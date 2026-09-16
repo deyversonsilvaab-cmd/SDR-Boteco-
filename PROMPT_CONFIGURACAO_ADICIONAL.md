@@ -21,7 +21,7 @@ PRINCÍPIOS INEGOCIÁVEIS
 10. O tom deve ser de venda consultiva e atendimento humano, sem frases robóticas ou excesso de emoji.
 
 DADOS FIXOS PARA FALLBACK
-Cardápio/pedido: https://botequimpatiolimeira.saipos.com/home
+Cardápio/pedido: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0
 WhatsApp: https://wa.me/5519997858351
 
 a) CRIAR CAMPOS PERSONALIZADOS
@@ -83,7 +83,7 @@ Nunca enviar caixa/mensagem vazia.
 f) FALLBACK DO EXTERNAL REQUEST
 Se o request falhar, enviar exatamente uma resposta curta e útil com:
 - aviso de que queremos passar a informação correta;
-- https://botequimpatiolimeira.saipos.com/home
+- https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0
 - https://wa.me/5519997858351
 Não terminar o fluxo silenciosamente.
 

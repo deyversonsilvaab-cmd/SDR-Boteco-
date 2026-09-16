@@ -1,6 +1,6 @@
 # SDR Boteco — ManyChat + Instagram + WhatsApp + Vercel
 
-Versão 2.1.1 — correções de handoff, guardrails e segurança do WhatsApp, com Instagram preservado, em 15/09/2026.
+Versão 2.2.0 — cardápio completo atualizado, busca aproximada por nome/erro de digitação e categorias com valores, em 16/09/2026.
 
 Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estruturado para receber mensagens do ManyChat, identificar a intenção do cliente, consultar uma base fechada de informações comerciais e devolver uma resposta humanizada sem inventar preços, itens, composição, porções, horários ou disponibilidade.
 
@@ -10,7 +10,11 @@ Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estr
 - O cliente é chamado pelo primeiro nome quando o ManyChat envia `first_name`.
 - Perguntas curtas de continuidade, como `valor?`, `o que acompanha?` e `serve quantas pessoas?`, usam `last_topic` para manter o contexto.
 - Preços só podem aparecer quando existem na base `data/knowledge.json`.
-- Itens sem dados validados recebem cardápio + WhatsApp, em vez de uma resposta inventada.
+- O catálogo interno contém 122 itens do cardápio atual, com nomes, valores, descrições e categorias extraídos do PDF fornecido.
+- Busca de cardápio aceita aproximação e erros de escrita; por exemplo, `kibe` → `Quibe Frito` e `bruxeta` → `Brusqueta`.
+- Termos genéricos, como `lanche`, `suco`, `chopp` e `executivos`, retornam as opções e valores da categoria em vez de apenas um link.
+- Termos ambíguos, como `picanha` ou `batata frita`, retornam as opções relacionadas em vez de escolher um produto arbitrariamente.
+- Itens realmente ausentes recebem cardápio + WhatsApp, em vez de uma resposta inventada.
 - Pedidos e oportunidades de envio do cardápio direcionam para o cardápio/pedido online.
 - Delivery oferece pedido direto, iFood e 99Food.
 - O atendimento continua funcionando mesmo sem OpenAI: a camada determinística é a fonte da verdade; a IA é usada apenas para humanizar a redação quando configurada.
@@ -24,7 +28,7 @@ Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estr
 
 ## Links oficiais usados pela automação
 
-- Cardápio/pedido: `https://botequimpatiolimeira.saipos.com/home`
+- Cardápio/pedido: `https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0`
 - WhatsApp: `https://wa.me/5519997858351`
 - iFood: `https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72`
 - 99Food: `https://99app.com/99food/food/`
@@ -46,7 +50,8 @@ O 99Food está configurado com o link oficial do serviço. Como não há um deep
 ├── lib/
 │   └── persona.js               # persona/system prompt da IA
 ├── audit-test.mjs               # auditoria de cenários críticos
-├── whatsapp-tests.mjs           # testes de WhatsApp + regressão do Instagram
+├── menu-tests.mjs               # integridade do cardápio + busca aproximada
+├── whatsapp-tests.mjs           # testes de WhatsApp + regressão estrutural
 ├── test-local.js                # teste simples do endpoint local
 ├── MANYCHAT_COORDENADAS.md      # configuração detalhada no ManyChat
 ├── WHATSAPP_MANYCHAT.md         # configuração do canal WhatsApp e handoff
@@ -111,7 +116,7 @@ Exemplo resumido:
   "needs_human": false,
   "lead_temperature": "quente",
   "next_action": "abrir_cardapio",
-  "cardapio_link": "https://botequimpatiolimeira.saipos.com/home",
+  "cardapio_link": "https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0",
   "whatsapp_link": "https://wa.me/5519997858351",
   "reply_part_1": "Mariana, ...",
   "reply_part_2": "",
@@ -173,15 +178,13 @@ A aplicação aplica quatro níveis de proteção:
 
 Nunca adicione preço por aproximação ou por memória. Atualize o item em `data/knowledge.json` e rode os testes.
 
-## Itens sem informação completa
+## Cardápio interno e aproximação de escrita
 
-Alguns produtos citados por clientes podem existir no cardápio real, mas não possuem preço/composição/porção validados no material original deste projeto. Nesses casos a automação **não inventa**. Ela responde imediatamente com:
+A v2.2.0 incorpora o cardápio atual enviado em PDF, com **122 itens** distribuídos em 15 categorias. Perguntas de preço ou produto são resolvidas primeiro pela base interna.
 
-- link do cardápio atualizado;
-- WhatsApp da equipe para confirmação específica;
-- contexto salvo para que uma pergunta seguinte não fique perdida.
+A busca usa três camadas: correspondência exata/alias, correções ortográficas conhecidas e aproximação por similaridade. Assim, erros comuns não viram fallback desnecessário. Exemplos: `kibe` → `Quibe Frito`, `bruxeta` → `Brusqueta`, `torremo` → `Torresmo`.
 
-Isso é intencional e é mais seguro do que preencher lacunas com informação não confirmada.
+Quando o termo representa uma categoria (`lanche`, `suco`, `chopp`, `executivos`), o bot lista as opções e seus valores. Quando o termo é ambíguo (`picanha`, `batata frita`), ele mostra as alternativas relacionadas. Somente itens realmente ausentes são encaminhados ao cardápio/WhatsApp para confirmação.
 
 ## Pedido e delivery
 
@@ -249,7 +252,7 @@ E no ManyChat, no External Request:
 x-webhook-secret: a-mesma-chave
 ```
 
-Se `WEBHOOK_SECRET` estiver vazio, o endpoint aceita chamadas sem autenticação. Para produção, não deixe vazio.
+Em produção, `WEBHOOK_SECRET` é obrigatório. Se estiver ausente, o webhook recusa POSTs com HTTP 401 (fail-closed). Em desenvolvimento local, a ausência do segredo continua permitida para facilitar testes.
 
 ## Deploy no Vercel
 

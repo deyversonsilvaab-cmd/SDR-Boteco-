@@ -29,7 +29,7 @@ last_bot_reply, channel, event_type`
   pedido!" solto no final.
 
 ### Links oficiais
-- Cardápio/pedido: `https://botequimpatiolimeira.saipos.com/home`
+- Cardápio/pedido: `https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0`
 - WhatsApp da equipe: `https://wa.me/5519997858351`
 
 ---
@@ -154,7 +154,7 @@ MENSAGEM FORA DE CONTEXTO / BRINCADEIRA / TROLL
 - **Mensagem de fallback (webhook falhou)** — tom leve, mantendo os 2 links:
   > Opa! Tô sem puxar essa info aqui agora pra não te passar nada errado 🙈 Mas
   > relaxa que dá pra ver o cardápio e fazer seu pedido por aqui ó:
-  > https://botequimpatiolimeira.saipos.com/home
+  > https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0
   > E se quiser falar direto com a equipe, é só chamar:
   > https://wa.me/5519997858351
 - Fluxos limpos (sem ramos mortos part_2/part_3) e sem automações concorrentes.

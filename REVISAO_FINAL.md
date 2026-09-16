@@ -1,21 +1,42 @@
-# Revisão final de produção — SDR Boteco v2.1.1
+# Revisão final de produção — SDR Boteco v2.2.0
 
 ## Status
 
-Projeto revisado para operar Instagram + WhatsApp no mesmo webhook. A v2.1.1 é uma versão corretiva da 2.1.0: mantém o comportamento determinístico do Instagram e endurece handoff, fatos autorizados e segurança no WhatsApp.
+Projeto revisado para Instagram + WhatsApp no mesmo webhook, agora com o cardápio atual incorporado à base interna. A v2.2.0 preserva handoff, guardrails e segurança da v2.1.1 e amplia a resolução determinística de itens e preços.
+
+## Cardápio
+
+- Fonte principal: PDF `Cardápio Sr boteco atual` enviado em 16/09/2026.
+- 122 itens catalogados em 15 categorias.
+- Preços e descrições da base foram preenchidos a partir do material fornecido.
+- Link digital oficial: `https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0`.
+- Itens antigos não presentes no material atual foram retirados do catálogo ativo.
+
+## Busca inteligente
+
+- Correspondência por nome e aliases.
+- Correções ortográficas conhecidas.
+- Similaridade por tokens para erros não cadastrados.
+- Categoria por aproximação sem selecionar item arbitrário.
+- Termos ambíguos retornam múltiplas opções.
+
+Exemplos validados:
+
+- `kibe` → pergunta se o cliente quis dizer **Quibe Frito** e informa **R$ 40,90**.
+- `lanche` → lista os 3 Burgers com seus valores.
+- `bruxeta` → **Brusqueta, R$ 31,90**.
+- `picanha` → lista as opções de picanha existentes em diferentes categorias.
+- `batata frita` → lista meia, inteira e adicional de 260g.
 
 ## Resultado da auditoria
 
 - Sintaxe Node/ESM válida.
-- `data/knowledge.json` válido e versão atualizada para 2.1.1.
-- 19/19 cenários históricos do Instagram aprovados.
-- Dynamic Block do Instagram e fluxo de vagas/RH aprovados.
-- Casos de WhatsApp, handoff, silêncio humano e regressão aprovados.
-- Reclamações com saudação/despedida aprovadas (`oi quero estorno`, `obrigado quero reembolso`, etc.).
-- Expressões benignas não acionam handoff (`sem problema, valeu`, `problema resolvido`).
-- Reclamação/negociação/humano não recebem CTA comercial antes da equipe.
-- Teste simulado de IA inventando `3h` é rejeitado pelo guardrail e cai para os fatos autorizados.
-- Em produção sem `WEBHOOK_SECRET`, POST retorna 401.
+- Base JSON válida, IDs únicos, preços formatados e categorias sem itens órfãos.
+- 22/22 cenários gerais aprovados.
+- Dynamic Block e rota de vagas/RH aprovados.
+- Testes de integridade e aproximação do cardápio aprovados.
+- Todos os testes de WhatsApp, handoff, segurança e guardrails aprovados.
+- Produção sem `WEBHOOK_SECRET` continua retornando 401.
 
 ## Health esperado
 
@@ -23,14 +44,10 @@ Projeto revisado para operar Instagram + WhatsApp no mesmo webhook. A v2.1.1 é 
 {
   "ok": true,
   "service": "sdr-boteco",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "channels": ["instagram", "whatsapp"]
 }
 ```
-
-## Observação de segurança
-
-`WEBHOOK_SECRET` é obrigatório na Vercel em produção. Sem a variável, o webhook recusa POSTs por segurança. O GET de health continua disponível.
 
 ## Comando de validação
 
@@ -38,4 +55,4 @@ Projeto revisado para operar Instagram + WhatsApp no mesmo webhook. A v2.1.1 é 
 npm run check
 ```
 
-O arquivo `MANIFEST_SHA256.txt` deve ser regenerado depois de qualquer edição e antes do empacotamento final.
+Regenerar `MANIFEST_SHA256.txt` após qualquer alteração antes do empacotamento final.

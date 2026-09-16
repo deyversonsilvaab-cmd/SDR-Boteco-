@@ -4,6 +4,7 @@ function makeReq(message, extraBody = {}) {
   return {
     method: "POST",
     headers: {},
+    query: {},
     body: {
       message,
       first_name: "Mariana",
@@ -33,25 +34,28 @@ async function call(message, extraBody = {}) {
 }
 
 const cases = [
-  { message: "Oi. Quero saber sobre a Tábua Mista.", intent: "item_nao_encontrado", must: ["cardápio", "WhatsApp"] },
-  { message: "O que acompanha o prato?", extra: { last_topic: "item:tabua_mista" }, intent: "item_nao_encontrado", must: ["não tenho", "cardápio"] },
+  { message: "Oi. Quero saber sobre a Tábua Mista.", intent: "item_cardapio", must: ["R$ 104,90", "linguiça toscana", "150g de frango"] },
+  { message: "O que acompanha o prato?", extra: { last_topic: "alacarte_tabua_mista" }, intent: "item_cardapio", must: ["2 gomos", "contrafilé", "R$ 104,90"] },
   { message: "Olá tem alguém?", intent: "saudacao", must: ["Mariana"] },
-  { message: "Queria o cardápio", intent: "cardapio", must: ["saipos.com", "retirada", "entrega"] },
-  { message: "Burgers", intent: "item_nao_encontrado", must: ["cardápio"] },
-  { message: "Vcs tem picanha?", intent: "item_nao_encontrado", must: ["cardápio", "WhatsApp"] },
-  { message: "Foundie", intent: "item_cardapio", must: ["R$ 99,90", "2 pessoas", "contrafilé"] },
-  { message: ["fondue", "doce"].join(" "), intent: "item_inativo" },
+  { message: "Queria o cardápio", intent: "cardapio", must: ["utm_id=97757_v0_s00_e0_tv0", "retirada", "entrega"] },
+  { message: "Burgers", intent: "categoria_cardapio", must: ["Burguer Salada", "R$ 29,90", "R$ 33,90", "R$ 39,90"] },
+  { message: "Vcs tem picanha?", intent: "opcoes_cardapio", must: ["Picanha - Executivo", "R$ 62,90", "Tiras de Picanha", "R$ 53,40"] },
+  { message: "qual o valor do kibe", intent: "item_cardapio", must: ["Você quis dizer Quibe Frito?", "R$ 40,90", "12 unidades"] },
+  { message: "quanto custa a bruxeta", intent: "item_cardapio", must: ["Você quis dizer Brusqueta?", "R$ 31,90"] },
+  { message: "Foundie", intent: "outro", forbidden: ["R$ 99,90"] },
   { message: "Consegue me doar robux?", intent: "fora_contexto", must: ["Robux", "brincadeira"], forbidden: ["saipos.com", "wa.me", "Faça o seu pedido"] },
-  { message: "Olá boa noite, queria fazer um pedido", intent: "pedido", must: ["saipos.com", "retirada", "entrega"] },
-  { message: "tem delivery?", intent: "delivery", must: ["iFood", "99Food", "saipos.com"] },
-  { message: "qual o valor da bisteca?", intent: "item_cardapio", must: ["R$ 19,90"] },
-  { message: "quanto custa o Frango Power?", intent: "item_cardapio", must: ["não tenho o valor", "WhatsApp"] },
-  { message: "qual valor do chopp Brahma?", intent: "item_cardapio", must: ["R$ 13,90", "R$ 51,90"] },
-  { message: "heineken zero valor", intent: "item_cardapio", must: ["não tenho o valor", "WhatsApp"] },
+  { message: "Olá boa noite, queria fazer um pedido", intent: "pedido", must: ["utm_id=97757_v0_s00_e0_tv0", "retirada", "entrega"] },
+  { message: "tem delivery?", intent: "delivery", must: ["iFood", "99Food", "utm_id=97757_v0_s00_e0_tv0"] },
+  { message: "qual o valor da bisteca?", intent: "outro", forbidden: ["R$ 19,90"] },
+  { message: "qual valor do Burger Bacon?", intent: "item_cardapio", must: ["R$ 33,90", "hambúrguer 160g"] },
+  { message: "heineken zero valor", intent: "item_cardapio", must: ["R$ 18,60"] },
   { message: "aceita vale alimentação?", intent: "pagamento", must: ["Não aceitamos vale alimentação"] },
   { message: "quero reservar para 6 pessoas amanhã", intent: "reserva", must: ["nome", "dia/data", "horário", "quantas pessoas", "confirmação"] },
   { message: `tem ${["open", "chopp"].join(" ")}?`, intent: "item_inativo" },
-  { message: "vaga de garçom", intent: "vaga", must: ["RH do restaurante", "wa.me/5517996022567", "análise do seu perfil", "oportunidade compatível"] }
+  { message: "vaga de garçom", intent: "vaga", must: ["RH do restaurante", "wa.me/5517996022567", "análise do seu perfil", "oportunidade compatível"] },
+  { message: "qual valor do lanche", intent: "categoria_cardapio", must: ["Burguer Sr. Boteco", "R$ 29,90", "R$ 33,90", "R$ 39,90"] },
+  { message: "qual valor do suco", intent: "categoria_cardapio", must: ["Suco de Laranja", "R$ 11,30", "Suco de Morango", "R$ 24,90"] },
+  { message: "qual valor da batata frita", intent: "opcoes_cardapio", must: ["R$ 13,90", "R$ 43,90", "R$ 91,90"] }
 ];
 
 let failed = 0;
