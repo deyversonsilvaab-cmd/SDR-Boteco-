@@ -46,7 +46,7 @@ const cases = [
   { message: "Consegue me doar robux?", intent: "fora_contexto", must: ["Robux", "brincadeira"], forbidden: ["saipos.com", "wa.me", "Faça o seu pedido"] },
   { message: "Olá boa noite, queria fazer um pedido", intent: "pedido", must: ["utm_id=97757_v0_s00_e0_tv0", "retirada", "entrega"] },
   { message: "tem delivery?", intent: "delivery", must: ["iFood", "99Food", "utm_id=97757_v0_s00_e0_tv0"] },
-  { message: "qual o valor da bisteca?", intent: "outro", forbidden: ["R$ 19,90"] },
+  { message: "qual o valor da bisteca?", intent: "cardapio_categorias", must: ["Aperitivos", "Porções", "Burguer Sr. Boteco", "Executivos", "Bebidas sem álcool", "utm_id=97757_v0_s00_e0_tv0"], forbidden: ["R$ 19,90", "wa.me/5519997858351"] },
   { message: "qual valor do Burger Bacon?", intent: "item_cardapio", must: ["R$ 33,90", "hambúrguer 160g"] },
   { message: "heineken zero valor", intent: "item_cardapio", must: ["R$ 18,60"] },
   { message: "aceita vale alimentação?", intent: "pagamento", must: ["Não aceitamos vale alimentação"] },

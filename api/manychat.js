@@ -11,7 +11,7 @@ const DEFAULT_FALLBACK = `Quero te passar a informação certa. Confira o cardá
 const INSTAGRAM_MAX_MESSAGE_LENGTH = 900;
 const INSTAGRAM_MAX_MESSAGE_PARTS = 3;
 const OPENAI_TIMEOUT_MS = 12000;
-const APP_VERSION = "2.3.0";
+const APP_VERSION = "2.3.1";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -541,6 +541,25 @@ function formatRelatedCatalog(items, message, links) {
   return formatCatalogList(items, `Encontrei mais de uma opção relacionada a “${label}”:`, links, "Se quiser, me diga o nome completo que eu detalho composição e valor.");
 }
 
+// Lista compacta das categorias registradas (uma mensagem só), usada quando o
+// cliente pergunta por um item que não conseguimos casar no catálogo.
+function formatCategoriasResumo(knowledge, links, opener = "") {
+  const catalogo = Array.isArray(knowledge?.catalogo) ? knowledge.catalogo : [];
+  const ordem = Array.isArray(knowledge?.categorias_cardapio) ? knowledge.categorias_cardapio : [];
+  const presentes = new Set(catalogo.map((item) => item?.categoria).filter(Boolean));
+  const categorias = [
+    ...ordem.filter((c) => presentes.has(c)),
+    ...[...presentes].filter((c) => !ordem.includes(c))
+  ];
+  const linhas = [];
+  linhas.push(opener || "Deixa eu te mostrar o que temos no cardápio hoje:");
+  linhas.push("");
+  for (const cat of categorias) linhas.push(`• ${cat}`);
+  linhas.push("");
+  linhas.push(`Me diz a categoria ou o nome do item que eu já te passo os valores certinhos. Cardápio completo/pedido: ${links.menu}`);
+  return linhas.join("\n");
+}
+
 function inferUnknownItemTopic(text) {
   if (includesAny(text, ["tabua mista", "tábua mista"])) return "item:tabua_mista";
   if (includesAny(text, ["picanha"])) return "item:picanha";
@@ -852,7 +871,13 @@ function resolveIntent(message, knowledge, context = {}) {
   }
 
   if (includesAny(text, ["burger", "burgers", "hamburguer", "hambúrguer", "porcao", "porção", "tabua", "tábua", "picanha", "carne", "frango", "kids", "sobremesa", "suco", "bebida", "cerveja", "chopp", "chope", "drinks", "drink"])) {
-    return makeResolution({ facts: base.item_nao_encontrado || DEFAULT_FALLBACK, intent: "item_nao_encontrado", topic: inferUnknownItemTopic(text), needs_human: true, lead_temperature: "quente", missing_fields: ["item_validado"], next_action: "cardapio_ou_whatsapp" });
+    return makeResolution({ facts: formatCategoriasResumo(knowledge, links, "Não achei esse item com esse nome exato, mas olha tudo que temos por categoria:"), intent: "cardapio_categorias", topic: inferUnknownItemTopic(text), needs_human: false, lead_temperature: "quente", next_action: "cardapio_ou_whatsapp" });
+  }
+
+  // Perguntou preço/valor mas não casamos nenhum item (ex.: "qual o valor da bisteca?").
+  // Em vez do fallback genérico, mostramos as categorias registradas.
+  if (isPriceQuestion(text)) {
+    return makeResolution({ facts: formatCategoriasResumo(knowledge, links, "Não localizei esse item pelo nome, mas veja as categorias que temos registradas:"), intent: "cardapio_categorias", topic: "cardapio_categorias", needs_human: false, lead_temperature: "quente", next_action: "cardapio_ou_whatsapp" });
   }
 
   if (isPlayfulOffTopic(text)) {
@@ -1238,7 +1263,7 @@ export default async function handler(req, res) {
 
     const allowedPrices = collectAllowedPrices(resolved.facts);
     const deterministicIntents = [
-      "vaga", "item_cardapio", "categoria_cardapio", "opcoes_cardapio",
+      "vaga", "item_cardapio", "categoria_cardapio", "opcoes_cardapio", "cardapio_categorias",
       "comentario_sem_texto", "comentario_social", "comentario_generico", "comentario_valor_sem_item", "comentario_reclamacao"
     ];
     const shouldHumanizeWithAI = message && !deterministicIntents.includes(resolved.intent);

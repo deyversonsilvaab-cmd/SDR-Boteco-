@@ -58,6 +58,26 @@ await test("Itens antigos fora do cardápio não permanecem no catálogo", async
   }
 });
 
+await test("Item não encontrado por preço lista as categorias registradas", async () => {
+  const p = await ask("qual o valor da bisteca?");
+  assert(p.intent === "cardapio_categorias", p.intent);
+  assert(p.topic === "cardapio_categorias", p.topic);
+  assert(p.needs_human === false, `needs_human=${p.needs_human}`);
+  assert(p.reply.includes("Não localizei esse item pelo nome"), p.reply);
+  for (const cat of knowledge.categorias_cardapio || []) assert(p.reply.includes(`• ${cat}`), `categoria ausente: ${cat}`);
+  assert(p.reply.includes(MENU), p.reply);
+  assert(!p.reply.includes(knowledge.links?.whatsapp || "__sem_whatsapp__"), "não deve empurrar WhatsApp");
+});
+
+await test("Item não encontrado no WhatsApp não aciona handoff", async () => {
+  const p = await ask("qual o valor da bisteca?", { channel: "whatsapp" });
+  assert(p.intent === "cardapio_categorias", p.intent);
+  assert(p.handoff === false, `handoff=${p.handoff}`);
+  assert(p.needs_human === false, `needs_human=${p.needs_human}`);
+  assert(p.reply.includes("• Porções"), p.reply);
+  assert(p.reply.includes(MENU), p.reply);
+});
+
 await test("kibe corrige para Quibe Frito e responde preço", async () => {
   const p = await ask("qual o valor do kibe");
   assert(p.intent === "item_cardapio", p.intent);

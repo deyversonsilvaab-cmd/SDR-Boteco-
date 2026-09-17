@@ -1,6 +1,10 @@
 # SDR Boteco — ManyChat + Instagram + WhatsApp + Vercel
 
-Versão 2.3.0 — cardápio completo + busca aproximada + comentários corrigidos + promoção oficial de chopp, em 16/09/2026.
+Versão 2.3.1 — cardápio completo + busca aproximada + comentários corrigidos + promoção oficial de chopp + categorias para item não localizado, em 16/09/2026.
+
+## Item não localizado — v2.3.1
+
+Quando o cliente pergunta preço de um item que não casa com o catálogo oficial (ex.: "qual o valor da bisteca?"), o bot não inventa preço e não força atendimento humano. Ele lista as categorias registradas e envia o link do cardápio completo para a pessoa escolher uma categoria ou informar outro nome. O intent `cardapio_categorias` é determinístico e não é reescrito pela IA.
 
 Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estruturado para receber mensagens do ManyChat, identificar a intenção do cliente, consultar uma base fechada de informações comerciais e devolver uma resposta humanizada sem inventar preços, itens, composição, porções, horários ou disponibilidade.
 
