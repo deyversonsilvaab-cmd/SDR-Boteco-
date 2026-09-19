@@ -22,10 +22,10 @@ async function test(name, fn) {
   catch (e) { failed++; console.error(`FAIL | ${name} | ${e.message}`); }
 }
 
-await test("Base possui 122 itens do cardápio atual", async () => {
+await test("Base possui 141 itens incluindo Pratos do Dia e Cardápio Fitness", async () => {
   assert(Array.isArray(knowledge.catalogo), "catalogo ausente");
-  assert(knowledge.catalogo.length === 122, `itens=${knowledge.catalogo.length}`);
-  assert(knowledge._meta?.itens_catalogados === 122, `meta=${knowledge._meta?.itens_catalogados}`);
+  assert(knowledge.catalogo.length === 141, `itens=${knowledge.catalogo.length}`);
+  assert(knowledge._meta?.itens_catalogados === 141, `meta=${knowledge._meta?.itens_catalogados}`);
 });
 
 await test("IDs únicos, categorias válidas e preços formatados", async () => {
@@ -40,7 +40,7 @@ await test("IDs únicos, categorias válidas e preços formatados", async () => 
 });
 
 await test("Categorias têm a contagem esperada", async () => {
-  const expected = { "Aperitivos":6,"Tira Gosto":6,"Porções":23,"Pratos Kids":2,"Burguer Sr. Boteco":3,"Sobremesas":3,"À la carte":12,"Adicionais":12,"Executivos":19,"Chopps":5,"Cervejas":2,"Caipirinhas":4,"Doses":7,"Sucos":9,"Bebidas sem álcool":9 };
+  const expected = { "Aperitivos":6,"Tira Gosto":6,"Porções":23,"Pratos Kids":2,"Burguer Sr. Boteco":3,"Sobremesas":3,"À la carte":12,"Adicionais":12,"Pratos do Dia (Almoço)":9,"Cardápio Fitness":10,"Executivos":19,"Chopps":5,"Cervejas":2,"Caipirinhas":4,"Doses":7,"Sucos":9,"Bebidas sem álcool":9 };
   for (const [cat, count] of Object.entries(expected)) {
     const got = knowledge.catalogo.filter((i) => i.categoria === cat).length;
     assert(got === count, `${cat}: ${got} != ${count}`);
@@ -53,29 +53,34 @@ await test("Link oficial atualizado com UTM", async () => {
 
 await test("Itens antigos fora do cardápio não permanecem no catálogo", async () => {
   const raw = JSON.stringify(knowledge.catalogo).toLowerCase();
-  for (const stale of ["fondue salgado", "bisteca", "frango power"]) {
+  for (const stale of ["fondue salgado", "frango power"]) {
     assert(!raw.includes(stale), `item antigo presente: ${stale}`);
   }
 });
 
-await test("Item não encontrado por preço lista as categorias registradas", async () => {
+await test("Bisteca é reconhecida como Prato do Dia e responde preço/horário", async () => {
   const p = await ask("qual o valor da bisteca?");
-  assert(p.intent === "cardapio_categorias", p.intent);
-  assert(p.topic === "cardapio_categorias", p.topic);
-  assert(p.needs_human === false, `needs_human=${p.needs_human}`);
-  assert(p.reply.includes("Não localizei esse item pelo nome"), p.reply);
-  for (const cat of knowledge.categorias_cardapio || []) assert(p.reply.includes(`• ${cat}`), `categoria ausente: ${cat}`);
-  assert(p.reply.includes(MENU), p.reply);
-  assert(!p.reply.includes(knowledge.links?.whatsapp || "__sem_whatsapp__"), "não deve empurrar WhatsApp");
+  assert(p.intent === "item_cardapio", p.intent);
+  assert(p.topic === "almoco_bisteca", p.topic);
+  assert(p.reply.includes("R$ 19,90"), p.reply);
+  assert(p.reply.includes("Bisteca suína"), p.reply);
+  assert(p.reply.includes("segunda a sexta-feira"), p.reply);
+  assert(p.reply.includes("11h às 15h"), p.reply);
+  assert(!p.reply.includes(MENU), `link do cardápio vazou no Instagram: ${p.reply}`);
+  assert(p.cardapio_link === MENU, `campo cardapio_link mudou: ${p.cardapio_link}`);
 });
 
-await test("Item não encontrado no WhatsApp não aciona handoff", async () => {
-  const p = await ask("qual o valor da bisteca?", { channel: "whatsapp" });
+await test("Item realmente não encontrado lista categorias e não gera handoff", async () => {
+  const p = await ask("qual o valor da pizza?");
   assert(p.intent === "cardapio_categorias", p.intent);
-  assert(p.handoff === false, `handoff=${p.handoff}`);
   assert(p.needs_human === false, `needs_human=${p.needs_human}`);
-  assert(p.reply.includes("• Porções"), p.reply);
-  assert(p.reply.includes(MENU), p.reply);
+  for (const cat of knowledge.categorias_cardapio || []) assert(p.reply.includes(`• ${cat}`), `categoria ausente: ${cat}`);
+  assert(!p.reply.includes(MENU), `link do cardápio vazou no texto: ${p.reply}`);
+
+  const wa = await ask("qual o valor da pizza?", { channel: "whatsapp" });
+  assert(wa.intent === "cardapio_categorias", wa.intent);
+  assert(wa.handoff === false, `handoff=${wa.handoff}`);
+  assert(wa.reply.includes(MENU), wa.reply);
 });
 
 await test("kibe corrige para Quibe Frito e responde preço", async () => {

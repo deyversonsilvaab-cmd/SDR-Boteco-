@@ -7,11 +7,13 @@ const DEFAULT_WHATSAPP_LINK = "https://wa.me/5519997858351";
 const DEFAULT_MENU_LINK = "https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0";
 const DEFAULT_IFOOD_LINK = "https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72";
 const DEFAULT_99FOOD_LINK = "https://99app.com/99food/food/";
+const DEFAULT_MAPS_LINK = "https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8";
+const DEFAULT_GOOGLE_REVIEW_LINK = "https://search.google.com/local/writereview?placeid=ChIJRVEHZGqByJQRVUe6ZO8Yqz8";
 const DEFAULT_FALLBACK = `Quero te passar a informação certa. Confira o cardápio em ${DEFAULT_MENU_LINK} ou fale com a equipe no WhatsApp: ${DEFAULT_WHATSAPP_LINK}`;
 const INSTAGRAM_MAX_MESSAGE_LENGTH = 900;
 const INSTAGRAM_MAX_MESSAGE_PARTS = 3;
 const OPENAI_TIMEOUT_MS = 12000;
-const APP_VERSION = "2.3.1";
+const APP_VERSION = "2.9.0";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -241,7 +243,11 @@ function extractConversationContext(body) {
       body?.last_topic || body?.topic || body?.ai_topic || body?.custom_fields?.last_topic || body?.custom_fields?.ai_topic || "",
       120
     ),
-    last_bot_reply: safeText(body?.last_bot_reply || body?.custom_fields?.last_bot_reply || "", 1000)
+    last_bot_reply: safeText(body?.last_bot_reply || body?.custom_fields?.last_bot_reply || "", 1000),
+    avaliacao_pendente: isTruthyFlag(body?.avaliacao_pendente ?? body?.custom_fields?.avaliacao_pendente),
+    avaliacao_feedback_pendente: isTruthyFlag(body?.avaliacao_feedback_pendente ?? body?.custom_fields?.avaliacao_feedback_pendente),
+    avaliacao_nota: safeText(body?.avaliacao_nota ?? body?.custom_fields?.avaliacao_nota ?? "", 10),
+    event_type: safeText(body?.event_type || body?.custom_fields?.event_type || "", 50).toLowerCase()
   };
 }
 
@@ -253,7 +259,7 @@ async function loadKnowledge() {
     console.error("KNOWLEDGE_LOAD_ERROR", error?.message || error);
     return {
       empresa: { nome: process.env.BUSINESS_NAME || "Sr. Boteco Limeira", whatsapp_link: DEFAULT_WHATSAPP_LINK, endereco: "Pátio Limeira Shopping" },
-      links: { cardapio_pedido: DEFAULT_MENU_LINK, whatsapp: DEFAULT_WHATSAPP_LINK, ifood: DEFAULT_IFOOD_LINK, food99: DEFAULT_99FOOD_LINK },
+      links: { cardapio_pedido: DEFAULT_MENU_LINK, whatsapp: DEFAULT_WHATSAPP_LINK, ifood: DEFAULT_IFOOD_LINK, food99: DEFAULT_99FOOD_LINK, google_maps: DEFAULT_MAPS_LINK, google_avaliacao: DEFAULT_GOOGLE_REVIEW_LINK },
       respostas_base: { fallback: DEFAULT_FALLBACK },
       catalogo: []
     };
@@ -266,7 +272,9 @@ function getLinks(knowledge) {
     whatsapp: knowledge?.links?.whatsapp || knowledge?.empresa?.whatsapp_link || DEFAULT_WHATSAPP_LINK,
     ifood: knowledge?.links?.ifood || DEFAULT_IFOOD_LINK,
     food99: knowledge?.links?.food99 || DEFAULT_99FOOD_LINK,
-    jobs: knowledge?.links?.whatsapp_vagas || "https://wa.me/5517996022567"
+    jobs: knowledge?.links?.whatsapp_vagas || "https://wa.me/5517996022567",
+    maps: knowledge?.links?.google_maps || knowledge?.links?.maps || DEFAULT_MAPS_LINK,
+    review: knowledge?.links?.google_avaliacao || knowledge?.links?.google_review || DEFAULT_GOOGLE_REVIEW_LINK
   };
 }
 
@@ -286,15 +294,53 @@ function isPlayfulOffTopic(text) {
   return includesAny(text, ["robux", "v bucks", "vbucks", "free fire diamante", "diamante free fire", "skin de jogo", "moeda de jogo"]);
 }
 
+function isBurgerPromotionQuery(text, knowledge) {
+  const normalized = applyMenuCorrections(text, knowledge).corrected || normalizeText(text);
+  const campaign = knowledge?.campanhas_ativas?.hamburguer_em_dobro || {};
+  const aliases = Array.isArray(campaign?.aliases) ? campaign.aliases.map(normalizeText) : [];
+  if (aliases.some((alias) => alias && normalized.includes(alias))) return true;
+
+  const hasBurger = includesAny(normalized, ["hamburguer", "hamburger", "burger", "burguer", "lanche"]);
+  const hasPromo = includesAny(normalized, ["promocao", "promo", "oferta", "ofertas", "dobro", "paga 1", "pague 1", "leva 2", "leve 2", "2 pelo preco de 1", "dois pelo preco de um"]);
+  const tuesdayPromo = includesAny(normalized, ["terca", "terca feira"]) && includesAny(normalized, ["promocao", "promo", "oferta", "dobro"]);
+  return (hasBurger && hasPromo) || tuesdayPromo;
+}
+
+function burgerPromotionFacts(knowledge, links) {
+  const campaign = knowledge?.campanhas_ativas?.hamburguer_em_dobro || {};
+  const base = knowledge?.respostas_base?.promocao_burger;
+  const catalogo = Array.isArray(knowledge?.catalogo) ? knowledge.catalogo : [];
+  const allowed = new Set(Array.isArray(campaign?.itens) ? campaign.itens : []);
+  const burgers = catalogo.filter((item) => item?.categoria === "Burguer Sr. Boteco" && (!allowed.size || allowed.has(item?.nome)));
+  const intro = base || campaign?.descricao || "Toda terça-feira, a partir das 16h, tem Burger em Dobro: paga 1 e leva 2 do mesmo burger.";
+  const linhas = [intro];
+  if (burgers.length) {
+    linhas.push("", "Opções cadastradas:");
+    for (const item of burgers) linhas.push(`• ${item.nome} — ${item.valor}`);
+  }
+  linhas.push("", `Cardápio completo/pedido: ${links.menu}`);
+  return linhas.join("\n");
+}
+
 function isChoppPromotionQuery(text, knowledge) {
   const normalized = applyMenuCorrections(text, knowledge).corrected || normalizeText(text);
   const hasChopp = includesAny(normalized, [
     "chopp", "chope", "chopinho", "choppinho", "chopp brahma", "chopp ashby", "ashby", "brahma"
   ]);
   const hasHappyHour = includesAny(normalized, ["happy hour", "happyhour"]);
-  const hasPromo = includesAny(normalized, ["promocao", "promo", "tem promocao", "qual promocao", "promocoes"]);
-  const burgerSpecific = hasPromo && includesAny(normalized, ["hamburguer", "hamburger", "burger", "burguer"]);
-  return hasChopp || hasHappyHour || (hasPromo && !burgerSpecific);
+  return hasChopp || hasHappyHour;
+}
+
+function isGenericPromotionQuery(text, knowledge) {
+  const normalized = applyMenuCorrections(text, knowledge).corrected || normalizeText(text);
+  const hasPromo = includesAny(normalized, [
+    "promocao", "promocoes", "promo", "oferta", "ofertas", "oferta do dia", "promocao do dia",
+    "quais ofertas", "quais promocoes", "tem oferta", "tem promocao"
+  ]);
+  if (!hasPromo) return false;
+  if (isBurgerPromotionQuery(normalized, knowledge)) return false;
+  if (isChoppPromotionQuery(normalized, knowledge)) return false;
+  return true;
 }
 
 function choppPromotionFacts(knowledge) {
@@ -308,6 +354,60 @@ function choppPromotionFacts(knowledge) {
   const items = Array.isArray(campaign?.itens) && campaign.itens.length ? campaign.itens.join(" e/ou ") : "Chopp Ashby e/ou Chopp Brahma";
   const warning = campaign?.aviso || "consultar disponibilidade no local";
   return `Nossa promoção de chopp funciona assim:\n• Todos os dias: chopp ${daily}.\n• Sábado e domingo, ${window}: caneca de ${volume} de ${items} por ${promoPrice} a caneca.\n${warning.charAt(0).toUpperCase()}${warning.slice(1)}.`;
+}
+
+function allPromotionsFacts(knowledge) {
+  const chopp = knowledge?.campanhas_ativas?.promocao_chopp || {};
+  const burger = knowledge?.campanhas_ativas?.hamburguer_em_dobro || {};
+  const lines = ["Temos estas ofertas cadastradas:", ""];
+
+  lines.push("🍔 Burger em Dobro");
+  lines.push(`• ${burger?.dias?.length ? burger.dias.join(" e ") : "Toda terça-feira"}, ${burger?.inicio || "a partir das 16h"}: ${burger?.regra || "paga 1 e leva 2 do mesmo burger."}`);
+  lines.push("");
+
+  lines.push("🍺 Promoção de Chopp");
+  lines.push(`• Todos os dias: chopp ${chopp?.preco_base_diario || "a partir de R$ 9,90"}.`);
+  lines.push(`• Sábado e domingo, ${chopp?.horario_promocional || "das 16h às 20h"}: caneca de ${chopp?.volume || "340 ml"} de Chopp Ashby e/ou Chopp Brahma por ${chopp?.preco_promocional || "R$ 3,99"}.`);
+  const warning = chopp?.aviso || "consultar disponibilidade no local";
+  lines.push(`${warning.charAt(0).toUpperCase()}${warning.slice(1)}.`);
+  lines.push("");
+  lines.push("Se quiser, me fala qual delas você quer conhecer melhor: burger ou chopp.");
+  return lines.join("\n");
+}
+
+function burgerPromoTeaser(knowledge) {
+  return knowledge?.respostas_base?.convite_promocao_burger || "Já conhece nossa promoção de terça-feira? Se quiser, me responde ‘sim’ que eu te explico como funciona.";
+}
+
+function appendBurgerPromoTeaser(facts, knowledge) {
+  const teaser = burgerPromoTeaser(knowledge);
+  const raw = String(facts || "").trim();
+  if (!raw || normalizeText(raw).includes(normalizeText(teaser))) return raw;
+  return `${raw}\n\n${teaser}`;
+}
+
+function isBurgerPromoTeaserContext(context) {
+  const last = normalizeText(context?.last_bot_reply || "");
+  return last.includes("promocao de terca") && (last.includes("me responde sim") || last.includes("te explico como funciona") || last.includes("conhece nossa promocao"));
+}
+
+function isPromotionsListContext(context) {
+  if (safeText(context?.last_intent, 80) === "promocoes_ativas") return true;
+  const last = normalizeText(context?.last_bot_reply || "");
+  return last.includes("burger em dobro") && last.includes("promocao de chopp") && last.includes("qual delas");
+}
+
+function isPositivePromoFollowUp(text) {
+  const normalized = normalizeText(text);
+  if (!normalized || includesAny(normalized, ["nao", "agora nao", "deixa"])) return false;
+  return includesAny(normalized, [
+    "sim", "quero", "quero saber", "me explica", "explica", "como funciona", "qual e", "manda", "pode falar", "claro", "bora", "conta"
+  ]);
+}
+
+function isNegativePromoFollowUp(text) {
+  const normalized = normalizeText(text);
+  return includesAny(normalized, ["nao", "agora nao", "deixa", "deixa pra la"]);
 }
 
 function isRemovedTopic(text) {
@@ -541,6 +641,51 @@ function formatRelatedCatalog(items, message, links) {
   return formatCatalogList(items, `Encontrei mais de uma opção relacionada a “${label}”:`, links, "Se quiser, me diga o nome completo que eu detalho composição e valor.");
 }
 
+function catalogFamilyItems(item, knowledge) {
+  const family = safeText(item?.familia, 120);
+  if (!family) return [];
+  return (Array.isArray(knowledge?.catalogo) ? knowledge.catalogo : []).filter((candidate) => safeText(candidate?.familia, 120) === family);
+}
+
+function isLunchContextQuery(text) {
+  return includesAny(text, ["almoco", "prato do dia", "pratos do dia", "menu almoco", "cardapio almoco"]);
+}
+
+function isExecutiveContextQuery(text) {
+  return includesAny(text, ["executivo", "executivos", "prato executivo", "pratos executivos"]);
+}
+
+function formatCatalogFamilyOptions(items, links) {
+  const unique = [];
+  const seen = new Set();
+  for (const item of items || []) {
+    if (!item?.id || seen.has(item.id)) continue;
+    seen.add(item.id);
+    unique.push(item);
+  }
+  const baseName = safeText(unique[0]?.nome, 120).replace(/\s+-\s+(Executivo|Prato do Dia.*)$/i, "");
+  const lines = [`Encontrei mais de uma opção de ${baseName || "esse prato"}:`];
+  for (const item of unique) {
+    const label = item?.contexto === "almoco" ? "Prato do Dia (Almoço)" : (item?.categoria === "Executivos" ? "Executivo" : (item?.categoria || item?.nome || "Opção"));
+    const availability = item?.contexto === "almoco" && item?.disponibilidade ? ` — ${item.disponibilidade}` : "";
+    lines.push(`• ${label} — ${item?.valor || "valor a confirmar"}${availability}`);
+  }
+  lines.push("Se quiser, me diga qual opção você quer que eu detalho os acompanhamentos.");
+  lines.push(`Cardápio digital/pedido: ${links.menu}`);
+  return lines.join("\n");
+}
+
+function formatLunchMenu(knowledge, links) {
+  const config = knowledge?.pratos_do_dia || {};
+  const category = config?.categoria || "Pratos do Dia (Almoço)";
+  const items = (Array.isArray(knowledge?.catalogo) ? knowledge.catalogo : []).filter((item) => item?.categoria === category);
+  const lines = ["Pratos do Dia — almoço", config?.disponibilidade || "Exclusivos no almoço de segunda a sexta-feira, das 11h às 15h.", ""];
+  for (const item of items) lines.push(`• ${item.nome} — ${item.valor}`);
+  if (config?.adicional_bebida?.descricao) lines.push("", config.adicional_bebida.descricao);
+  lines.push("", `Cardápio digital/pedido: ${links.menu}`);
+  return lines.join("\n");
+}
+
 // Lista compacta das categorias registradas (uma mensagem só), usada quando o
 // cliente pergunta por um item que não conseguimos casar no catálogo.
 function formatCategoriasResumo(knowledge, links, opener = "") {
@@ -556,7 +701,8 @@ function formatCategoriasResumo(knowledge, links, opener = "") {
   linhas.push("");
   for (const cat of categorias) linhas.push(`• ${cat}`);
   linhas.push("");
-  linhas.push(`Me diz a categoria ou o nome do item que eu já te passo os valores certinhos. Cardápio completo/pedido: ${links.menu}`);
+  linhas.push("Me diz a categoria ou o nome do item que eu já te passo os valores certinhos.");
+  linhas.push(`Cardápio completo/pedido: ${links.menu}`);
   return linhas.join("\n");
 }
 
@@ -568,8 +714,137 @@ function inferUnknownItemTopic(text) {
   return "cardapio";
 }
 
-function makeResolution({ facts, intent, topic = intent, needs_human = false, lead_temperature = "morno", missing_fields = [], next_action = "responder" }) {
-  return { facts, intent, topic, needs_human, lead_temperature, missing_fields, next_action };
+function makeResolution({ facts, intent, topic = intent, needs_human = false, lead_temperature = "morno", missing_fields = [], next_action = "responder", extra = {} }) {
+  return { facts, intent, topic, needs_human, lead_temperature, missing_fields, next_action, ...extra };
+}
+
+function isEvaluationStartQuery(text) {
+  const normalized = normalizeText(text);
+  return ["avaliacao", "avaliar", "avaliar pedido", "avaliar atendimento", "avaliacao pedido", "avaliacao atendimento"].includes(normalized);
+}
+
+function isFitnessCategoryQuery(text) {
+  const normalized = normalizeText(text);
+  return new Set([
+    "fit", "fitness", "cardapio fit", "cardapio fitness", "menu fit", "menu fitness",
+    "comida fit", "comida fitness", "pratos fit", "pratos fitness", "opcoes fit", "opcoes fitness"
+  ]).has(normalized);
+}
+
+function isEvaluationContext(context = {}) {
+  if (context?.avaliacao_pendente) return true;
+  if (safeText(context?.last_intent, 80) === "avaliacao_solicitar_nota") return true;
+  if (normalizeText(context?.event_type || "").includes("avaliacao")) return true;
+  const last = normalizeText(context?.last_bot_reply || "");
+  return last.includes("de 1 a 5") && (last.includes("nota") || last.includes("avali"));
+}
+
+function extractEvaluationRating(message) {
+  const text = normalizeText(message);
+  const patterns = [
+    /^([1-5])$/,
+    /^nota\s+([1-5])$/,
+    /^(?:dou|daria|minha nota e|minha nota)\s+([1-5])$/,
+    /^([1-5])\s+(?:estrela|estrelas)$/
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return Number(match[1]);
+  }
+  return null;
+}
+
+function evaluationReply(rating) {
+  if (rating === 5) {
+    return "Que bom saber! Obrigado pela nota 5 ⭐ Se quiser compartilhar sua experiência no Google, isso ajuda muito o Sr. Boteco. É só tocar no botão abaixo.";
+  }
+  if (rating === 4) {
+    return "Obrigado pela nota 4! Ficamos felizes com a sua avaliação. Se quiser, me conta em uma frase o que faltou para sua experiência virar 5 estrelas.";
+  }
+  if (rating === 3) {
+    return "Obrigado pela nota 3. Queremos melhorar sua próxima experiência. Se puder, me conta em uma frase o que podemos ajustar.";
+  }
+  return "Obrigado pela sinceridade. Queremos entender e melhorar. Se puder, me conta em uma frase o que aconteceu ou o que podemos fazer melhor.";
+}
+
+function resolveEvaluation(message, context = {}) {
+  const text = safeText(message, 1800);
+
+  if (context?.avaliacao_feedback_pendente && text) {
+    return makeResolution({
+      facts: "Obrigado por contar. Seu comentário ficou registrado para a equipe considerar no atendimento.",
+      intent: "avaliacao_feedback",
+      topic: "avaliacao",
+      needs_human: false,
+      lead_temperature: "morno",
+      next_action: "avaliacao_salvar_feedback",
+      extra: {
+        avaliacao_pendente: false,
+        avaliacao_salva: true,
+        avaliacao_feedback_pendente: false,
+        avaliacao_nota: context?.avaliacao_nota || "",
+        avaliacao_feedback: text
+      }
+    });
+  }
+
+  if (isEvaluationStartQuery(text)) {
+    return makeResolution({
+      facts: "Claro! De 1 a 5, que nota você dá para sua experiência no Sr. Boteco? É só me mandar o número.",
+      intent: "avaliacao_solicitar_nota",
+      topic: "avaliacao",
+      needs_human: false,
+      lead_temperature: "morno",
+      next_action: "avaliacao_aguardar_nota",
+      extra: {
+        avaliacao_pendente: true,
+        avaliacao_salva: false,
+        avaliacao_feedback_pendente: false,
+        avaliacao_nota: "",
+        avaliacao_feedback: ""
+      }
+    });
+  }
+
+  if (isEvaluationContext(context)) {
+    const rating = extractEvaluationRating(text);
+    if (rating !== null) {
+      const feedbackPending = rating <= 4;
+      return makeResolution({
+        facts: evaluationReply(rating),
+        intent: "avaliacao_nota",
+        topic: "avaliacao",
+        needs_human: false,
+        lead_temperature: "morno",
+        next_action: feedbackPending ? "avaliacao_coletar_feedback" : "avaliacao_salvar",
+        extra: {
+          avaliacao_pendente: false,
+          avaliacao_salva: true,
+          avaliacao_feedback_pendente: feedbackPending,
+          avaliacao_nota: rating,
+          avaliacao_feedback: ""
+        }
+      });
+    }
+
+    return makeResolution({
+      facts: "Pra eu registrar certinho, me manda só uma nota de 1 a 5.",
+      intent: "avaliacao_nota_invalida",
+      topic: "avaliacao",
+      needs_human: false,
+      lead_temperature: "morno",
+      next_action: "avaliacao_aguardar_nota",
+      extra: {
+        avaliacao_pendente: true,
+        avaliacao_salva: false,
+        avaliacao_feedback_pendente: false,
+        avaliacao_nota: "",
+        avaliacao_feedback: ""
+      }
+    });
+  }
+
+  return null;
 }
 
 function isComplaintText(text) {
@@ -631,6 +906,111 @@ function stripSalesLinksFromFacts(facts, links) {
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+// Remove links de ação do TEXTO da resposta no Instagram DM (cardápio, WhatsApp,
+// RH e Google Maps). Esses destinos viram CTA contextual no ManyChat. Mantém iFood/99Food.
+function stripButtonLinks(text, links) {
+  // No Instagram DM, estes destinos são apresentados como CTA contextual nativo.
+  // iFood/99Food continuam no texto porque não dependem desse botão contextual.
+  const urls = [links?.menu, links?.whatsapp, links?.maps, links?.jobs, links?.ifood, links?.food99, links?.review].filter(Boolean);
+  if (!urls.length) return String(text || "");
+  let out = String(text || "");
+  const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  for (const url of urls) {
+    // Limpa também links em Markdown gerados pela camada de humanização: [Cardápio](URL).
+    const markdown = new RegExp(`\\[([^\\]]+)\\]\\(${escapeRegExp(url)}\\)`, "gi");
+    out = out.replace(markdown, "$1");
+    out = out.split(url).join("");
+  }
+  out = out
+    .split("\n")
+    .map((line) => {
+      const rawLine = String(line || "").trim();
+      if (/^ifood\s*:?\s*$/i.test(rawLine)) return "Também estamos no iFood.";
+      return line
+        .replace(/\s{2,}/g, " ")
+        .replace(/\s+([.,!?;])/g, "$1")
+        .replace(/\b(aqui|por aqui)\s*[:：]\s*(?=[.,!?;]|$)/gi, "pelo botão abaixo")
+        .replace(/\bwhatsapp\s*[:：]\s*(?=[.,!?;]|$)/gi, "WhatsApp pelo botão abaixo")
+        .replace(/\bpelo WhatsApp pelo botão abaixo\b/gi, "pelo botão abaixo")
+        .replace(/\bpor esse link\b/gi, "pelo botão abaixo")
+        .replace(/\bpor este link\b/gi, "pelo botão abaixo")
+        .replace(/\bacesse nosso WhatsApp\b/gi, "use o botão abaixo")
+        .replace(/\bconfira o card[aá]pio atualizado em\s*$/gi, "Confira o cardápio atualizado no botão abaixo")
+        .replace(/\s*99food\s*[:：]?\s*[–—-]?\s*procure por Sr\.? Boteco Limeira no app\.?/gi, "Também estamos no 99Food")
+        .replace(/[\s:：–-]+$/g, "")
+        .trimEnd();
+    })
+    // remove linhas que sobraram só com o rótulo do link/CTA
+    .filter((line) => !/^(card[aá]pio( digital| completo)?(\s*\/\s*pedido)?|pedido direto|fale com a equipe|falar no whatsapp|no whatsapp|whatsapp|rota no google maps|google maps|como chegar|localiza[cç][aã]o|enviar curr[ií]culo|ifood|99food|avaliar no google|avalia[cç][aã]o no google)\s*$/i.test(line.trim()))
+    .filter((line) => !/^[\s📲🔗👉👇]+$/u.test(line.trim()))
+    // colapsa linhas em branco consecutivas
+    .filter((line, i, arr) => !(line.trim() === "" && (i === 0 || arr[i - 1].trim() === "")))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  return out || String(text || "");
+}
+
+function polishInstagramButtonReply(text, resolved) {
+  const intent = safeText(resolved?.intent, 80);
+  let out = String(text || "")
+    .replace(/pelo botão abaixo\s+pelo botão abaixo/gi, "pelo botão abaixo")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  if (intent === "cardapio") {
+    return "Aqui está nosso cardápio digital atualizado. Pelo botão abaixo você pode conferir as opções e fazer o pedido para retirada ou entrega.";
+  }
+  if (intent === "pedido") {
+    return "Bora fazer seu pedido? Pelo botão abaixo você escolhe retirada no local ou entrega.";
+  }
+  if (intent === "delivery") {
+    return "Para pedir com entrega, escolha a opção que preferir nos botões abaixo: pedido direto, iFood ou 99Food.";
+  }
+  if (intent === "humano") {
+    return "Claro. Para falar direto com a equipe e resolver mais rápido, é só tocar no botão abaixo.";
+  }
+  if (intent === "vaga") {
+    return "Para oportunidades de trabalho no Sr. Boteco, envie seu currículo diretamente para o RH do restaurante pelo botão abaixo. O RH fará a análise do seu perfil e entrará em contato caso surja uma oportunidade compatível.";
+  }
+  return out;
+}
+
+function contextualCtas(resolved, links) {
+  const intent = safeText(resolved?.intent, 80);
+  const nextAction = safeText(resolved?.next_action, 80);
+  const rating = Number(resolved?.avaliacao_nota || 0);
+
+  const one = (type, label, url) => url ? [{ type, label, url }] : [];
+  const many = (...items) => items.filter((item) => item?.url).slice(0, 3);
+
+  // Avaliação máxima: convite opcional para avaliação pública no Google, sem URL no texto.
+  if (intent === "avaliacao_nota" && rating === 5) return one("avaliacao_google", "Avaliar no Google", links.review);
+
+  // CTA escolhido pela intenção real da conversa, não por um par fixo de botões.
+  if (intent === "localizacao") return one("localizacao", "Como chegar", links.maps);
+  if (intent === "promocao_chopp") return one("localizacao", "Como chegar", links.maps);
+  if (intent === "vaga") return one("rh", "Enviar currículo", links.jobs);
+  if (intent === "humano" || intent === "reserva" || nextAction === "whatsapp") return one("whatsapp", "Falar no WhatsApp", links.whatsapp);
+  if (intent === "delivery") {
+    return many(
+      { type: "pedido", label: "Pedido direto", url: links.menu },
+      { type: "ifood", label: "iFood", url: links.ifood },
+      { type: "99food", label: "99Food", url: links.food99 }
+    );
+  }
+  if (intent === "pedido") return one("pedido", "Fazer pedido", links.menu);
+  if ([
+    "cardapio", "item_cardapio", "categoria_cardapio", "opcoes_cardapio",
+    "cardapio_categorias", "almoco", "promocao_burger", "feijoada", "item_inativo"
+  ].includes(intent)) return one("cardapio", "Cardápio", links.menu);
+
+  if (nextAction === "abrir_cardapio") return one("cardapio", "Cardápio", links.menu);
+  if (nextAction === "fazer_pedido") return one("cardapio", "Cardápio", links.menu);
+  if (resolved?.needs_human && nextAction !== "coletar_detalhes") return one("whatsapp", "Falar no WhatsApp", links.whatsapp);
+  return [];
 }
 
 function isSocialComment(message) {
@@ -726,6 +1106,9 @@ function resolveIntent(message, knowledge, context = {}) {
   const links = getLinks(knowledge);
   const base = knowledge?.respostas_base || {};
 
+  const evaluation = resolveEvaluation(message, context);
+  if (evaluation) return evaluation;
+
   if (includesAny(text, ["mencionou voce no proprio story", "marcou no story"])) {
     return makeResolution({ facts: base.story_mention || "Obrigado pela marcação. Adoramos fazer parte desse momento.", intent: "story_mention", topic: "relacionamento", lead_temperature: "morno", next_action: "relacionar" });
   }
@@ -754,6 +1137,27 @@ function resolveIntent(message, knowledge, context = {}) {
       lead_temperature: "morno",
       next_action: "whatsapp_vagas"
     });
+  }
+
+  // O cardápio de almoço tem preços próprios e janela própria. Se a pessoa pedir
+  // o menu do almoço/pratos do dia sem citar um item específico, mostramos as opções.
+  const earlyLunchItem = isLunchContextQuery(text) ? findCatalogMatch(message, knowledge) : null;
+  if (isLunchContextQuery(text) && !earlyLunchItem?.item) {
+    return makeResolution({ facts: formatLunchMenu(knowledge, links), intent: "almoco", topic: "pratos_do_dia", lead_temperature: "quente", next_action: "abrir_cardapio" });
+  }
+
+  // Categoria explícita vence o pedido genérico de "cardápio". Assim frases como
+  // "cardápio fitness" ou "cardápio de porções" abrem diretamente a categoria.
+  const earlyCategoryMatch = findCatalogCategory(message, knowledge);
+  if (earlyCategoryMatch?.category && includesAny(text, ["cardapio", "menu"])) {
+    const categoryFacts = formatCatalogCategory(earlyCategoryMatch.category, knowledge, links, earlyCategoryMatch.matched);
+    const categoryOutput = earlyCategoryMatch.category === "Burguer Sr. Boteco" ? appendBurgerPromoTeaser(categoryFacts.facts, knowledge) : categoryFacts.facts;
+    return makeResolution({ facts: categoryOutput, intent: "categoria_cardapio", topic: `categoria:${normalizeText(earlyCategoryMatch.category).replace(/\s+/g, "_")}`, needs_human: false, lead_temperature: "quente", next_action: "fazer_pedido" });
+  }
+
+  if (isFitnessCategoryQuery(text)) {
+    const categoryFacts = formatCatalogCategory("Cardápio Fitness", knowledge, links, "fitness");
+    return makeResolution({ facts: categoryFacts.facts, intent: "categoria_cardapio", topic: "categoria:cardapio_fitness", needs_human: false, lead_temperature: "quente", next_action: "fazer_pedido" });
   }
 
   if (includesAny(text, ["cardapio", "menu", "o que tem", "comidas", "pratos", "ver cardapio", "ver o cardapio"])) {
@@ -787,7 +1191,7 @@ function resolveIntent(message, knowledge, context = {}) {
   }
 
   if (includesAny(text, ["onde fica", "localizacao", "localização", "endereco", "endereço", "shopping", "como chegar"])) {
-    return makeResolution({ facts: `${base.localizacao || "Ficamos no Pátio Limeira Shopping."}\n\nSe quiser falar com a equipe: ${links.whatsapp}`, intent: "localizacao", topic: "localizacao", lead_temperature: "quente", next_action: "visita" });
+    return makeResolution({ facts: base.localizacao || `Ficamos no Pátio Limeira Shopping.\n\nRota no Google Maps: ${links.maps}`, intent: "localizacao", topic: "localizacao", lead_temperature: "quente", next_action: "visita" });
   }
 
   if (includesAny(text, ["horario", "horário", "que horas abre", "que horas fecha", "funcionamento", "aberto hoje", "fecha que horas", "cozinha fecha"])) {
@@ -814,9 +1218,62 @@ function resolveIntent(message, knowledge, context = {}) {
     });
   }
 
-  if (includesAny(text, ["hamburguer em dobro", "hambúrguer em dobro", "burger em dobro", "double burger", "compre 1 ganhe 1", "compra 1 ganha outro"])) {
-    const c = knowledge?.campanhas_ativas?.hamburguer_em_dobro;
-    return makeResolution({ facts: `${c?.descricao || "Toda terça-feira, compra 1 hambúrguer e ganha outro."}\n${c?.validade || "Terças-feiras, das 16h às 21h."}\n\nAs opções participantes devem ser conferidas no cardápio: ${links.menu}`, intent: "promocao_burger", topic: "burger", lead_temperature: "quente", next_action: "abrir_cardapio" });
+  // Continuidade conversacional: depois de mostrar o preço normal de um burger,
+  // o bot convida a conhecer a promoção. Uma resposta curta de interesse recebe
+  // a explicação completa em uma NOVA mensagem, usando o contexto salvo pelo ManyChat.
+  if (isBurgerPromoTeaserContext(context)) {
+    if (isPositivePromoFollowUp(text)) {
+      return makeResolution({
+        facts: burgerPromotionFacts(knowledge, links),
+        intent: "promocao_burger",
+        topic: "burger",
+        needs_human: false,
+        lead_temperature: "quente",
+        next_action: "abrir_cardapio"
+      });
+    }
+    if (isNegativePromoFollowUp(text)) {
+      return makeResolution({
+        facts: "Tranquilo! Se quiser, eu te ajudo com algum burger ou qualquer outro item do cardápio.",
+        intent: "promocao_burger_recusada",
+        topic: "burger",
+        needs_human: false,
+        lead_temperature: "morno",
+        next_action: "responder"
+      });
+    }
+  }
+
+  // Depois da lista unificada de promoções, o cliente pode escolher uma delas
+  // escrevendo apenas "burger", "lanche", "chopp" etc.
+  if (isPromotionsListContext(context)) {
+    if (includesAny(text, ["burger", "burguer", "hamburguer", "hambúrguer", "lanche", "terca", "terça"])) {
+      return makeResolution({ facts: burgerPromotionFacts(knowledge, links), intent: "promocao_burger", topic: "burger", needs_human: false, lead_temperature: "quente", next_action: "abrir_cardapio" });
+    }
+    if (includesAny(text, ["chopp", "chope", "ashby", "brahma", "happy hour"])) {
+      return makeResolution({ facts: choppPromotionFacts(knowledge), intent: "promocao_chopp", topic: "chopp", needs_human: false, lead_temperature: "quente", next_action: "responder" });
+    }
+    if (isPositivePromoFollowUp(text)) {
+      return makeResolution({
+        facts: "Claro! Você quer saber da promoção de Burger em Dobro de terça-feira ou da promoção de chopp?",
+        intent: "promocoes_escolher",
+        topic: "promocoes",
+        needs_human: false,
+        lead_temperature: "quente",
+        next_action: "responder"
+      });
+    }
+  }
+
+  if (isBurgerPromotionQuery(text, knowledge)) {
+    return makeResolution({
+      facts: burgerPromotionFacts(knowledge, links),
+      intent: "promocao_burger",
+      topic: "burger",
+      needs_human: false,
+      lead_temperature: "quente",
+      next_action: "abrir_cardapio"
+    });
   }
 
   if (isChoppPromotionQuery(text, knowledge)) {
@@ -830,6 +1287,17 @@ function resolveIntent(message, knowledge, context = {}) {
     });
   }
 
+  if (isGenericPromotionQuery(text, knowledge)) {
+    return makeResolution({
+      facts: allPromotionsFacts(knowledge),
+      intent: "promocoes_ativas",
+      topic: "promocoes",
+      needs_human: false,
+      lead_temperature: "quente",
+      next_action: "responder"
+    });
+  }
+
   if (includesAny(text, ["feijoada"])) {
     const c = knowledge?.campanhas_ativas?.feijoada;
     return makeResolution({ facts: `${c?.descricao || "Temos feijoada às quartas e sábados."}\n\nPara preço, composição ou disponibilidade do dia, confira o cardápio ${links.menu} ou fale com a equipe: ${links.whatsapp}`, intent: "feijoada", topic: "feijoada", needs_human: isPriceQuestion(text), lead_temperature: "quente", next_action: "abrir_cardapio" });
@@ -837,14 +1305,31 @@ function resolveIntent(message, knowledge, context = {}) {
 
   const itemMatch = findCatalogMatch(message, knowledge);
   if (itemMatch?.item) {
+    const familyItems = catalogFamilyItems(itemMatch.item, knowledge);
+    if (familyItems.length >= 2) {
+      let selected = null;
+      if (isLunchContextQuery(text)) selected = familyItems.find((item) => item?.contexto === "almoco") || null;
+      else if (isExecutiveContextQuery(text)) selected = familyItems.find((item) => item?.categoria === "Executivos") || null;
+
+      if (!selected) {
+        return makeResolution({ facts: formatCatalogFamilyOptions(familyItems, links), intent: "opcoes_cardapio", topic: `familia:${itemMatch.item.familia}`, needs_human: false, lead_temperature: "quente", next_action: "fazer_pedido" });
+      }
+
+      const selectedFacts = formatCatalogItem(selected, message, links, { approximate: Boolean(itemMatch.corrected) });
+      const selectedOutput = selected?.categoria === "Burguer Sr. Boteco" ? appendBurgerPromoTeaser(selectedFacts.facts, knowledge) : selectedFacts.facts;
+      return makeResolution({ facts: selectedOutput, intent: "item_cardapio", topic: selected.id || "item_cardapio", needs_human: selectedFacts.needs_human, lead_temperature: "quente", missing_fields: selectedFacts.missing_fields, next_action: selectedFacts.needs_human ? "whatsapp" : "fazer_pedido" });
+    }
+
     const itemFacts = formatCatalogItem(itemMatch.item, message, links, { approximate: Boolean(itemMatch.corrected) });
-    return makeResolution({ facts: itemFacts.facts, intent: "item_cardapio", topic: itemMatch.item.id || "item_cardapio", needs_human: itemFacts.needs_human, lead_temperature: "quente", missing_fields: itemFacts.missing_fields, next_action: itemFacts.needs_human ? "whatsapp" : "fazer_pedido" });
+    const itemOutput = itemMatch.item?.categoria === "Burguer Sr. Boteco" ? appendBurgerPromoTeaser(itemFacts.facts, knowledge) : itemFacts.facts;
+    return makeResolution({ facts: itemOutput, intent: "item_cardapio", topic: itemMatch.item.id || "item_cardapio", needs_human: itemFacts.needs_human, lead_temperature: "quente", missing_fields: itemFacts.missing_fields, next_action: itemFacts.needs_human ? "whatsapp" : "fazer_pedido" });
   }
 
   const categoryMatch = findCatalogCategory(message, knowledge);
   if (categoryMatch?.category) {
     const categoryFacts = formatCatalogCategory(categoryMatch.category, knowledge, links, categoryMatch.matched);
-    return makeResolution({ facts: categoryFacts.facts, intent: "categoria_cardapio", topic: `categoria:${normalizeText(categoryMatch.category).replace(/\s+/g, "_")}`, needs_human: false, lead_temperature: "quente", next_action: "fazer_pedido" });
+    const categoryOutput = categoryMatch.category === "Burguer Sr. Boteco" ? appendBurgerPromoTeaser(categoryFacts.facts, knowledge) : categoryFacts.facts;
+    return makeResolution({ facts: categoryOutput, intent: "categoria_cardapio", topic: `categoria:${normalizeText(categoryMatch.category).replace(/\s+/g, "_")}`, needs_human: false, lead_temperature: "quente", next_action: "fazer_pedido" });
   }
 
   const relatedItems = findRelatedCatalogItems(message, knowledge);
@@ -866,8 +1351,8 @@ function resolveIntent(message, knowledge, context = {}) {
     }
   }
 
-  if (includesAny(text, ["almoco", "almoço", "executivo", "prato do dia"])) {
-    return makeResolution({ facts: `${base.almoco || knowledge?.horarios?.almoco || "Almoço de segunda a sexta, das 11h às 15h."}\n\nCardápio/pedido: ${links.menu}`, intent: "almoco", topic: "almoco", lead_temperature: "quente", next_action: "abrir_cardapio" });
+  if (isLunchContextQuery(text)) {
+    return makeResolution({ facts: formatLunchMenu(knowledge, links), intent: "almoco", topic: "pratos_do_dia", lead_temperature: "quente", next_action: "abrir_cardapio" });
   }
 
   if (includesAny(text, ["burger", "burgers", "hamburguer", "hambúrguer", "porcao", "porção", "tabua", "tábua", "picanha", "carne", "frango", "kids", "sobremesa", "suco", "bebida", "cerveja", "chopp", "chope", "drinks", "drink"])) {
@@ -1085,10 +1570,12 @@ export function splitForChannel(text, channel) {
   return splitForInstagram(text);
 }
 
-function buildStandardPayload({ reply, resolved, links, requestId, customer, handoff = false, handoffReason = "" }) {
+function buildStandardPayload({ reply, resolved, links, requestId, customer, handoff = false, handoffReason = "", ctas = [] }) {
   const parts = splitForChannel(reply, customer?.channel);
+  const primary = ctas[0] || {};
   return {
     ok: true,
+    app_version: APP_VERSION,
     request_id: requestId,
     channel: customer?.channel || "instagram",
     handoff: Boolean(handoff),
@@ -1101,11 +1588,34 @@ function buildStandardPayload({ reply, resolved, links, requestId, customer, han
     lead_temperature: resolved.lead_temperature,
     missing_fields: resolved.missing_fields,
     next_action: resolved.next_action,
+    avaliacao_pendente: Boolean(resolved.avaliacao_pendente),
+    avaliacao_salva: Boolean(resolved.avaliacao_salva),
+    avaliacao_nota: resolved.avaliacao_nota ?? "",
+    avaliacao_feedback_pendente: Boolean(resolved.avaliacao_feedback_pendente),
+    avaliacao_feedback: safeText(resolved.avaliacao_feedback || "", 1800),
     cardapio_link: links.menu,
     whatsapp_link: links.whatsapp,
     whatsapp_vagas_link: links.jobs,
+    localizacao_link: links.maps,
+    maps_link: links.maps,
+    google_avaliacao_link: links.review,
+    google_review_link: links.review,
     ifood_link: links.ifood,
     food99_link: links.food99,
+    cta_count: ctas.length,
+    cta_type: primary.type || "",
+    cta_label: primary.label || "",
+    cta_url: primary.url || "",
+    cta_1_type: ctas[0]?.type || "",
+    cta_1_label: ctas[0]?.label || "",
+    cta_1_url: ctas[0]?.url || "",
+    cta_2_type: ctas[1]?.type || "",
+    cta_2_label: ctas[1]?.label || "",
+    cta_2_url: ctas[1]?.url || "",
+    cta_3_type: ctas[2]?.type || "",
+    cta_3_label: ctas[2]?.label || "",
+    cta_3_url: ctas[2]?.url || "",
+    ctas,
     reply_part_1: parts[0] || "",
     reply_part_2: parts[1] || "",
     reply_part_3: parts[2] || "",
@@ -1114,27 +1624,12 @@ function buildStandardPayload({ reply, resolved, links, requestId, customer, han
 }
 
 function dynamicButtons(resolved, links) {
-  const buttons = [];
-  const add = (caption, url) => {
-    if (url && !buttons.some((b) => b.url === url) && buttons.length < 3) buttons.push({ type: "url", caption, url });
-  };
-
-  if (["abrir_cardapio", "fazer_pedido", "cardapio_ou_whatsapp", "delivery"].includes(resolved.next_action)) add("Cardápio / Pedir", links.menu);
-  if (resolved.next_action === "delivery") {
-    add("iFood", links.ifood);
-    add("99Food", links.food99);
-  }
-  if (resolved.next_action === "whatsapp_vagas") {
-    add("Enviar currículo", links.jobs);
-  } else if (resolved.needs_human || ["whatsapp", "cardapio_ou_whatsapp", "coletar_reserva"].includes(resolved.next_action)) {
-    add("Falar no WhatsApp", links.whatsapp);
-  }
-  return buttons;
+  return contextualCtas(resolved, links).map((cta) => ({ type: "url", caption: cta.label, url: cta.url }));
 }
 
-function buildDynamicBlock({ reply, resolved, links }) {
+function buildDynamicBlock({ reply, resolved, links, ctas = null }) {
   const parts = splitForInstagram(reply);
-  const buttons = dynamicButtons(resolved, links);
+  const buttons = (ctas || contextualCtas(resolved, links)).map((cta) => ({ type: "url", caption: cta.label, url: cta.url }));
   const messages = parts.map((text, index) => ({
     type: "text",
     text,
@@ -1193,6 +1688,7 @@ export default async function handler(req, res) {
     if (isWhatsapp(customer) && humanIsHandling(body)) {
       return send(res, 200, {
         ok: true,
+        app_version: APP_VERSION,
         request_id: requestId,
         channel: "whatsapp",
         reply: "",
@@ -1205,6 +1701,11 @@ export default async function handler(req, res) {
         lead_temperature: "quente",
         missing_fields: [],
         next_action: "silencio_humano",
+        avaliacao_pendente: false,
+        avaliacao_salva: false,
+        avaliacao_nota: "",
+        avaliacao_feedback_pendente: false,
+        avaliacao_feedback: "",
         messages: [],
         reply_part_1: "",
         reply_part_2: "",
@@ -1263,7 +1764,9 @@ export default async function handler(req, res) {
 
     const allowedPrices = collectAllowedPrices(resolved.facts);
     const deterministicIntents = [
-      "vaga", "item_cardapio", "categoria_cardapio", "opcoes_cardapio", "cardapio_categorias",
+      "vaga", "item_cardapio", "categoria_cardapio", "opcoes_cardapio", "cardapio_categorias", "almoco",
+      "promocoes_ativas", "promocoes_escolher", "promocao_burger", "promocao_burger_recusada", "promocao_chopp",
+      "avaliacao_solicitar_nota", "avaliacao_nota", "avaliacao_nota_invalida", "avaliacao_feedback",
       "comentario_sem_texto", "comentario_social", "comentario_generico", "comentario_valor_sem_item", "comentario_reclamacao"
     ];
     const shouldHumanizeWithAI = message && !deterministicIntents.includes(resolved.intent);
@@ -1272,7 +1775,7 @@ export default async function handler(req, res) {
     let finalReply = aiReply || resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;
     const allowedUrls = handoff
       ? []
-      : [links.menu, links.whatsapp, links.ifood, links.food99, links.jobs, knowledge?.links?.site_oficial].filter(Boolean);
+      : [links.menu, links.whatsapp, links.ifood, links.food99, links.jobs, links.maps, links.review, knowledge?.links?.site_oficial].filter(Boolean);
     if (
       containsInventedPrice(finalReply, allowedPrices) ||
       containsUnapprovedUrl(finalReply, allowedUrls) ||
@@ -1282,20 +1785,42 @@ export default async function handler(req, res) {
       finalReply = resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;
     }
 
+    // Nas DMs do Instagram, todos os destinos de ação ficam escondidos nos botões
+    // contextuais: Cardápio, pedido direto, iFood, 99Food, WhatsApp, RH, Maps e Google Review.
+    // Comentários continuam em fluxo separado para não retirar um link sem haver botão configurado.
+    const ctas = (!isWhatsapp(customer) && !commentEvent) ? contextualCtas(resolved, links) : [];
+
+    if (!isWhatsapp(customer) && !commentEvent) {
+      finalReply = stripButtonLinks(finalReply, links);
+      finalReply = polishInstagramButtonReply(finalReply, resolved);
+    }
+
     finalReply = ensurePersonalized(safeText(finalReply, 2600), customer);
 
     if (!isWhatsapp(customer) && wantsDynamicMode(req, body)) {
-      return send(res, 200, buildDynamicBlock({ reply: finalReply, resolved, links }));
+      return send(res, 200, buildDynamicBlock({ reply: finalReply, resolved, links, ctas }));
     }
 
-    return send(res, 200, buildStandardPayload({ reply: finalReply, resolved, links, requestId, customer, handoff, handoffReason }));
+    return send(res, 200, buildStandardPayload({ reply: finalReply, resolved, links, requestId, customer, handoff, handoffReason, ctas }));
   } catch (error) {
     console.error("BOT_FATAL_ERROR", requestId, error);
-    const fallback = `Não quero te passar nenhuma informação errada. Confira o cardápio em ${DEFAULT_MENU_LINK} ou fale com a equipe: ${DEFAULT_WHATSAPP_LINK}`;
-    const channel = customer?.channel || "instagram";
+    const channel = normalizeChannel(customer?.channel || "instagram");
+    const fallbackLinks = {
+      menu: DEFAULT_MENU_LINK,
+      whatsapp: DEFAULT_WHATSAPP_LINK,
+      ifood: DEFAULT_IFOOD_LINK,
+      food99: DEFAULT_99FOOD_LINK,
+      jobs: "https://wa.me/5517996022567",
+      maps: DEFAULT_MAPS_LINK
+    };
+    let fallback = `Não quero te passar nenhuma informação errada. Confira o cardápio em ${DEFAULT_MENU_LINK} ou fale com a equipe: ${DEFAULT_WHATSAPP_LINK}`;
+    const ctas = channel === "instagram" ? [{ type: "whatsapp", label: "Falar no WhatsApp", url: DEFAULT_WHATSAPP_LINK }] : [];
+    if (channel === "instagram") fallback = stripButtonLinks(fallback, fallbackLinks);
     const parts = splitForChannel(fallback, channel);
+    const primary = ctas[0] || {};
     return send(res, 200, {
       ok: false,
+      app_version: APP_VERSION,
       request_id: requestId,
       channel,
       handoff: false,
@@ -1308,8 +1833,21 @@ export default async function handler(req, res) {
       lead_temperature: "quente",
       missing_fields: ["erro_temporario"],
       next_action: "whatsapp",
+      avaliacao_pendente: false,
+      avaliacao_salva: false,
+      avaliacao_nota: "",
+      avaliacao_feedback_pendente: false,
+      avaliacao_feedback: "",
       cardapio_link: DEFAULT_MENU_LINK,
       whatsapp_link: DEFAULT_WHATSAPP_LINK,
+      whatsapp_vagas_link: fallbackLinks.jobs,
+      localizacao_link: DEFAULT_MAPS_LINK,
+      maps_link: DEFAULT_MAPS_LINK,
+      cta_count: ctas.length,
+      cta_type: primary.type || "",
+      cta_label: primary.label || "",
+      cta_url: primary.url || "",
+      ctas,
       reply_part_1: parts[0] || "",
       reply_part_2: parts[1] || "",
       reply_part_3: parts[2] || "",

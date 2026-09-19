@@ -66,12 +66,12 @@ async function test(name, fn) {
   }
 }
 
-await test("GET health v2.3.1 + canais", async () => {
+await test("GET health v2.9.0 + canais", async () => {
   const req = makeReq("", {}, "GET");
   const res = makeRes();
   await handler(req, res);
   assert(res.statusCode === 200, `status=${res.statusCode}`);
-  assert(res.payload?.version === "2.3.1", `version=${res.payload?.version}`);
+  assert(res.payload?.version === "2.9.0", `version=${res.payload?.version}`);
   assert(JSON.stringify(res.payload?.channels) === JSON.stringify(["instagram", "whatsapp"]), `channels=${JSON.stringify(res.payload?.channels)}`);
 });
 
@@ -201,7 +201,8 @@ await test("Regressão estrutural do Instagram continua preservada", async () =>
   assert(payload?.intent === "cardapio", `intent=${payload?.intent}`);
   assert(payload?.next_action === "abrir_cardapio", `next_action=${payload?.next_action}`);
   assert(payload?.handoff === false, `handoff=${payload?.handoff}`);
-  assert(String(payload?.reply || "").includes("saipos.com"), "cardápio ausente");
+  assert(!String(payload?.reply || "").includes("saipos.com"), `link do cardápio deve ficar fora do texto: ${payload?.reply}`);
+  assert(String(payload?.cardapio_link || "").includes("saipos.com"), `campo cardapio_link ausente: ${payload?.cardapio_link}`);
 });
 
 await test("Guardrail rejeita horário inventado pela IA", async () => {

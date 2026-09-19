@@ -1,4 +1,77 @@
+## 2.9.0 — Avaliação Google + URLs somente em botões
+
+- Nota 5 recebe CTA `Avaliar no Google`; URL não aparece no texto da DM.
+- Notas 1–4 recebem respostas específicas e podem coletar feedback.
+- Instagram remove do texto também links de iFood/99Food e Google Review.
+- Delivery retorna três CTAs: Pedido direto, iFood e 99Food.
+- Payload adiciona `cta_1_*`, `cta_2_*`, `cta_3_*`.
+- `Fit` isolado abre o Cardápio Fitness.
+
+## 2.8.0 — Avaliação 1–5 + Cardápio Fitness
+
+- Adicionada categoria Cardápio Fitness com 10 itens, preços e composições da arte oficial.
+- Catálogo total: 141 itens / 17 categorias.
+- Avaliação 1–5 passa a usar estado explícito (`avaliacao_pendente`) e pode coletar feedback para notas 1–3.
+- Payload inclui campos `avaliacao_*` para persistência no ManyChat.
+- Adicionados `fitness-tests.mjs` e `evaluation-tests.mjs`.
+- `cardápio fitness` abre diretamente a categoria específica.
+
+## 2.7.0 — Promoções unificadas + interação conversacional de Burger
+
+- `promoção`, `promoções`, `oferta` e `ofertas` sem contexto específico agora retornam **todas as promoções comerciais ativas juntas**: Burger em Dobro + Promoção de Chopp.
+- Promoções específicas continuam individuais.
+- Perguntas normais por `lanche`/`burger` mantêm os preços normais do cardápio e acrescentam somente um convite para conhecer a promoção de terça-feira.
+- O detalhamento da promoção de Burger é enviado em **nova mensagem** quando o cliente responde positivamente (`sim`, `como funciona`, `quero saber`, etc.).
+- Resposta negativa encerra o convite sem insistência.
+- Depois da lista unificada, `burger` ou `chopp` seleciona diretamente a promoção correspondente.
+- `promo-tests.mjs` ampliado para validar fluxo em duas mensagens, promoções unificadas e seleção individual.
+- GET health e `package.json` atualizados para **2.7.0**.
+
+## 2.6.0 — Burger em Dobro + validação de Fondue Doce
+
+- Cadastrada/atualizada a promoção **Burger em Dobro**: todas as terças-feiras, **a partir das 16h**, paga 1 e leva **2 do mesmo burger**.
+- Removido o horário antigo de encerramento `21h`, pois ele não foi informado na regra atual.
+- A promoção passa a reconhecer `lanche em dobro`, `promoção de lanche`, `promoção de burger`, `promoção de terça`, `paga 1 leva 2` e variações.
+- A resposta oficial lista os 3 burgers cadastrados e seus preços, sem alterar os preços normais do catálogo.
+- `Fondue doce` confirmado fora do catálogo ativo; guardrail e teste específico impedem retorno de preço/disponibilidade inventados.
+- Promoção genérica (`tem promoção?`) continua respondendo a promoção de chopp, preservando o comportamento anterior; termos específicos de burger/terça em dobro têm prioridade para `promocao_burger`.
+- GET health, `package.json` e metadados da base atualizados para **2.6.0**.
+
+## 2.5.0 — Pratos do Dia / almoço + cobertura total do catálogo
+
+- Cadastrados 9 **Pratos do Dia** da arte oficial fornecida.
+- Disponibilidade oficial desses pratos: **segunda a sexta-feira, das 11h às 15h**.
+- Bisteca cadastrada: **R$ 19,90**, com composição e disponibilidade do almoço.
+- Catálogo ampliado de 122 para **131 itens** e de 15 para **16 categorias**.
+- Nova categoria: **Pratos do Dia (Almoço)**.
+- Pratos que possuem versão de almoço e versão Executiva agora são diferenciados por contexto e preço; sem contexto, o bot mostra as duas opções.
+- `pratos do dia`/`almoço` lista as 9 opções e informa o adicional opcional de bebida por **+R$ 5,00**.
+- Removida uma regra antiga de Fondue Salgado que estava fora do catálogo atual e poderia conflitar com a base fechada.
+- Limpeza de links no Instagram endurecida para também tratar URLs formatadas em Markdown.
+- Adicionada `lunch-tests.mjs`, incluindo teste que consulta os **131 itens pelo nome** e exige o preço correspondente.
+- GET health, `package.json` e metadados da base atualizados para **2.5.0**.
+
+## 2.4.0 — CTAs contextuais + rota Google Maps
+
+- Adicionado link oficial de rota: `https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8`.
+- DMs do Instagram removem do texto links de Cardápio, WhatsApp, RH e Google Maps; iFood/99Food permanecem quando úteis.
+- Novo CTA contextual por intenção (`cta_type`, `cta_label`, `cta_url`).
+- Dynamic Block v2 usa o mesmo CTA contextual e deixa de exibir botões genéricos/fixos.
+- `app_version` e `localizacao_link` adicionados ao payload padrão.
+- Instagram comments e canal WhatsApp preservados.
+
 # Atualizações
+
+## 2.3.2 — Links de Cardápio/WhatsApp via botões no Instagram
+
+- DMs do Instagram removem do texto as URLs do cardápio e do WhatsApp geral.
+- Campos `cardapio_link` e `whatsapp_link` continuam no payload para os botões nativos do ManyChat.
+- iFood e 99Food permanecem no texto nas respostas de pedido/delivery.
+- Comentários do Instagram não são afetados, pois esse fluxo não usa os mesmos botões.
+- Canal WhatsApp não é afetado e continua recebendo os links no texto quando necessário.
+- Lista de categorias separa o CTA em linha própria antes da limpeza, evitando sobra de texto quebrado.
+- Adicionada a suíte `button-links-tests.mjs` e atualizados os testes de regressão para o novo comportamento.
+- GET health, `package.json` e metadados da base atualizados para **2.3.2**.
 
 ## 2.3.0 — Promoção oficial de chopp
 

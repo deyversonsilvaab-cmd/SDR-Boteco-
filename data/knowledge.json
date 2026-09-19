@@ -1,11 +1,13 @@
 {
   "_meta": {
-    "versao": "2.3.1",
-    "revisado_em": "2026-09-16",
+    "versao": "2.9.0",
+    "revisado_em": "2026-09-18",
     "politica": "Base fechada: preço, composição, peso e item do cardápio só podem ser afirmados quando estiverem registrados nesta base.",
     "fonte_cardapio": "Cardápio Sr boteco atual.pdf (9 páginas) enviado em 16/09/2026.",
     "fonte_cardapio_digital": "https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0",
-    "itens_catalogados": 122
+    "itens_catalogados": 141,
+    "fonte_pratos_do_dia": "Arte Pratos do Dia enviada em 17/09/2026; valores e composições transcritos da imagem. Horário 11h às 15h confirmado pelo usuário.",
+    "fonte_cardapio_fitness": "Arte Cardápio Fitness enviada em 17/09/2026; 10 itens, preços e composições transcritos da imagem. Nenhum horário específico foi informado para esta categoria."
   },
   "empresa": {
     "nome": "Sr. Boteco Limeira",
@@ -14,7 +16,8 @@
     "whatsapp_formatado": "(19) 99785-8351",
     "whatsapp_link": "https://wa.me/5519997858351",
     "endereco": "Pátio Limeira Shopping",
-    "whatsapp_vagas_formatado": "(17) 99602-2567"
+    "whatsapp_vagas_formatado": "(17) 99602-2567",
+    "localizacao_link": "https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8"
   },
   "links": {
     "cardapio_pedido": "https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0",
@@ -22,7 +25,9 @@
     "ifood": "https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72",
     "food99": "https://99app.com/99food/food/",
     "whatsapp": "https://wa.me/5519997858351",
-    "whatsapp_vagas": "https://wa.me/5517996022567"
+    "whatsapp_vagas": "https://wa.me/5517996022567",
+    "google_maps": "https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8",
+    "google_avaliacao": "https://search.google.com/local/writereview?placeid=ChIJRVEHZGqByJQRVUe6ZO8Yqz8"
   },
   "pedidos": {
     "orientacao": "Quando o cliente pedir cardápio, preço, comida, pedido, retirada ou entrega, consultar primeiro o catálogo interno. Se o item estiver cadastrado, responder com o nome, valor e descrição validados. Se a pessoa pedir uma categoria, listar as opções e valores dessa categoria. Só enviar para confirmação humana quando o item realmente não estiver na base ou exigir confirmação operacional. Link oficial do cardápio/pedido: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0",
@@ -66,6 +71,8 @@
     "Sobremesas",
     "À la carte",
     "Adicionais",
+    "Pratos do Dia (Almoço)",
+    "Cardápio Fitness",
     "Executivos",
     "Chopps",
     "Cervejas",
@@ -918,6 +925,157 @@
       "serve_pessoas": null
     },
     {
+      "id": "almoco_file_frango_toscana",
+      "nome": "Filé de Frango com Toscana",
+      "categoria": "Pratos do Dia (Almoço)",
+      "valor": "R$ 22,90",
+      "descricao": "100g de frango, 1 gomo de linguiça toscana, fritas ou purê, arroz, feijão, salada e farofa.",
+      "aliases": [
+        "file de frango com toscana",
+        "frango com toscana",
+        "frango toscana",
+        "file frango toscana",
+        "prato frango toscana"
+      ],
+      "disponibilidade": "Exclusivo no almoço: segunda a sexta-feira, das 11h às 15h.",
+      "contexto": "almoco"
+    },
+    {
+      "id": "almoco_bisteca",
+      "nome": "Bisteca",
+      "categoria": "Pratos do Dia (Almoço)",
+      "valor": "R$ 19,90",
+      "descricao": "Bisteca suína, fritas ou purê, arroz, feijão, salada e farofa.",
+      "aliases": [
+        "bisteca suina",
+        "bisteca suína",
+        "prato de bisteca",
+        "bisteca almoco",
+        "bisteca almoço"
+      ],
+      "disponibilidade": "Exclusivo no almoço: segunda a sexta-feira, das 11h às 15h.",
+      "contexto": "almoco"
+    },
+    {
+      "id": "almoco_bife_acebolado",
+      "nome": "Bife Acebolado",
+      "categoria": "Pratos do Dia (Almoço)",
+      "valor": "R$ 27,90",
+      "descricao": "Bife bovino acebolado, fritas ou purê, arroz, feijão, salada e farofa.",
+      "aliases": [
+        "bife acebolado",
+        "bife bovino acebolado",
+        "prato bife acebolado",
+        "bife almoco",
+        "bife almoço"
+      ],
+      "disponibilidade": "Exclusivo no almoço: segunda a sexta-feira, das 11h às 15h.",
+      "contexto": "almoco"
+    },
+    {
+      "id": "almoco_estrogonofe_frango",
+      "nome": "Strogonoff de Frango",
+      "categoria": "Pratos do Dia (Almoço)",
+      "valor": "R$ 21,90",
+      "descricao": "250g de strogonoff de frango, batata palha, arroz e farofa. Não acompanha salada.",
+      "aliases": [
+        "strogonoff de frango",
+        "strogonoff frango",
+        "estrogonofe de frango",
+        "estrogonofe frango",
+        "strogonoff almoco",
+        "estrogonofe almoco",
+        "strogonoff",
+        "estrogonofe"
+      ],
+      "disponibilidade": "Exclusivo no almoço: segunda a sexta-feira, das 11h às 15h.",
+      "contexto": "almoco",
+      "familia": "estrogonofe_frango"
+    },
+    {
+      "id": "almoco_file_frango_grelhado",
+      "nome": "Filé de Frango Grelhado",
+      "categoria": "Pratos do Dia (Almoço)",
+      "valor": "R$ 22,90",
+      "descricao": "150g de frango, fritas ou purê, arroz, feijão, salada e farofa.",
+      "aliases": [
+        "file de frango grelhado",
+        "file frango grelhado",
+        "frango grelhado",
+        "frango grelhado almoco",
+        "frango grelhado almoço"
+      ],
+      "disponibilidade": "Exclusivo no almoço: segunda a sexta-feira, das 11h às 15h.",
+      "contexto": "almoco",
+      "familia": "file_frango_grelhado"
+    },
+    {
+      "id": "almoco_file_frango_parmegiana",
+      "nome": "Filé de Frango à Parmegiana",
+      "categoria": "Pratos do Dia (Almoço)",
+      "valor": "R$ 26,90",
+      "descricao": "150g de frango, molho de tomate, muçarela, fritas, arroz e farofa. Não acompanha salada.",
+      "aliases": [
+        "file de frango a parmegiana",
+        "file frango parmegiana",
+        "frango a parmegiana",
+        "parmegiana de frango",
+        "frango parmegiana almoco"
+      ],
+      "disponibilidade": "Exclusivo no almoço: segunda a sexta-feira, das 11h às 15h.",
+      "contexto": "almoco",
+      "familia": "file_frango_parmegiana"
+    },
+    {
+      "id": "almoco_linguica_toscana",
+      "nome": "Linguiça Toscana",
+      "categoria": "Pratos do Dia (Almoço)",
+      "valor": "R$ 21,90",
+      "descricao": "180g de linguiça toscana (2 gomos), fritas ou purê, arroz, feijão, salada e farofa.",
+      "aliases": [
+        "linguica toscana",
+        "linguiça toscana",
+        "toscana",
+        "linguica almoco",
+        "linguiça almoço"
+      ],
+      "disponibilidade": "Exclusivo no almoço: segunda a sexta-feira, das 11h às 15h.",
+      "contexto": "almoco",
+      "familia": "linguica_toscana"
+    },
+    {
+      "id": "almoco_omelete_calabresa",
+      "nome": "Omelete de Calabresa",
+      "categoria": "Pratos do Dia (Almoço)",
+      "valor": "R$ 21,90",
+      "descricao": "Omelete com calabresa, muçarela e cebola, fritas ou purê, arroz, feijão, salada e farofa.",
+      "aliases": [
+        "omelete calabresa",
+        "omelete de calabresa",
+        "omelete almoco",
+        "omelete almoço"
+      ],
+      "disponibilidade": "Exclusivo no almoço: segunda a sexta-feira, das 11h às 15h.",
+      "contexto": "almoco"
+    },
+    {
+      "id": "almoco_prato_fitness_frango",
+      "nome": "Prato Fitness Frango",
+      "categoria": "Pratos do Dia (Almoço)",
+      "valor": "R$ 19,90",
+      "descricao": "Filé de frango grelhado, legumes, purê de batata e salada.",
+      "aliases": [
+        "prato fitness",
+        "fitness frango",
+        "prato fitness frango",
+        "frango fitness",
+        "fitness almoco",
+        "fitness almoço"
+      ],
+      "disponibilidade": "Exclusivo no almoço: segunda a sexta-feira, das 11h às 15h.",
+      "contexto": "almoco"
+    },
+    {
       "id": "executivo_contrafile",
       "categoria": "Executivos",
       "nome": "Contrafilé",
@@ -1028,12 +1186,15 @@
       "aliases": [
         "estrogonofe frango",
         "strogonoff frango",
-        "strogonofe frango"
+        "strogonofe frango",
+        "strogonoff",
+        "estrogonofe"
       ],
       "descricao": "250g de estrogonofe de frango, batata palha, arroz, salada e farofa.",
       "valor": "R$ 36,90",
       "serve_pessoas": null,
-      "disponibilidade": "Executivos conforme disponibilidade do cardápio atual."
+      "disponibilidade": "Executivos conforme disponibilidade do cardápio atual.",
+      "familia": "estrogonofe_frango"
     },
     {
       "id": "executivo_file_frango_grelhado",
@@ -1046,7 +1207,8 @@
       "descricao": "150g de frango, fritas, arroz, feijão, salada e farofa.",
       "valor": "R$ 30,90",
       "serve_pessoas": null,
-      "disponibilidade": "Executivos conforme disponibilidade do cardápio atual."
+      "disponibilidade": "Executivos conforme disponibilidade do cardápio atual.",
+      "familia": "file_frango_grelhado"
     },
     {
       "id": "executivo_file_frango_milanesa",
@@ -1072,7 +1234,8 @@
       "descricao": "170g de frango, molho de tomate, muçarela, fritas, arroz, salada e farofa.",
       "valor": "R$ 36,90",
       "serve_pessoas": null,
-      "disponibilidade": "Executivos conforme disponibilidade do cardápio atual."
+      "disponibilidade": "Executivos conforme disponibilidade do cardápio atual.",
+      "familia": "file_frango_parmegiana"
     },
     {
       "id": "executivo_tilapia_milanesa",
@@ -1151,7 +1314,8 @@
       "descricao": "180g de linguiça toscana (2 gomos), fritas, arroz, feijão, salada e farofa.",
       "valor": "R$ 30,90",
       "serve_pessoas": null,
-      "disponibilidade": "Executivos conforme disponibilidade do cardápio atual."
+      "disponibilidade": "Executivos conforme disponibilidade do cardápio atual.",
+      "familia": "linguica_toscana"
     },
     {
       "id": "executivo_picanha",
@@ -1626,13 +1790,184 @@
       "descricao": "Sabores limão, maçã verde, maracujá e morango.",
       "valor": "R$ 9,90",
       "serve_pessoas": null
+    },
+    {
+      "id": "fitness_frango_cabotia",
+      "categoria": "Cardápio Fitness",
+      "nome": "Frango Fitness com Cabotiá",
+      "aliases": [
+        "frango fitness com cabotia",
+        "frango fitness cabotia",
+        "frango com cabotia",
+        "frango cabotia"
+      ],
+      "descricao": "150g de filé de frango grelhado, 120g de purê de abóbora cabotiá, seleta de legumes e salada.",
+      "valor": "R$ 19,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "fitness_frango_ovo",
+      "categoria": "Cardápio Fitness",
+      "nome": "Frango Fit com Ovo",
+      "aliases": [
+        "frango fit com ovo",
+        "frango fitness com ovo",
+        "frango com ovo fitness"
+      ],
+      "descricao": "150g de filé de frango grelhado, arroz branco, salada e 1 ovo.",
+      "valor": "R$ 22,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "fitness_bowl_frango",
+      "categoria": "Cardápio Fitness",
+      "nome": "Bowl Fitness de Frango",
+      "aliases": [
+        "bowl fitness de frango",
+        "bowl de frango",
+        "bowl fitness frango"
+      ],
+      "descricao": "Frango em tiras, arroz, seleta de legumes, alface, tomate, cenoura, cebola roxa e molho leve.",
+      "valor": "R$ 24,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "fitness_tilapia_legumes",
+      "categoria": "Cardápio Fitness",
+      "nome": "Tilápia com Legumes - Fitness",
+      "aliases": [
+        "tilapia com legumes fitness",
+        "tilapia fitness com legumes",
+        "tilapia com legumes fit"
+      ],
+      "descricao": "150g de tilápia grelhada, seleta de legumes, alface, tomate e cenoura.",
+      "valor": "R$ 32,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "fitness_tilapia_arroz_salada",
+      "categoria": "Cardápio Fitness",
+      "nome": "Tilápia com Arroz e Salada - Fitness",
+      "aliases": [
+        "tilapia com arroz e salada",
+        "tilapia fitness arroz salada",
+        "tilapia arroz salada fit"
+      ],
+      "descricao": "150g de tilápia grelhada, arroz branco, salada fresca e legumes.",
+      "valor": "R$ 34,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "fitness_tilapia_low_carb",
+      "categoria": "Cardápio Fitness",
+      "nome": "Tilápia Low Carb",
+      "aliases": [
+        "tilapia low carb",
+        "tilapia lowcarb",
+        "tilapia fitness low carb"
+      ],
+      "descricao": "150g de tilápia grelhada, seleta de legumes, salada e ovo. Sem arroz e sem fritura.",
+      "valor": "R$ 34,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "fitness_contra_file",
+      "categoria": "Cardápio Fitness",
+      "nome": "Contra Filé Fitness",
+      "aliases": [
+        "contra file fitness",
+        "contrafile fitness",
+        "contra file fit",
+        "contrafile fit"
+      ],
+      "descricao": "150g de contra filé grelhado, arroz branco, seleta de legumes e salada.",
+      "valor": "R$ 34,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "fitness_omelete",
+      "categoria": "Cardápio Fitness",
+      "nome": "Omelete Fitness",
+      "aliases": [
+        "omelete fitness",
+        "omelete fit"
+      ],
+      "descricao": "Omelete com frango desfiado, tomate, cebola roxa e queijo, acompanhado de salada.",
+      "valor": "R$ 22,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "fitness_salada_frango",
+      "categoria": "Cardápio Fitness",
+      "nome": "Salada Fitness com Frango",
+      "aliases": [
+        "salada fitness com frango",
+        "salada fit com frango",
+        "salada de frango fitness"
+      ],
+      "descricao": "Alface, tomate, cenoura, cebola roxa, ovo cozido e frango grelhado em tiras.",
+      "valor": "R$ 24,90",
+      "serve_pessoas": null
+    },
+    {
+      "id": "fitness_salada_tilapia",
+      "categoria": "Cardápio Fitness",
+      "nome": "Salada Fitness com Tilápia",
+      "aliases": [
+        "salada fitness com tilapia",
+        "salada fit com tilapia",
+        "salada de tilapia fitness"
+      ],
+      "descricao": "Alface, tomate, cenoura, cebola roxa e tilápia grelhada em tiras.",
+      "valor": "R$ 32,90",
+      "serve_pessoas": null
     }
   ],
   "campanhas_ativas": {
     "hamburguer_em_dobro": {
-      "descricao": "Toda terça-feira, compra 1 hambúrguer e ganha outro.",
-      "validade": "Terças-feiras, das 16h às 21h.",
-      "regra": "Não inventar quais burgers participam. Para opções participantes, enviar o cardápio e, se necessário, WhatsApp da equipe."
+      "nome": "Burger em Dobro",
+      "descricao": "Todas as terças-feiras, a partir das 16h, os burgers do Sr. Boteco são em dobro: paga 1 e leva 2 do mesmo burger.",
+      "dias": [
+        "terça-feira"
+      ],
+      "inicio": "a partir das 16h",
+      "regra": "Paga 1 e leva 2 do mesmo burger. Não misturar sabores na mesma oferta.",
+      "itens": [
+        "Burguer Salada",
+        "Burguer Bacon",
+        "Burguer Duplo Bacon"
+      ],
+      "aliases": [
+        "hamburguer em dobro",
+        "hambúrguer em dobro",
+        "burger em dobro",
+        "burguer em dobro",
+        "lanche em dobro",
+        "promoção de burger",
+        "promocao de burger",
+        "promoção de burguer",
+        "promocao de burguer",
+        "promoção de hambúrguer",
+        "promocao de hamburguer",
+        "promoção de lanche",
+        "promocao de lanche",
+        "terça do burger",
+        "terca do burger",
+        "terça em dobro",
+        "terca em dobro",
+        "paga 1 leva 2",
+        "pague 1 leve 2",
+        "dois pelo preço de um",
+        "2 pelo preço de 1",
+        "promoção de terça",
+        "promocao de terca",
+        "oferta de burger",
+        "oferta de burguer",
+        "oferta de hambúrguer",
+        "oferta de lanche",
+        "oferta de terça",
+        "oferta de terca"
+      ]
     },
     "feijoada": {
       "descricao": "Feijoada às quartas e sábados.",
@@ -1682,16 +2017,18 @@
     "delivery": "Para pedir com entrega, você pode usar nosso cardápio digital: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0\n\niFood: https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72\n\n99Food: https://99app.com/99food/food/ — procure por Sr. Boteco Limeira no app.",
     "humano": "Claro. Para falar direto com a equipe e resolver mais rápido, acesse nosso WhatsApp: https://wa.me/5519997858351",
     "item_nao_encontrado": "Não encontrei esse item com segurança no cardápio atual. Posso tentar pelo nome aproximado, pela categoria ou você pode conferir o cardápio completo aqui: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0. Se ainda assim não aparecer, confirmo com a equipe pelo WhatsApp: https://wa.me/5519997858351",
-    "localizacao": "Ficamos no Pátio Limeira Shopping.",
+    "localizacao": "Ficamos no Pátio Limeira Shopping.\n\nRota no Google Maps: https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8",
     "horario": "Funcionamos todos os dias das 11h às 22h.",
-    "almoco": "De segunda a sexta-feira, das 11h às 15h, temos almoço executivo. Posso consultar um prato específico da base ou te enviar o cardápio completo.",
+    "almoco": "De segunda a sexta-feira, das 11h às 15h, temos Pratos do Dia exclusivos para o almoço, além das demais opções cadastradas. Posso te passar os pratos e valores.",
     "reserva": "Para adiantar sua reserva, me passe nome, dia/data, horário e quantas pessoas. A equipe faz a confirmação final.",
     "story_mention": "Adorei ver sua marcação. Obrigado por dividir esse momento com a gente — esperamos te receber de novo em breve.",
     "despedida": "Foi um prazer te atender. Quando quiser voltar ou fazer um pedido, é só chamar.",
     "fallback": "Quero te passar a informação certa. Posso procurar pelo nome do item, mesmo com erro de digitação, ou pela categoria. Cardápio digital atualizado: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0. Se ainda precisar confirmar algo com a equipe: https://wa.me/5519997858351",
     "vaga": "Para oportunidades de trabalho no Sr. Boteco, envie seu currículo diretamente para o RH do restaurante pelo WhatsApp:\n\n📲 https://wa.me/5517996022567\n\nEla fará a análise do seu perfil e entrará em contato caso surja uma oportunidade compatível com sua experiência.\n\nAgradecemos o seu interesse em fazer parte da equipe do Sr. Boteco!",
     "handoff_humano": "Vou chamar alguém da equipe pra continuar seu atendimento por aqui.",
-    "promocao_chopp": "Nossa promoção de chopp funciona assim:\n• Todos os dias: chopp a partir de R$ 9,90.\n• Sábado e domingo, das 16h às 20h: caneca de 340 ml de Chopp Ashby e/ou Chopp Brahma por R$ 3,99 a caneca.\nConsultar disponibilidade no local."
+    "promocao_chopp": "Nossa promoção de chopp funciona assim:\n• Todos os dias: chopp a partir de R$ 9,90.\n• Sábado e domingo, das 16h às 20h: caneca de 340 ml de Chopp Ashby e/ou Chopp Brahma por R$ 3,99 a caneca.\nConsultar disponibilidade no local.",
+    "promocao_burger": "Toda terça-feira, a partir das 16h, tem Burger em Dobro: você paga 1 e leva 2 do mesmo burger.\nA oferta vale para os burgers cadastrados no cardápio.",
+    "convite_promocao_burger": "Já conhece nossa promoção de terça-feira? Se quiser, me responde ‘sim’ que eu te explico como funciona."
   },
   "regras_atendimento": [
     "Nunca inventar preço, produto, promoção, composição, quantidade de pessoas servidas, horário, evento, disponibilidade de mesa ou condição de entrega.",
@@ -1700,13 +2037,16 @@
     "Se o cliente pedir cardápio ou houver oportunidade natural de enviá-lo, usar https://botequimpatiolimeira.saipos.com/home e explicar retirada/entrega conforme as opções do checkout.",
     "Se o cliente pedir delivery, oferecer o link direto, iFood e 99Food. No 99Food, orientar a busca por Sr. Boteco Limeira no app quando não houver deep link específico validado.",
     "Se um item não estiver no catálogo ou estiver sem preço/composição/porção confirmados, dizer com transparência que a informação não está validada e enviar cardápio e WhatsApp.",
-    "O Fondue Salgado é o único fondue ativo nesta base: R$ 99,90, serve 2 pessoas, acompanha torradas, iscas de frango empanado, contrafilé, calabresa e batata frita, disponível das 16h às 21h.",
     "Não fornecer informação sobre produtos ou campanhas removidos da base. Se o cliente insistir em algo não ativo, responder apenas que a condição/opção não está nas informações ativas e direcionar para cardápio/WhatsApp.",
     "Aceitamos dinheiro, cartão de crédito, cartão de débito, Pix e vale refeição Alelo, Pluxee, VR e Ticket. Não aceitamos vale alimentação.",
     "Assuntos de vaga, currículo, freelance, garçom, garçonete ou cumim vão para o RH pelo WhatsApp https://wa.me/5517996022567. Nunca prometer vaga, entrevista ou retorno; informar apenas que o perfil será analisado e que o RH entrará em contato se surgir oportunidade compatível.",
     "Pedido para falar com atendente/humano não é vaga: direcionar para https://wa.me/5519997858351.",
     "Reservas, aniversários, grupos e eventos nunca devem ser confirmados automaticamente; coletar os dados e direcionar para confirmação da equipe.",
-    "O tom deve ser de venda humanizada: cordial, específico, consultivo e objetivo, com no máximo um convite comercial claro por resposta. Evitar texto genérico, excesso de emojis e frases repetidas."
+    "O tom deve ser de venda humanizada: cordial, específico, consultivo e objetivo, com no máximo um convite comercial claro por resposta. Evitar texto genérico, excesso de emojis e frases repetidas.",
+    "Os Pratos do Dia são exclusivos do almoço, de segunda a sexta-feira, das 11h às 15h. Nunca afirmar disponibilidade desses preços fora dessa janela. Se houver prato com versão de almoço e versão Executiva, diferenciar as duas e mostrar os respectivos valores em vez de escolher um preço arbitrariamente.",
+    "Nos Pratos do Dia, existe adicional opcional de bebida por +R$ 5,00: 1 suco de limão ou laranja (300 ml) ou Coca-Cola KS (290 ml). Só informar esse adicional quando o assunto for Pratos do Dia/almoço ou quando o cliente perguntar por bebida/acompanhamento.",
+    "No Instagram, URLs de ação (cardápio, pedido direto, iFood, 99Food, WhatsApp, RH, Google Maps e avaliação Google) devem ficar fora do texto e ser entregues por botões contextuais. No WhatsApp, os links podem permanecer no texto.",
+    "Avaliações de 1 a 5 só devem ser interpretadas como nota quando houver estado de avaliação pendente, evento de avaliação ou contexto explícito da pergunta. Nota 5 pode receber CTA opcional para avaliação no Google; notas 1 a 4 devem receber resposta e podem coletar feedback."
   ],
   "aliases_categorias": {
     "Aperitivos": [
@@ -1808,6 +2148,35 @@
       "refrigerantes",
       "energetico",
       "energético"
+    ],
+    "Pratos do Dia (Almoço)": [
+      "prato do dia",
+      "pratos do dia",
+      "prato de almoço",
+      "pratos de almoço",
+      "prato de almoco",
+      "pratos de almoco",
+      "menu almoço",
+      "menu almoco",
+      "almoço",
+      "almoco"
+    ],
+    "Cardápio Fitness": [
+      "fitness",
+      "fit",
+      "cardapio fitness",
+      "cardápio fitness",
+      "menu fitness",
+      "menu fit",
+      "pratos fitness",
+      "prato fitness",
+      "comida fitness",
+      "comida fit",
+      "saudavel",
+      "saudável",
+      "low carb",
+      "salada fitness",
+      "saladas fitness"
     ]
   },
   "correcoes_ortograficas": {
@@ -1845,6 +2214,41 @@
     "asby": "ashby",
     "ashiby": "ashby",
     "brama": "brahma",
-    "braama": "brahma"
+    "braama": "brahma",
+    "fitnes": "fitness",
+    "fitnesse": "fitness",
+    "fiteness": "fitness",
+    "lowcarb": "low carb",
+    "cabotia": "cabotiá"
+  },
+  "meta": {
+    "versao": "2.6.0"
+  },
+  "pratos_do_dia": {
+    "titulo": "Pratos do Dia",
+    "categoria": "Pratos do Dia (Almoço)",
+    "disponibilidade": "Exclusivos no almoço de segunda a sexta-feira, das 11h às 15h.",
+    "dias": "segunda a sexta-feira",
+    "horario": "11h às 15h",
+    "adicional_bebida": {
+      "valor": "R$ 5,00",
+      "descricao": "Por +R$ 5,00, escolha 1 suco de limão ou laranja (300 ml) ou Coca-Cola KS (290 ml)."
+    },
+    "fonte": "Arte “Pratos do Dia” enviada em 17/09/2026."
+  },
+  "avaliacao_atendimento": {
+    "escala_min": 1,
+    "escala_max": 5,
+    "pergunta": "Como foi seu pedido no Sr. Boteco? De 1 a 5, que nota você dá pra gente?",
+    "regra": "A nota só é interpretada como avaliação quando o ManyChat sinaliza avaliacao_pendente=true, quando event_type é avaliacao, ou quando o contexto anterior é claramente a pergunta de avaliação.",
+    "feedback_para_notas_ate": 3
+  },
+  "avaliacao_cliente": {
+    "escala": "1 a 5",
+    "regra_5": "Agradecer a nota 5 e oferecer, de forma opcional, o botão Avaliar no Google. Nunca expor a URL no texto do Instagram.",
+    "regra_4": "Agradecer e convidar, sem pressionar, a contar em uma frase o que faltou para virar 5 estrelas.",
+    "regra_3": "Agradecer e pedir uma frase sobre o que pode melhorar.",
+    "regra_1_2": "Agradecer a sinceridade, demonstrar interesse em entender o problema e pedir uma frase de feedback.",
+    "google_review_url": "https://search.google.com/local/writereview?placeid=ChIJRVEHZGqByJQRVUe6ZO8Yqz8"
   }
 }

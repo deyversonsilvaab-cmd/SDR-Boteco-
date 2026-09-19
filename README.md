@@ -1,10 +1,69 @@
 # SDR Boteco — ManyChat + Instagram + WhatsApp + Vercel
 
-Versão 2.3.1 — cardápio completo + busca aproximada + comentários corrigidos + promoção oficial de chopp + categorias para item não localizado, em 16/09/2026.
+Versão 2.9.0 — avaliação 1–5 com CTA Google, URLs de ação somente em botões no Instagram, Cardápio Fitness, promoções unificadas, Pratos do Dia e cobertura completa do catálogo.
+
+## Avaliação 1–5 + Cardápio Fitness — v2.8.0
+
+- Corrigido o fluxo de avaliação: notas de 1 a 5 só são interpretadas quando existe contexto de pesquisa (`avaliacao_pendente`, `event_type=avaliacao` ou contexto anterior claro).
+- O webhook devolve `avaliacao_nota`, `avaliacao_salva`, `avaliacao_pendente`, `avaliacao_feedback_pendente` e `avaliacao_feedback` para o ManyChat persistir nos Custom Fields.
+- Notas 1–3 podem coletar um comentário curto; notas 4–5 recebem agradecimento sem CTA comercial.
+- A palavra `Avaliação` inicia a pesquisa manualmente.
+- Adicionada a categoria **Cardápio Fitness** com 10 itens oficiais transcritos da arte fornecida.
+- O catálogo agora contém **141 itens em 17 categorias**.
+- `cardápio fitness` abre diretamente a categoria Fitness em vez do cardápio genérico.
+- Nenhum horário foi inventado para o Fitness, pois a fonte enviada não informa janela de disponibilidade.
+- Novas suítes: `fitness-tests.mjs` e `evaluation-tests.mjs`.
+
+
+## Promoções unificadas + interação de Burger — v2.7.0
+
+- Pergunta genérica por **promoção/oferta** agora mostra juntas as promoções de **Burger em Dobro** e **Chopp**.
+- Pergunta específica continua individual: burger/lanche/terça → Burger em Dobro; chopp/chope/Brahma/Ashby/happy hour → promoção de chopp.
+- Consulta normal de burger/lanche mantém os **preços normais** e termina com um convite curto para conhecer a promoção de terça.
+- Se o cliente responder `sim`, `quero saber`, `como funciona` etc., a próxima mensagem explica a oferta completa usando o contexto salvo pelo ManyChat.
+- Se responder `não`, o bot não insiste.
+- Após a lista unificada, responder apenas `burger` ou `chopp` já abre a promoção escolhida.
+
+
+## Burger em Dobro — v2.6.0
+
+- **Todas as terças-feiras, a partir das 16h:** paga 1 e leva **2 do mesmo burger**.
+- A base oficial reconhece `burger em dobro`, `lanche em dobro`, `promoção de lanche`, `promoção de burger`, `promoção de terça`, `paga 1 leva 2` e variações.
+- A resposta lista os burgers cadastrados e seus preços: Burguer Salada (R$ 29,90), Burguer Bacon (R$ 33,90) e Burguer Duplo Bacon (R$ 39,90).
+- Não existe horário final cadastrado para essa oferta; o bot informa apenas **a partir das 16h** e não inventa encerramento.
+- `Fondue doce` permanece fora do catálogo ativo e protegido por guardrail para não receber preço/disponibilidade inventados.
+
+
+
+## Pratos do Dia / almoço — v2.5.0
+
+- Incorporada a arte oficial **Pratos do Dia** com 9 pratos e preços.
+- Esses pratos são exclusivos do almoço: **segunda a sexta-feira, das 11h às 15h**.
+- `Bisteca` passa a responder diretamente com **R$ 19,90**, composição e janela de disponibilidade.
+- Itens que existem com preço de almoço e preço Executivo (como Filé de Frango Grelhado, Strogonoff/Estrogonofe, Filé de Frango à Parmegiana e Linguiça Toscana) não escolhem um preço arbitrariamente: mostram as duas opções quando o contexto não estiver claro.
+- Se o cliente disser `no almoço`, o bot usa o Prato do Dia; se disser `executivo`, usa o Executivo.
+- Perguntas por `pratos do dia`/`almoço` listam as 9 opções e o adicional opcional de bebida por **+R$ 5,00**.
+- O catálogo tinha **131 itens em 16 categorias** nesta etapa; na v2.8.0 passou para **141 itens em 17 categorias** com o Fitness.
+- A suíte `lunch-tests.mjs` verifica os 9 pratos e percorre **100% dos itens cadastrados**, garantindo que cada nome cadastrado devolva seu valor.
+
+
+## CTAs contextuais no Instagram — v2.4.0
+
+- Links de Cardápio, WhatsApp, RH e Google Maps saem do texto das DMs do Instagram e passam a ser expostos por CTA contextual.
+- O webhook devolve `cta_type`, `cta_label`, `cta_url`, `cta_count` e `localizacao_link` para o ManyChat.
+- Cardápio/item → botão **Cardápio**; pedido/delivery → **Fazer pedido**; endereço → **Como chegar**; atendimento → **Falar no WhatsApp**; vaga → **Enviar currículo**.
+- Promoção de chopp usa **Como chegar**, coerente com a orientação de consultar disponibilidade no local.
+- iFood e 99Food continuam no texto quando a intenção for delivery.
+- Comentários e canal WhatsApp não sofrem a limpeza de links.
+
+
+## Links por botões no Instagram — v2.3.2
+
+Nas DMs do Instagram, os links do **Cardápio** e do **WhatsApp geral** não aparecem mais dentro do texto da resposta. O ManyChat usa os campos `cardapio_link` e `whatsapp_link` para os botões nativos publicados no fluxo. Links de **iFood** e **99Food** continuam no texto quando a intenção é pedido/delivery. O canal WhatsApp e o fluxo de comentários do Instagram não passam por essa limpeza.
 
 ## Item não localizado — v2.3.1
 
-Quando o cliente pergunta preço de um item que não casa com o catálogo oficial (ex.: "qual o valor da bisteca?"), o bot não inventa preço e não força atendimento humano. Ele lista as categorias registradas e envia o link do cardápio completo para a pessoa escolher uma categoria ou informar outro nome. O intent `cardapio_categorias` é determinístico e não é reescrito pela IA.
+Quando o cliente pergunta preço de um item que não casa com o catálogo oficial (ex.: "qual o valor da pizza?"), o bot não inventa preço e não força atendimento humano. Ele lista as categorias registradas e envia o link do cardápio completo para a pessoa escolher uma categoria ou informar outro nome. O intent `cardapio_categorias` é determinístico e não é reescrito pela IA.
 
 Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estruturado para receber mensagens do ManyChat, identificar a intenção do cliente, consultar uma base fechada de informações comerciais e devolver uma resposta humanizada sem inventar preços, itens, composição, porções, horários ou disponibilidade.
 
@@ -23,11 +82,11 @@ Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estr
 - O cliente é chamado pelo primeiro nome quando o ManyChat envia `first_name`.
 - Perguntas curtas de continuidade, como `valor?`, `o que acompanha?` e `serve quantas pessoas?`, usam `last_topic` para manter o contexto.
 - Preços só podem aparecer quando existem na base `data/knowledge.json`.
-- O catálogo interno contém 122 itens do cardápio atual, com nomes, valores, descrições e categorias extraídos do PDF fornecido.
+- O catálogo interno contém **141 itens em 17 categorias**: 122 itens do cardápio PDF + 9 Pratos do Dia/almoço + 10 itens do Cardápio Fitness cadastrados a partir das artes oficiais fornecidas.
 - Busca de cardápio aceita aproximação e erros de escrita; por exemplo, `kibe` → `Quibe Frito` e `bruxeta` → `Brusqueta`.
 - Termos genéricos, como `lanche`, `suco`, `chopp` e `executivos`, retornam as opções e valores da categoria em vez de apenas um link.
 - Termos ambíguos, como `picanha` ou `batata frita`, retornam as opções relacionadas em vez de escolher um produto arbitrariamente.
-- Itens realmente ausentes recebem cardápio + WhatsApp, em vez de uma resposta inventada.
+- Itens realmente ausentes listam as categorias oficiais; no Instagram os acessos a Cardápio/WhatsApp ficam nos botões nativos, sem URLs poluindo o texto.
 - Pedidos e oportunidades de envio do cardápio direcionam para o cardápio/pedido online.
 - Delivery oferece pedido direto, iFood e 99Food.
 - O atendimento continua funcionando mesmo sem OpenAI: a camada determinística é a fonte da verdade; a IA é usada apenas para humanizar a redação quando configurada.
@@ -48,6 +107,7 @@ Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estr
 - 99Food: `https://99app.com/99food/food/`
 - Site: `https://srboteco.com.br/`
 - Vagas: `https://wa.me/5517996022567`
+- Google Maps / Como chegar: `https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8`
 
 Os currículos são encaminhados diretamente ao RH. O bot não promete vaga, entrevista ou retorno; informa que o perfil será analisado e que o RH entrará em contato caso surja oportunidade compatível.
 
@@ -67,6 +127,12 @@ O 99Food está configurado com o link oficial do serviço. Como não há um deep
 ├── menu-tests.mjs               # integridade do cardápio + busca aproximada
 ├── whatsapp-tests.mjs           # testes de WhatsApp + regressão estrutural
 ├── comment-tests.mjs            # testes de comentários/Direct + placeholders
+├── button-links-tests.mjs       # links de Cardápio/WhatsApp fora do texto nas DMs do Instagram
+├── contextual-cta-tests.mjs     # CTA por contexto
+├── lunch-tests.mjs              # Pratos do Dia + cobertura integral
+├── promo-tests.mjs              # promoções de chopp e burger
+├── fitness-tests.mjs            # Cardápio Fitness
+├── evaluation-tests.mjs         # avaliação 1–5 e feedback
 ├── test-local.js                # teste simples do endpoint local
 ├── MANYCHAT_COORDENADAS.md      # configuração detalhada no ManyChat
 ├── WHATSAPP_MANYCHAT.md         # configuração do canal WhatsApp e handoff
@@ -105,7 +171,10 @@ GET https://SEU-PROJETO.vercel.app/api/manychat
   "last_topic": "{{ai_topic}}",
   "last_bot_reply": "{{ai_last_bot_reply}}",
   "channel": "instagram",
-  "event_type": "direct"
+  "event_type": "direct",
+  "avaliacao_pendente": "<custom field>",
+  "avaliacao_feedback_pendente": "<custom field>",
+  "avaliacao_nota": "<custom field>"
 }
 ```
 
@@ -132,6 +201,11 @@ Exemplo resumido:
   "needs_human": false,
   "lead_temperature": "quente",
   "next_action": "abrir_cardapio",
+  "avaliacao_pendente": false,
+  "avaliacao_salva": false,
+  "avaliacao_nota": "",
+  "avaliacao_feedback_pendente": false,
+  "avaliacao_feedback": "",
   "cardapio_link": "https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0",
   "whatsapp_link": "https://wa.me/5519997858351",
   "reply_part_1": "Mariana, ...",
