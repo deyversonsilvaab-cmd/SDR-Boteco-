@@ -209,9 +209,11 @@ await test("guardrail da promoção rejeita dia/horário inventado pela IA", asy
   process.env.OPENAI_API_KEY = "test-key";
   global.fetch = async () => ({
     ok: true,
+    status: 200,
     async json() {
-      return { choices: [{ message: { content: JSON.stringify({ reply: "Tem chopp a R$ 3,99 na sexta às 14h e também aos fins de semana." }) } }] };
-    }
+      return { output_text: JSON.stringify({ reply: "Tem chopp a R$ 3,99 na sexta às 14h e também aos fins de semana." }) };
+    },
+    async text() { return ""; }
   });
   try {
     const p = await ask("qual a promoção de chopp?");
@@ -224,12 +226,12 @@ await test("guardrail da promoção rejeita dia/horário inventado pela IA", asy
     global.fetch = ORIGINAL_FETCH;
   }
 });
-await test("GET health retorna 2.9.1 e os dois canais", async () => {
+await test("GET health retorna 2.9.2 e os dois canais", async () => {
   const req = makeReq({}, "GET");
   const res = makeRes();
   await handler(req, res);
   assert.equal(res.statusCode, 200);
-  assert.equal(res.payload.version, "2.9.1");
+  assert.equal(res.payload.version, "2.9.2");
   assert.deepEqual(res.payload.channels, ["instagram", "whatsapp"]);
 });
 

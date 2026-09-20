@@ -12,8 +12,11 @@ const DEFAULT_GOOGLE_REVIEW_LINK = "https://search.google.com/local/writereview?
 const DEFAULT_FALLBACK = `Quero te passar a informação certa. Confira o cardápio em ${DEFAULT_MENU_LINK} ou fale com a equipe no WhatsApp: ${DEFAULT_WHATSAPP_LINK}`;
 const INSTAGRAM_MAX_MESSAGE_LENGTH = 900;
 const INSTAGRAM_MAX_MESSAGE_PARTS = 3;
-const OPENAI_TIMEOUT_MS = 12000;
-const APP_VERSION = "2.9.1";
+const OPENAI_TIMEOUT_MS = 10000;
+const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
+const DEFAULT_OPENAI_MODEL = "gpt-5.6-luna";
+const DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-4o";
+const APP_VERSION = "2.9.2";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -289,8 +292,15 @@ function isServingQuestion(text) {
 function isGreetingOnly(text) {
   const normalized = normalizeText(text);
   if (!normalized || normalized.split(" ").length > 7) return false;
-  const greetings = ["oi", "ola", "bom dia", "boa tarde", "boa noite", "tem alguem", "alguem ai", "oi tem alguem"];
-  return greetings.some((term) => normalized === term || normalized.startsWith(`${term} `));
+
+  const exactGreetings = new Set([
+    "oi", "ola", "bom dia", "boa tarde", "boa noite",
+    "tem alguem", "alguem ai", "oi tem alguem", "ola tem alguem",
+    "oi tudo bem", "ola tudo bem", "oi tudo bom", "ola tudo bom",
+    "bom dia tudo bem", "boa tarde tudo bem", "boa noite tudo bem",
+    "oi gente", "ola gente", "oi pessoal", "ola pessoal"
+  ]);
+  return exactGreetings.has(normalized);
 }
 
 function isPlayfulOffTopic(text) {
@@ -1124,6 +1134,12 @@ function resolveIntent(message, knowledge, context = {}) {
     return makeResolution({ facts: base.story_mention || "Obrigado pela marcação. Adoramos fazer parte desse momento.", intent: "story_mention", topic: "relacionamento", lead_temperature: "morno", next_action: "relacionar" });
   }
 
+  // Saudação pura deve ser resolvida antes da busca fuzzy do cardápio.
+  // Evita, por exemplo, interpretar "olá" como "cola" / Refrigerante KS.
+  if (isGreetingOnly(text)) {
+    return makeResolution({ facts: base.saudacao || "Que bom falar com você. Como posso te ajudar hoje?", intent: "saudacao", topic: "inicio", lead_temperature: "morno", next_action: "descobrir_interesse" });
+  }
+
   if (isRemovedTopic(text)) {
     return makeResolution({
       facts: `Essa opção ou condição não está nas informações ativas que tenho aqui. Para conferir o que está disponível hoje, acesse o cardápio: ${links.menu}\n\nSe quiser confirmar direto com a equipe: ${links.whatsapp}`,
@@ -1391,10 +1407,6 @@ function resolveIntent(message, knowledge, context = {}) {
     return makeResolution({ facts: base.despedida || "Foi um prazer te atender. Quando quiser, é só chamar.", intent: "despedida", topic: "relacionamento", lead_temperature: "frio", next_action: "encerrar" });
   }
 
-  if (isGreetingOnly(text)) {
-    return makeResolution({ facts: base.saudacao || "Que bom falar com você. Como posso te ajudar hoje?", intent: "saudacao", topic: "inicio", lead_temperature: "morno", next_action: "descobrir_interesse" });
-  }
-
   const contextHint = context?.last_topic || context?.last_intent;
   return makeResolution({
     facts: `${base.fallback || DEFAULT_FALLBACK}${contextHint ? `\n\nSe sua dúvida continua sobre ${safeText(contextHint, 60)}, me diga o item ou detalhe que você quer confirmar.` : ""}`,
@@ -1481,38 +1493,78 @@ function ensurePersonalized(reply, customer) {
   return `${name}, ${reply}`;
 }
 
-async function callOpenAI({ knowledge, customer, context, message, resolved, eventType }) {
-  if (!process.env.OPENAI_API_KEY) return null;
+function extractResponsesOutputText(data) {
+  const direct = safeText(data?.output_text || "", 2200);
+  if (direct) return direct;
 
+  const chunks = [];
+  for (const item of Array.isArray(data?.output) ? data.output : []) {
+    for (const content of Array.isArray(item?.content) ? item.content : []) {
+      const text = safeText(content?.text || content?.output_text || "", 2200);
+      if (text) chunks.push(text);
+    }
+  }
+  return safeText(chunks.join("\n"), 2200);
+}
+
+function parseOpenAIReply(content) {
+  const raw = safeText(content || "", 2200);
+  if (!raw) return null;
+
+  const cleaned = raw.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
+  const candidates = [cleaned];
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+  if (firstBrace >= 0 && lastBrace > firstBrace) candidates.push(cleaned.slice(firstBrace, lastBrace + 1));
+
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate);
+      const reply = safeText(parsed?.reply || "", 2200);
+      if (reply) return reply;
+    } catch {
+      // Se a IA sair do contrato JSON, o webhook usa os fatos determinísticos.
+    }
+  }
+  return null;
+}
+
+function openAIModelCandidates() {
+  const primary = safeText(process.env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL, 120) || DEFAULT_OPENAI_MODEL;
+  const fallback = safeText(process.env.OPENAI_FALLBACK_MODEL || DEFAULT_OPENAI_FALLBACK_MODEL, 120) || DEFAULT_OPENAI_FALLBACK_MODEL;
+  return [...new Set([primary, fallback].filter(Boolean))];
+}
+
+function supportsReasoningEffort(model) {
+  return /^gpt-5(?:[.\-]|$)/i.test(String(model || ""));
+}
+
+async function requestOpenAIResponse({ model, customer, context, message, resolved, eventType }) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
 
   try {
     const payload = {
-      model: process.env.OPENAI_MODEL || "gpt-4o",
-      messages: [
-        { role: "system", content: buildSystemPrompt({ eventType, channel: customer.channel }) },
-        {
-          role: "user",
-          content: JSON.stringify({
-            cliente: customer,
-            contexto: context,
-            mensagem: message,
-            event_type: eventType,
-            canal: customer.channel,
-            intent_detectado: resolved.intent,
-            topico_detectado: resolved.topic,
-            fatos_para_esta_resposta: resolved.facts,
-            campos_pendentes: resolved.missing_fields,
-            proxima_acao: resolved.next_action
-          })
-        }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.2
+      model,
+      instructions: buildSystemPrompt({ eventType, channel: customer.channel }),
+      input: JSON.stringify({
+        cliente: customer,
+        contexto: context,
+        mensagem: message,
+        event_type: eventType,
+        canal: customer.channel,
+        intent_detectado: resolved.intent,
+        topico_detectado: resolved.topic,
+        fatos_para_esta_resposta: resolved.facts,
+        campos_pendentes: resolved.missing_fields,
+        proxima_acao: resolved.next_action
+      }),
+      max_output_tokens: 900,
+      store: false,
+      ...(supportsReasoningEffort(model) ? { reasoning: { effort: "none" } } : {})
     };
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch(OPENAI_RESPONSES_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1524,25 +1576,42 @@ async function callOpenAI({ knowledge, customer, context, message, resolved, eve
 
     if (!response.ok) {
       const body = await response.text().catch(() => "");
-      throw new Error(`OpenAI HTTP ${response.status}: ${body.slice(0, 250)}`);
+      return {
+        ok: false,
+        status: response.status,
+        error: `OpenAI HTTP ${response.status}: ${body.slice(0, 250)}`
+      };
     }
 
     const data = await response.json();
-    const content = safeText(data?.choices?.[0]?.message?.content || "", 2200);
-    if (!content) return null;
-
-    try {
-      const parsed = JSON.parse(content.replace(/^```json\s*/i, "").replace(/```$/i, "").trim());
-      return safeText(parsed?.reply || "", 2200) || null;
-    } catch {
-      return null;
-    }
+    const content = extractResponsesOutputText(data);
+    const reply = parseOpenAIReply(content);
+    if (!reply) return { ok: false, status: 200, error: "OpenAI retornou conteúdo sem reply JSON válido." };
+    return { ok: true, reply };
   } catch (error) {
-    console.error("OPENAI_REPLY_ERROR", error?.message || error);
-    return null;
+    return { ok: false, status: 0, error: error?.message || String(error) };
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function callOpenAI({ knowledge, customer, context, message, resolved, eventType }) {
+  if (!process.env.OPENAI_API_KEY) return null;
+
+  const models = openAIModelCandidates();
+  for (const model of models) {
+    const result = await requestOpenAIResponse({ model, customer, context, message, resolved, eventType });
+    if (result.ok) {
+      console.log("OPENAI_REPLY_OK", { model, api: "responses" });
+      return result.reply;
+    }
+
+    console.error("OPENAI_REPLY_ERROR", { model, api: "responses", status: result.status, error: result.error });
+    // Chave inválida/permissão ou rate limit não melhoram tentando outro modelo.
+    if ([401, 403, 429].includes(result.status)) break;
+  }
+
+  return null;
 }
 
 function splitForInstagram(text) {
@@ -1686,7 +1755,9 @@ export default async function handler(req, res) {
         channels: ["instagram", "whatsapp"],
         message: "Webhook online. Use POST para conversar.",
         openai_configured: Boolean(process.env.OPENAI_API_KEY),
-        model: process.env.OPENAI_MODEL || "gpt-4o"
+        model: process.env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL,
+        fallback_model: process.env.OPENAI_FALLBACK_MODEL || DEFAULT_OPENAI_FALLBACK_MODEL,
+        openai_api: "responses"
       });
     }
 

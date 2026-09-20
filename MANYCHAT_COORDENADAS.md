@@ -1,5 +1,7 @@
-# Nota v2.9.1 — avaliação + CTAs sem URLs no texto
+# Nota v2.9.2 — ManyChat
 
-Para a configuração atual completa do ManyChat, use `PROMPT_EXECUCAO_MANYCHAT_COMPLETO_V2.9.1.md`.
+A v2.9.2 atualiza a IA integrada no webhook/Vercel e preserva a estrutura do ManyChat da v2.9.1.
 
-Atenção: remover o bloco fixo “Faça o seu pedido!” + Cardápio + WhatsApp. Os botões agora são contextuais e o webhook pode retornar até 3 CTAs (delivery).
+Para revisão completa dos fluxos, use `PROMPT_EXECUCAO_MANYCHAT_COMPLETO_V2.9.2.md`.
+
+Não ativar AI Step do ManyChat. A inteligência continua no webhook.

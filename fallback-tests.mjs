@@ -36,6 +36,12 @@ async function test(name, fn) {
   catch (error) { failed++; console.error(`FAIL | ${name} | ${error.message}`); }
 }
 
+await test("saudação Olá não cai na busca fuzzy de refrigerante", async () => {
+  const p = await ask({ message: "Olá" });
+  assert(p.intent === "saudacao", `${p.intent} | ${p.reply}`);
+  assert(!/Refrigerante KS|Coca-Cola/i.test(String(p.reply || "")), p.reply);
+});
+
 await test("fallback não entendido fica limpo e oferece WhatsApp por CTA", async () => {
   const p = await ask({ message: "preciso saber uma coisa xyzabc" });
   assert(p.intent === "outro", p.intent);
@@ -79,16 +85,16 @@ await test("WhatsApp não recebe a limpeza visual exclusiva do Instagram", async
   assert(String(p.reply).includes(MENU) || String(p.reply).includes(WA), p.reply);
 });
 
-await test("health e payload reportam 2.9.1", async () => {
+await test("health e payload reportam 2.9.2", async () => {
   const res = makeRes();
   await handler({ method: "GET", headers: {}, query: {} }, res);
-  assert(res.payload?.version === "2.9.1", JSON.stringify(res.payload));
+  assert(res.payload?.version === "2.9.2", JSON.stringify(res.payload));
   const p = await ask({ message: "Oi" });
-  assert(p.app_version === "2.9.1", p.app_version);
+  assert(p.app_version === "2.9.2", p.app_version);
 });
 
 if (failed) {
   console.error(`\n${failed} teste(s) de fallback falharam.`);
   process.exit(1);
 }
-console.log("\nFallback Instagram v2.9.1: todos os testes passaram.");
+console.log("\nFallback Instagram v2.9.2: todos os testes passaram.");

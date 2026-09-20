@@ -1,6 +1,19 @@
 # SDR Boteco — ManyChat + Instagram + WhatsApp + Vercel
 
-Versão 2.9.1 — avaliação 1–5 com CTA Google, URLs de ação somente em botões no Instagram, fallbacks limpos, Cardápio Fitness, promoções unificadas, Pratos do Dia e cobertura completa do catálogo.
+Versão 2.9.2 — IA integrada atualizada para OpenAI Responses API com `gpt-5.6-luna` como modelo padrão, fallback seguro para `gpt-4o`, avaliação 1–5, CTAs limpos no Instagram, Cardápio Fitness, promoções, Pratos do Dia e catálogo completo.
+
+
+## IA integrada — v2.9.2
+
+- A camada de humanização migrou de `/v1/chat/completions` para a **Responses API** (`/v1/responses`).
+- Modelo padrão configurável: `gpt-5.6-luna`, adequado ao atendimento de alto volume e baixo custo.
+- Fallback configurável: `gpt-4o`; se a IA falhar, o webhook ainda usa a resposta determinística validada.
+- `OPENAI_API_KEY` continua opcional; sem chave, cardápio, preços, promoções, avaliação e CTAs continuam funcionando.
+- Para modelos GPT-5.x, a humanização usa `reasoning.effort = none`, evitando raciocínio desnecessário para simples reescrita.
+- A requisição usa `store: false` e envia apenas o contexto necessário para humanizar os fatos já autorizados.
+- O guardrail continua bloqueando preço, URL, horário e fato objetivo que não esteja nos fatos determinísticos.
+- Corrigida também a saudação `Olá`, que podia cair na busca fuzzy e ser confundida com `cola`/refrigerante.
+- Nova suíte `ai-integration-tests.mjs` valida endpoint, modelo, fallback e degradação segura.
 
 ## Fallback Instagram consolidado — v2.9.1
 
@@ -355,16 +368,17 @@ A persona não substitui as travas determinísticas: preços, produtos, horário
 
 ## OpenAI
 
-A chave é opcional:
+A chave é opcional. Em produção, configure as variáveis somente no Vercel:
 
 ```env
 OPENAI_API_KEY=
-OPENAI_MODEL=gpt-4o
+OPENAI_MODEL=gpt-5.6-luna
+OPENAI_FALLBACK_MODEL=gpt-4o
 ```
 
-Com chave: a IA reescreve os fatos em tom humano/vendedor consultivo, sujeita às travas do código.
+A v2.9.2 usa a **Responses API**. O modelo principal apenas humaniza os fatos já autorizados; ele não é a fonte de preço, horário, promoção, cardápio ou URL.
 
-Sem chave ou se a API falhar: o webhook usa a resposta determinística já validada. Portanto, uma indisponibilidade da IA não deve deixar o cliente sem resposta.
+Sem chave, se o modelo principal não estiver disponível ou se a API falhar, o webhook mantém o atendimento com as respostas determinísticas já validadas.
 
 ## Segurança do webhook
 

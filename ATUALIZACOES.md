@@ -1,3 +1,14 @@
+## 2.9.2 — IA integrada / Responses API
+
+- Migração da camada de humanização para `POST /v1/responses`.
+- Modelo padrão: `gpt-5.6-luna`; fallback configurável: `gpt-4o`.
+- `OPENAI_MODEL` e `OPENAI_FALLBACK_MODEL` podem ser alterados pela Vercel sem editar o código.
+- GPT-5.x usa `reasoning.effort=none` na humanização e `store=false`.
+- Se a OpenAI falhar, o webhook volta para os fatos determinísticos sem interromper o atendimento.
+- GET health passa a informar `openai_api`, `model` e `fallback_model`.
+- Corrigida a saudação `Olá` antes da busca fuzzy para não ser interpretada como refrigerante/`cola`.
+- Adicionada suíte `ai-integration-tests.mjs`.
+
 ## 2.9.1 — Fallback Instagram consolidado
 
 - Corrige texto residual após remoção de URLs nos fallbacks `outro`, `sem_mensagem` e `erro_seguro`.

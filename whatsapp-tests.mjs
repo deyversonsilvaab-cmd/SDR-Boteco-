@@ -66,12 +66,12 @@ async function test(name, fn) {
   }
 }
 
-await test("GET health v2.9.1 + canais", async () => {
+await test("GET health v2.9.2 + canais", async () => {
   const req = makeReq("", {}, "GET");
   const res = makeRes();
   await handler(req, res);
   assert(res.statusCode === 200, `status=${res.statusCode}`);
-  assert(res.payload?.version === "2.9.1", `version=${res.payload?.version}`);
+  assert(res.payload?.version === "2.9.2", `version=${res.payload?.version}`);
   assert(JSON.stringify(res.payload?.channels) === JSON.stringify(["instagram", "whatsapp"]), `channels=${JSON.stringify(res.payload?.channels)}`);
 });
 
@@ -208,13 +208,17 @@ await test("Regressão estrutural do Instagram continua preservada", async () =>
 await test("Guardrail rejeita horário inventado pela IA", async () => {
   process.env.OPENAI_API_KEY = "test-key";
   let sentBody = null;
-  global.fetch = async (_url, options) => {
+  let sentUrl = "";
+  global.fetch = async (url, options) => {
+    sentUrl = String(url);
     sentBody = JSON.parse(options.body);
     return {
       ok: true,
+      status: 200,
       async json() {
-        return { choices: [{ message: { content: JSON.stringify({ reply: "Hoje fechamos às 3h." }) } }] };
-      }
+        return { output_text: JSON.stringify({ reply: "Hoje fechamos às 3h." }) };
+      },
+      async text() { return ""; }
     };
   };
 
@@ -223,7 +227,10 @@ await test("Guardrail rejeita horário inventado pela IA", async () => {
     const reply = String(payload?.reply || "");
     assert(!reply.includes("3h"), `horário inventado passou: ${reply}`);
     assert(reply.includes("11h") && reply.includes("22h"), `fallback factual não preservado: ${reply}`);
-    assert(sentBody?.temperature === 0.2, `temperature=${sentBody?.temperature}`);
+    assert(sentUrl.endsWith("/v1/responses"), `url=${sentUrl}`);
+    assert(sentBody?.model === "gpt-5.6-luna", `model=${sentBody?.model}`);
+    assert(sentBody?.reasoning?.effort === "none", `reasoning=${JSON.stringify(sentBody?.reasoning)}`);
+    assert(sentBody?.store === false, `store=${sentBody?.store}`);
   } finally {
     delete process.env.OPENAI_API_KEY;
     global.fetch = ORIGINAL_FETCH;
@@ -234,9 +241,11 @@ await test("Guardrail de handoff rejeita até link comercial oficial injetado pe
   process.env.OPENAI_API_KEY = "test-key";
   global.fetch = async () => ({
     ok: true,
+    status: 200,
     async json() {
-      return { choices: [{ message: { content: JSON.stringify({ reply: "Entendi o problema. Enquanto isso, veja o cardápio: https://botequimpatiolimeira.saipos.com/home" }) } }] };
-    }
+      return { output_text: JSON.stringify({ reply: "Entendi o problema. Enquanto isso, veja o cardápio: https://botequimpatiolimeira.saipos.com/home" }) };
+    },
+    async text() { return ""; }
   });
 
   try {
