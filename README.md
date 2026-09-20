@@ -1,6 +1,16 @@
 # SDR Boteco — ManyChat + Instagram + WhatsApp + Vercel
 
-Versão 2.9.0 — avaliação 1–5 com CTA Google, URLs de ação somente em botões no Instagram, Cardápio Fitness, promoções unificadas, Pratos do Dia e cobertura completa do catálogo.
+Versão 2.9.1 — avaliação 1–5 com CTA Google, URLs de ação somente em botões no Instagram, fallbacks limpos, Cardápio Fitness, promoções unificadas, Pratos do Dia e cobertura completa do catálogo.
+
+## Fallback Instagram consolidado — v2.9.1
+
+- Corrige os textos de fallback quando URLs são retiradas da DM e substituídas por CTA nativo.
+- `outro`, `sem_mensagem` e `erro_seguro` não deixam mais `em`, `:` ou rótulos de link sobrando.
+- Quando a mensagem orienta “pelo botão abaixo”, o payload garante o CTA **Falar no WhatsApp**.
+- Corrige um falso positivo antigo de saudação: palavras como `coisa` não são mais confundidas com `oi`.
+- Mantém o WhatsApp fora da limpeza visual exclusiva do Instagram.
+- Nova suíte `fallback-tests.mjs`; pacote consolidado mantém todas as frentes anteriores.
+
 
 ## Avaliação 1–5 + Cardápio Fitness — v2.8.0
 

@@ -1,3 +1,10 @@
+## 2.9.1 — Fallback Instagram consolidado
+
+- Corrige texto residual após remoção de URLs nos fallbacks `outro`, `sem_mensagem` e `erro_seguro`.
+- Garante CTA **Falar no WhatsApp** quando o texto orienta o cliente a usar o botão.
+- Mantém todas as frentes funcionais da v2.9.0 sem alteração de catálogo, promoções ou avaliação.
+- Adiciona suíte `fallback-tests.mjs`.
+
 ## 2.9.0 — Avaliação Google + URLs somente em botões
 
 - Nota 5 recebe CTA `Avaliar no Google`; URL não aparece no texto da DM.
