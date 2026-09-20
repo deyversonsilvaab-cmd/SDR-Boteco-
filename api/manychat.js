@@ -16,7 +16,7 @@ const OPENAI_TIMEOUT_MS = 10000;
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5.6-luna";
 const DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-4o";
-const APP_VERSION = "2.9.2";
+const APP_VERSION = "2.9.3";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -48,6 +48,32 @@ function normalizeText(value) {
 
 function includesAny(text, terms) {
   return terms.some((term) => text.includes(normalizeText(term)));
+}
+
+// Igual a includesAny, mas exige palavra inteira. Evita "mesa" dentro de "sobremesa"
+// ou "pedido" dentro de "meu pedido veio errado".
+function includesAnyWord(text, terms) {
+  const normalized = normalizeText(text);
+  return terms.some((term) => {
+    const t = normalizeText(term).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`(^|[^a-z0-9])${t}([^a-z0-9]|$)`).test(normalized);
+  });
+}
+
+function isFarewellOnly(text) {
+  const normalized = normalizeText(text).replace(/[!.,]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!normalized || normalized.split(" ").length > 5) return false;
+  const farewellWords = new Set([
+    "valeu", "vlw", "obrigado", "obrigada", "brigado", "brigada", "obg", "tchau", "tchau tchau",
+    "ate mais", "ate logo", "ate breve", "falou", "flw", "beleza", "show", "top", "perfeito", "ok",
+    "muito obrigado", "muito obrigada", "valeu demais", "obrigado pela atencao", "obrigada pela atencao",
+    "boa noite obrigado", "boa noite obrigada", "valeu obrigado"
+  ]);
+  if (farewellWords.has(normalized)) return true;
+  const words = normalized.split(" ");
+  const fillers = new Set(["muito", "demais", "mesmo", "entao", "ta", "ok", "beleza", "show", "top", "viu", "ai", "bom", "boa"]);
+  const core = words.filter((w) => !fillers.has(w));
+  return core.length > 0 && core.every((w) => farewellWords.has(w));
 }
 
 function getHeader(req, name) {
@@ -874,7 +900,7 @@ function isComplaintText(text) {
     "problema resolvido", "problema foi resolvido", "deu tudo certo", "esta tudo certo", "está tudo certo",
     "nada errado", "nao tem nada errado", "não tem nada errado"
   ];
-  const weakComplaint = ["problema", "errado", "erro", "faltou", "nao chegou", "não chegou", "veio frio"];
+  const weakComplaint = ["problema", "errado", "erro", "faltou", "nao chegou", "não chegou", "veio frio", "demorou", "demorando", "atrasado", "atrasou", "veio gelado", "veio quente", "veio estragado", "cade meu pedido", "cadê meu pedido"];
   return !includesAny(text, benignProblem) && includesAny(text, weakComplaint);
 }
 
@@ -1140,6 +1166,25 @@ function resolveIntent(message, knowledge, context = {}) {
     return makeResolution({ facts: base.saudacao || "Que bom falar com você. Como posso te ajudar hoje?", intent: "saudacao", topic: "inicio", lead_temperature: "morno", next_action: "descobrir_interesse" });
   }
 
+  // Despedida curta ("valeu", "obrigado") também vence a busca fuzzy do cardápio
+  // (antes "valeu" virava "Del Valle").
+  if (isFarewellOnly(text)) {
+    return makeResolution({ facts: base.despedida || "Foi um prazer te atender. Quando quiser, é só chamar.", intent: "despedida", topic: "relacionamento", lead_temperature: "frio", next_action: "encerrar" });
+  }
+
+  // Reclamação/problema com pedido vence "pedido", "entrega" etc.
+  // "meu pedido veio errado" não pode virar convite para fazer um novo pedido.
+  if (isComplaintText(text)) {
+    return makeResolution({
+      facts: base.reclamacao || "Sinto muito por isso. Pra resolver rápido e do jeito certo, fale direto com a equipe pelo botão abaixo que a gente cuida disso.",
+      intent: "reclamacao",
+      topic: "reclamacao",
+      needs_human: true,
+      lead_temperature: "quente",
+      next_action: "whatsapp"
+    });
+  }
+
   if (isRemovedTopic(text)) {
     return makeResolution({
       facts: `Essa opção ou condição não está nas informações ativas que tenho aqui. Para conferir o que está disponível hoje, acesse o cardápio: ${links.menu}\n\nSe quiser confirmar direto com a equipe: ${links.whatsapp}`,
@@ -1155,7 +1200,7 @@ function resolveIntent(message, knowledge, context = {}) {
     return makeResolution({ facts: base.humano || `Claro. Fale direto com a equipe: ${links.whatsapp}`, intent: "humano", topic: "atendimento_humano", needs_human: true, lead_temperature: "quente", next_action: "whatsapp" });
   }
 
-  if (includesAny(text, ["vaga", "emprego", "curriculo", "currículo", "freelance", "garcom", "garçom", "garconete", "garçonete", "cumim", "trabalhar com voces", "trabalhar com vocês"])) {
+  if (includesAny(text, ["vaga", "emprego", "curriculo", "currículo", "freelance", "garcom", "garçom", "garconete", "garçonete", "cumim", "trabalhar com voces", "trabalhar com vocês", "trabalhar ai", "trabalhar aí", "trabalhar no sr", "trabalhar no boteco", "quero trabalhar", "oportunidade de trabalho", "estao contratando", "estão contratando", "tem vaga", "contratando"])) {
     return makeResolution({
       facts: base.vaga || `Para oportunidades de trabalho no Sr. Boteco, envie seu currículo diretamente para o RH do restaurante pelo WhatsApp:\n\n📲 ${links.jobs}\n\nEla fará a análise do seu perfil e entrará em contato caso surja uma oportunidade compatível com sua experiência.\n\nAgradecemos o seu interesse em fazer parte da equipe do Sr. Boteco!`,
       intent: "vaga",
@@ -1191,7 +1236,7 @@ function resolveIntent(message, knowledge, context = {}) {
     return makeResolution({ facts: base.cardapio || `Cardápio/pedido: ${links.menu}`, intent: "cardapio", topic: "cardapio", lead_temperature: "quente", next_action: "abrir_cardapio" });
   }
 
-  if (includesAny(text, ["fazer pedido", "quero pedir", "queria fazer um pedido", "pedido", "pedir para retirar", "retirada", "retirar no local", "take away"])) {
+  if (includesAnyWord(text, ["fazer pedido", "quero pedir", "queria fazer um pedido", "pedido", "pedir", "pedir para retirar", "retirada", "retirar no local", "take away"])) {
     return makeResolution({ facts: base.pedido || `Faça seu pedido por aqui: ${links.menu}`, intent: "pedido", topic: "pedido", lead_temperature: "quente", next_action: "fazer_pedido" });
   }
 
@@ -1199,7 +1244,7 @@ function resolveIntent(message, knowledge, context = {}) {
     return makeResolution({ facts: base.delivery || `Pedido direto: ${links.menu}\niFood: ${links.ifood}\n99Food: ${links.food99}`, intent: "delivery", topic: "pedido", lead_temperature: "quente", next_action: "delivery" });
   }
 
-  if (includesAny(text, ["reservar", "reserva", "mesa", "aniversario", "aniversário", "grupo", "evento", "confraternizacao", "confraternização"])) {
+  if (includesAnyWord(text, ["reservar", "reserva", "reservas", "mesa", "mesas", "aniversario", "aniversário", "grupo", "evento", "confraternizacao", "confraternização"])) {
     return makeResolution({
       facts: base.reserva || "Para adiantar sua reserva, me passe nome, dia/data, horário e quantas pessoas. A equipe faz a confirmação final.",
       intent: "reserva",
@@ -1221,7 +1266,7 @@ function resolveIntent(message, knowledge, context = {}) {
     return makeResolution({ facts: base.localizacao || `Ficamos no Pátio Limeira Shopping.\n\nRota no Google Maps: ${links.maps}`, intent: "localizacao", topic: "localizacao", lead_temperature: "quente", next_action: "visita" });
   }
 
-  if (includesAny(text, ["horario", "horário", "que horas abre", "que horas fecha", "funcionamento", "aberto hoje", "fecha que horas", "cozinha fecha"])) {
+  if (includesAny(text, ["horario", "horário", "que horas abre", "que horas fecha", "funcionamento", "aberto hoje", "fecha que horas", "cozinha fecha", "abre domingo", "abre sabado", "abre sábado", "abre segunda", "abre hoje", "abre amanha", "abre amanhã", "abre que horas", "que dia abre", "que dias abre", "dias que abre", "ate que horas", "até que horas", "esta aberto", "está aberto", "ta aberto", "tá aberto", "aberto agora", "fecha hoje", "abre feriado", "funciona domingo", "funciona feriado"])) {
     return makeResolution({ facts: base.horario || knowledge?.horarios?.funcionamento || "Funcionamos todos os dias das 11h às 22h.", intent: "horario", topic: "horario", lead_temperature: "quente", next_action: "visita" });
   }
 
