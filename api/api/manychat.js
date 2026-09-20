@@ -287,7 +287,10 @@ function isServingQuestion(text) {
 }
 
 function isGreetingOnly(text) {
-  return includesAny(text, ["oi", "ola", "bom dia", "boa tarde", "boa noite", "tem alguem", "alguem ai", "oi tem alguem"]) && text.split(" ").length <= 7;
+  const normalized = normalizeText(text);
+  if (!normalized || normalized.split(" ").length > 7) return false;
+  const greetings = ["oi", "ola", "bom dia", "boa tarde", "boa noite", "tem alguem", "alguem ai", "oi tem alguem"];
+  return greetings.some((term) => normalized === term || normalized.startsWith(`${term} `));
 }
 
 function isPlayfulOffTopic(text) {
@@ -1000,6 +1003,7 @@ function contextualCtas(resolved, links) {
   if (intent === "localizacao") return one("localizacao", "Como chegar", links.maps);
   if (intent === "promocao_chopp") return one("localizacao", "Como chegar", links.maps);
   if (intent === "vaga") return one("rh", "Enviar currículo", links.jobs);
+  if (["outro", "sem_mensagem", "erro_seguro"].includes(intent)) return one("whatsapp", "Falar no WhatsApp", links.whatsapp);
   if (intent === "humano" || intent === "reserva" || nextAction === "whatsapp") return one("whatsapp", "Falar no WhatsApp", links.whatsapp);
   if (intent === "delivery") {
     return many(
