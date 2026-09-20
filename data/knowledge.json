@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "versao": "2.9.0",
-    "revisado_em": "2026-09-18",
+    "versao": "2.9.1",
+    "revisado_em": "2026-09-20",
     "politica": "Base fechada: preço, composição, peso e item do cardápio só podem ser afirmados quando estiverem registrados nesta base.",
     "fonte_cardapio": "Cardápio Sr boteco atual.pdf (9 páginas) enviado em 16/09/2026.",
     "fonte_cardapio_digital": "https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0",
@@ -2222,7 +2222,7 @@
     "cabotia": "cabotiá"
   },
   "meta": {
-    "versao": "2.6.0"
+    "versao": "2.9.1"
   },
   "pratos_do_dia": {
     "titulo": "Pratos do Dia",
