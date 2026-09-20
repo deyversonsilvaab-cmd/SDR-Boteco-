@@ -66,12 +66,12 @@ async function test(name, fn) {
   }
 }
 
-await test("GET health v2.9.2 + canais", async () => {
+await test("GET health v2.9.3 + canais", async () => {
   const req = makeReq("", {}, "GET");
   const res = makeRes();
   await handler(req, res);
   assert(res.statusCode === 200, `status=${res.statusCode}`);
-  assert(res.payload?.version === "2.9.2", `version=${res.payload?.version}`);
+  assert(res.payload?.version === "2.9.3", `version=${res.payload?.version}`);
   assert(JSON.stringify(res.payload?.channels) === JSON.stringify(["instagram", "whatsapp"]), `channels=${JSON.stringify(res.payload?.channels)}`);
 });
 

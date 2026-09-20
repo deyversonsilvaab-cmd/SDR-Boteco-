@@ -163,9 +163,9 @@ await test("Dynamic Block de delivery usa Pedido direto, iFood e 99Food", async 
   assert(buttons[2]?.url === FOOD99, JSON.stringify(buttons));
 });
 
-await test("payload informa versão 2.9.2 para diagnóstico", async () => {
+await test("payload informa versão 2.9.3 para diagnóstico", async () => {
   const p = await ask("Oi");
-  assert(p.app_version === "2.9.2", p.app_version);
+  assert(p.app_version === "2.9.3", p.app_version);
 });
 
 if (failed) {
