@@ -110,7 +110,11 @@ function isUnresolvedTemplateValue(value) {
 
 function cleanInboundText(value, max = 1800) {
   const text = safeText(value, max);
-  return isUnresolvedTemplateValue(text) ? "" : text;
+  if (isUnresolvedTemplateValue(text)) return "";
+  // Mídia (foto, áudio, figurinha) chega como URL pura no last_input_text do ManyChat.
+  // Não é texto do cliente: tratamos como "sem mensagem" para não tentar interpretar a URL.
+  if (/^https?:\/\/\S+$/i.test(text)) return "";
+  return text;
 }
 
 // v2.9.4 — Envelope "Full Contact Data" do ManyChat.
