@@ -36,6 +36,9 @@ check("envelope WhatsApp: atendimento_humano=true silencia o bot", p.intent === 
 p = await run({ contact: { id: "3", first_name: "Bia", last_input_text: "", custom_fields: {} } }, { event_type: "story_mention", channel: "instagram" });
 check("envelope: event_type via query string (story_mention)", p.intent === "story_mention");
 
+p = await run(contact("https://manybot-files.s3.eu-central-1.amazonaws.com/x/wa/2026/09/19/original_abc.jpeg"));
+check("envelope: mídia (URL pura) vira sem_mensagem, não tenta interpretar", p.intent === "sem_mensagem");
+
 p = await run({ subscriber_id: "4", first_name: "Caio", message: "cardápio", channel: "instagram" });
 check("corpo antigo continua funcionando", p.intent === "cardapio");
 
