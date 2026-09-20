@@ -16,7 +16,7 @@ const OPENAI_TIMEOUT_MS = 10000;
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5.6-luna";
 const DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-4o";
-const APP_VERSION = "2.9.3";
+const APP_VERSION = "2.9.4";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -111,6 +111,49 @@ function isUnresolvedTemplateValue(value) {
 function cleanInboundText(value, max = 1800) {
   const text = safeText(value, max);
   return isUnresolvedTemplateValue(text) ? "" : text;
+}
+
+// v2.9.4 — Envelope "Full Contact Data" do ManyChat.
+// O corpo templatado a mão ({"message":"{Última Entrada de Texto}", ...}) quebra o JSON
+// quando um campo tem quebra de linha ou aspas (o ManyChat não escapa os valores),
+// e aí a requisição nem chega ao webhook. Com {"contact": {Full Contact Data}} o
+// ManyChat gera o JSON inteiro já escapado. Aqui achatamos esse envelope para o
+// formato que o restante do código já entende.
+function unwrapContactEnvelope(body, query = {}) {
+  const src = body && typeof body === "object" ? body : {};
+  const contact = src.contact && typeof src.contact === "object" ? src.contact : null;
+  const q = query && typeof query === "object" ? query : {};
+  const base = { ...src };
+  if (q.channel && !base.channel) base.channel = q.channel;
+  if (q.event_type && !base.event_type) base.event_type = q.event_type;
+  if (!contact) return base;
+
+  const cf = contact.custom_fields && typeof contact.custom_fields === "object" ? contact.custom_fields : {};
+  const pick = (...values) => {
+    for (const value of values) {
+      if (value === undefined || value === null) continue;
+      if (typeof value === "string" && !value.trim()) continue;
+      return value;
+    }
+    return "";
+  };
+
+  return {
+    ...base,
+    subscriber_id: pick(base.subscriber_id, contact.id, contact.key),
+    first_name: pick(base.first_name, contact.first_name),
+    username: pick(base.username, contact.ig_username, contact.username),
+    message: pick(cleanInboundText(base.message), contact.last_input_text),
+    last_input_text: pick(contact.last_input_text),
+    last_intent: pick(base.last_intent, cf.ai_last_intent),
+    last_topic: pick(base.last_topic, cf.ai_last_topic),
+    last_bot_reply: pick(base.last_bot_reply, cf.ai_last_bot_reply),
+    avaliacao_pendente: pick(base.avaliacao_pendente, cf.avaliacao_pendente),
+    avaliacao_feedback_pendente: pick(base.avaliacao_feedback_pendente, cf.avaliacao_feedback_pendente),
+    avaliacao_nota: pick(base.avaliacao_nota, cf.avaliacao_nota),
+    atendimento_humano: pick(base.atendimento_humano, cf.atendimento_humano),
+    custom_fields: { ...cf, ...(base.custom_fields && typeof base.custom_fields === "object" ? base.custom_fields : {}) }
+  };
 }
 
 function extractMessage(body) {
@@ -1809,7 +1852,7 @@ export default async function handler(req, res) {
     if (req.method !== "POST") return send(res, 405, { ok: false, error: "Método não permitido. Use POST." });
     if (!isAuthorized(req)) return send(res, 401, { ok: false, error: "Não autorizado. Verifique WEBHOOK_SECRET." });
 
-    const body = req.body || {};
+    const body = unwrapContactEnvelope(req.body || {}, req.query || {});
     customer = extractCustomer(body);
 
     if (isWhatsapp(customer) && humanIsHandling(body)) {
