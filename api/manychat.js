@@ -6,7 +6,7 @@ import { buildSystemPrompt } from "../lib/persona.js";
 const DEFAULT_WHATSAPP_LINK = "https://wa.me/5519997858351";
 const DEFAULT_MENU_LINK = "https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0";
 const DEFAULT_IFOOD_LINK = "https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72";
-const DEFAULT_99FOOD_LINK = "https://99app.com/99food/food/";
+const DEFAULT_99FOOD_LINK = "https://oia.99app.com/dlp9/bSSJXQ?area=BR";
 const DEFAULT_MAPS_LINK = "https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8";
 const DEFAULT_GOOGLE_REVIEW_LINK = "https://search.google.com/local/writereview?placeid=ChIJRVEHZGqByJQRVUe6ZO8Yqz8";
 const DEFAULT_FALLBACK = `Quero te passar a informação certa. Confira o cardápio em ${DEFAULT_MENU_LINK} ou fale com a equipe no WhatsApp: ${DEFAULT_WHATSAPP_LINK}`;
@@ -16,7 +16,7 @@ const OPENAI_TIMEOUT_MS = 10000;
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5.6-luna";
 const DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-4o";
-const APP_VERSION = "2.9.4";
+const APP_VERSION = "2.9.5";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
