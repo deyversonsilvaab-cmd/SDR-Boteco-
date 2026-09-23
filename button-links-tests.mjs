@@ -3,7 +3,7 @@ import handler from "./api/manychat.js";
 const MENU = "https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0";
 const WA = "https://wa.me/5519997858351";
 const IFOOD = "https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72";
-const FOOD99 = "https://99app.com/99food/food/";
+const FOOD99 = "https://oia.99app.com/dlp9/bSSJXQ?area=BR";
 
 function makeRes() {
   return { statusCode:null, payload:null, setHeader(){}, status(c){this.statusCode=c;return this;}, json(p){this.payload=p;return p;}, end(){} };

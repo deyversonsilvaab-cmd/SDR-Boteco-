@@ -52,7 +52,7 @@ function assert(condition, message) {
 
 function hasSalesLink(payload) {
   const reply = String(payload?.reply || "");
-  return reply.includes("saipos.com") || reply.includes("ifood.com") || reply.includes("99app.com/99food");
+  return reply.includes("saipos.com") || reply.includes("ifood.com") || reply.includes("99app.com");
 }
 
 let failed = 0;
@@ -66,12 +66,12 @@ async function test(name, fn) {
   }
 }
 
-await test("GET health v2.9.4 + canais", async () => {
+await test("GET health v2.9.5 + canais", async () => {
   const req = makeReq("", {}, "GET");
   const res = makeRes();
   await handler(req, res);
   assert(res.statusCode === 200, `status=${res.statusCode}`);
-  assert(res.payload?.version === "2.9.4", `version=${res.payload?.version}`);
+  assert(res.payload?.version === "2.9.5", `version=${res.payload?.version}`);
   assert(JSON.stringify(res.payload?.channels) === JSON.stringify(["instagram", "whatsapp"]), `channels=${JSON.stringify(res.payload?.channels)}`);
 });
 

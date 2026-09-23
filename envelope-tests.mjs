@@ -18,7 +18,7 @@ const contact = (last_input_text, custom_fields = {}) => ({
 let p = await run(contact("Boa tarde", { ai_last_bot_reply: "Eng, Tábua Mista\n\n2 gomos \"de\" linguiça", ai_last_intent: "item_cardapio" }));
 check("envelope: 'Boa tarde' com memória multilinha vira saudacao", p.intent === "saudacao");
 check("envelope: nome do contato usado", p.reply.startsWith("Teste"));
-check("envelope: app_version 2.9.4", p.app_version === "2.9.4");
+check("envelope: app_version 2.9.4", p.app_version === "2.9.5");
 
 p = await run(contact("Qurero saber sobre quibe"));
 check("envelope: quibe vira item_cardapio", p.intent === "item_cardapio" && /quibe/i.test(p.reply));

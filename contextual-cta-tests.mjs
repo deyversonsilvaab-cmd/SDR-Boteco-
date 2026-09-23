@@ -5,7 +5,7 @@ const WA = "https://wa.me/5519997858351";
 const RH = "https://wa.me/5517996022567";
 const MAPS = "https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8";
 const IFOOD = "https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72";
-const FOOD99 = "https://99app.com/99food/food/";
+const FOOD99 = "https://oia.99app.com/dlp9/bSSJXQ?area=BR";
 
 function makeRes() {
   return { statusCode:null, payload:null, setHeader(){}, status(c){this.statusCode=c;return this;}, json(p){this.payload=p;return p;}, end(){} };
@@ -163,9 +163,9 @@ await test("Dynamic Block de delivery usa Pedido direto, iFood e 99Food", async 
   assert(buttons[2]?.url === FOOD99, JSON.stringify(buttons));
 });
 
-await test("payload informa versão 2.9.4 para diagnóstico", async () => {
+await test("payload informa versão 2.9.5 para diagnóstico", async () => {
   const p = await ask("Oi");
-  assert(p.app_version === "2.9.4", p.app_version);
+  assert(p.app_version === "2.9.5", p.app_version);
 });
 
 if (failed) {
