@@ -1,6 +1,6 @@
 {
   "name": "sdr-boteco",
-  "version": "2.9.5",
+  "version": "2.9.6",
   "private": true,
   "type": "module",
   "engines": {
@@ -10,7 +10,7 @@
     "dev": "vercel dev",
     "test:local": "node test-local.js",
     "audit": "node audit-test.mjs",
-    "check": "node --check api/manychat.js && node --check lib/persona.js && node audit-test.mjs && node menu-tests.mjs && node whatsapp-tests.mjs && node comment-tests.mjs && node promo-tests.mjs && node button-links-tests.mjs && node contextual-cta-tests.mjs && node lunch-tests.mjs && node fitness-tests.mjs && node evaluation-tests.mjs && node fallback-tests.mjs && node ai-integration-tests.mjs && node routing-tests.mjs && node envelope-tests.mjs",
+    "check": "node --check api/manychat.js && node --check lib/persona.js && node audit-test.mjs && node menu-tests.mjs && node whatsapp-tests.mjs && node comment-tests.mjs && node promo-tests.mjs && node button-links-tests.mjs && node contextual-cta-tests.mjs && node lunch-tests.mjs && node fitness-tests.mjs && node evaluation-tests.mjs && node fallback-tests.mjs && node ai-integration-tests.mjs && node routing-tests.mjs && node envelope-tests.mjs && node address-bot-tests.mjs",
     "test:whatsapp": "node whatsapp-tests.mjs",
     "test:menu": "node menu-tests.mjs",
     "test:comments": "node comment-tests.mjs",
@@ -21,7 +21,7 @@
     "test:fitness": "node fitness-tests.mjs",
     "test:evaluation": "node evaluation-tests.mjs",
     "test:fallback": "node fallback-tests.mjs",
-    "test:ai": "node ai-integration-tests.mjs && node routing-tests.mjs && node envelope-tests.mjs"
+    "test:ai": "node ai-integration-tests.mjs && node routing-tests.mjs && node envelope-tests.mjs && node address-bot-tests.mjs"
   },
   "devDependencies": {
     "vercel": "^44.2.10"

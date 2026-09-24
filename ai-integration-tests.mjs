@@ -52,7 +52,7 @@ const originalFetch = globalThis.fetch;
 await test("health informa Responses API, v2.9.4 e modelo Luna por padrão", async () => {
   const res = makeRes();
   await handler({ method: "GET", headers: {}, query: {} }, res);
-  assert(res.payload?.version === "2.9.5", JSON.stringify(res.payload));
+  assert(res.payload?.version === "2.9.6", JSON.stringify(res.payload));
   assert(res.payload?.model === "gpt-5.6-luna", JSON.stringify(res.payload));
   assert(res.payload?.fallback_model === "gpt-4o", JSON.stringify(res.payload));
   assert(res.payload?.openai_api === "responses", JSON.stringify(res.payload));
@@ -151,4 +151,4 @@ if (failed) {
   console.error(`\n${failed} teste(s) de integração OpenAI falharam.`);
   process.exit(1);
 }
-console.log("\nIA integrada v2.9.5: todos os testes passaram.");
+console.log("\nIA integrada v2.9.6: todos os testes passaram.");
