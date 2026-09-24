@@ -16,7 +16,7 @@ const OPENAI_TIMEOUT_MS = 10000;
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5.6-luna";
 const DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-4o";
-const APP_VERSION = "2.9.9";
+const APP_VERSION = "2.9.10";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -1037,7 +1037,7 @@ function isLocationQuestion(text) {
 }
 
 function isParkingQuestion(text) {
-  return includesAny(normalizeText(text), ["estacionamento", "estacionar", "onde parar o carro", "vaga pra carro", "vaga para carro", "tem vaga de carro", "parar o carro", "deixar o carro", "deixo o carro", "deixar a moto", "deixo a moto", "parar a moto", "paro o carro", "paro a moto", "estaciona"]);
+  return includesAny(normalizeText(text), ["estacionamento", "estacionar", "onde parar o carro", "vaga pra carro", "vaga para carro", "tem vaga de carro", "parar o carro", "deixar o carro", "deixo o carro", "deixar a moto", "deixo a moto", "parar a moto", "paro o carro", "paro a moto", "estaciona", "estacionamento gratis", "estacionamento free", "regulamento do estacionamento"]);
 }
 
 // v2.9.8 — Marmita / comida pra levar (resposta oficial do Michel).
@@ -1061,8 +1061,15 @@ function formatParking(knowledge) {
     return `Ficamos dentro do Pátio Limeira Shopping: ${address}. O shopping tem estacionamento.`;
   }
   const c = e.carros || {}, m = e.motos || {};
+  const g = e.cortesia_sr_boteco;
+  const promo = g ? [
+    `Tem sim! 🅿️ ESTACIONAMENTO GRÁTIS de ${String(g.dias).toUpperCase()}, ${String(g.horario).toUpperCase()}.`,
+    `${g.chamada} Válido ${g.condicao}. ⚠️ ${g.regulamento}`,
+    "",
+    `Fora desse horário, valem as tarifas do estacionamento do Pátio Limeira Shopping (${address}):`
+  ] : [`Tem sim! Ficamos dentro do Pátio Limeira Shopping (${address}), que tem estacionamento.`];
   return [
-    `Tem sim! Ficamos dentro do Pátio Limeira Shopping (${address}), que tem estacionamento.`,
+    ...promo,
     `🚗 Carros: até 2h ${c.ate_2h} | hora adicional ${c.hora_adicional} | pernoite ${c.pernoite}`,
     `🏍️ Motos: até 2h ${m.ate_2h} | hora adicional ${m.hora_adicional} | pernoite ${m.pernoite}`,
     `Perda do ticket: ${e.perda_ticket}`,
@@ -1216,7 +1223,7 @@ function contextualCtas(resolved, links) {
       { type: "99food", label: "99Food", url: links.food99 }
     );
   }
-  if (intent === "localizacao_estacionamento") return one("localizacao", "Como chegar", links.maps);
+  if (intent === "localizacao_estacionamento") return many({ type: "whatsapp", label: "Consultar regulamento", url: links.whatsapp }, { type: "localizacao", label: "Como chegar", url: links.maps });
   if (intent === "localizacao" || intent === "feedback_critica_local") return one("localizacao", "Como chegar", links.maps);
   if (["humano_frustracao", "feedback_critica", "outro_repetido"].includes(intent)) return one("whatsapp", "Falar no WhatsApp", links.whatsapp);
   if (intent === "promocao_chopp") return one("localizacao", "Como chegar", links.maps);
