@@ -16,6 +16,7 @@
     "whatsapp_formatado": "(19) 99785-8351",
     "whatsapp_link": "https://wa.me/5519997858351",
     "endereco": "Pátio Limeira Shopping",
+    "endereco_completo": "R. Carlos Gomes, 1321 - Centro, Limeira - SP (Pátio Limeira Shopping)",
     "whatsapp_vagas_formatado": "(17) 99602-2567",
     "localizacao_link": "https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8"
   },
@@ -2017,7 +2018,7 @@
     "delivery": "Para pedir com entrega, você pode usar nosso cardápio digital: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0\n\niFood: https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72\n\n99Food: https://oia.99app.com/dlp9/bSSJXQ?area=BR",
     "humano": "Claro. Para falar direto com a equipe e resolver mais rápido, acesse nosso WhatsApp: https://wa.me/5519997858351",
     "item_nao_encontrado": "Não encontrei esse item com segurança no cardápio atual. Posso tentar pelo nome aproximado, pela categoria ou você pode conferir o cardápio completo aqui: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0. Se ainda assim não aparecer, confirmo com a equipe pelo WhatsApp: https://wa.me/5519997858351",
-    "localizacao": "Ficamos no Pátio Limeira Shopping.\n\nRota no Google Maps: https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8",
+    "localizacao": "Ficamos no Pátio Limeira Shopping: R. Carlos Gomes, 1321 - Centro, Limeira - SP.\n\nRota no Google Maps: https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8",
     "horario": "Funcionamos todos os dias das 11h às 22h.",
     "almoco": "De segunda a sexta-feira, das 11h às 15h, temos Pratos do Dia exclusivos para o almoço, além das demais opções cadastradas. Posso te passar os pratos e valores.",
     "reserva": "Para adiantar sua reserva, me passe nome, dia/data, horário e quantas pessoas. A equipe faz a confirmação final.",
