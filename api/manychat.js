@@ -16,7 +16,7 @@ const OPENAI_TIMEOUT_MS = 10000;
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5.6-luna";
 const DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-4o";
-const APP_VERSION = "2.9.5";
+const APP_VERSION = "2.9.6";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -941,14 +941,72 @@ function isComplaintText(text) {
     "nota fiscal", "cobranca indevida", "cobranca duplicada", "cobrado duas vezes", "devolucao"
   ];
   if (includesAny(text, strongComplaint)) return true;
+  // v2.9.6 — "faltou o endereço" é pedido de informação (ex.: anúncio sem endereço),
+  // não reclamação de pedido. Deve responder a informação, não mandar pro WhatsApp.
+  if (missingInfoTopic(text)) return false;
 
   const benignProblem = [
     "sem problema", "sem problemas", "nenhum problema", "nao tive problema", "não tive problema",
     "problema resolvido", "problema foi resolvido", "deu tudo certo", "esta tudo certo", "está tudo certo",
     "nada errado", "nao tem nada errado", "não tem nada errado"
   ];
-  const weakComplaint = ["problema", "errado", "erro", "faltou", "nao chegou", "não chegou", "veio frio", "demorou", "demorando", "atrasado", "atrasou", "veio gelado", "veio quente", "veio estragado", "cade meu pedido", "cadê meu pedido"];
+  const weakComplaint = ["problema", "errado", "erro", "faltou", "faltando", "veio sem", "nao chegou", "não chegou", "veio frio", "demorou", "demorando", "atrasado", "atrasou", "veio gelado", "veio quente", "veio estragado", "cade meu pedido", "cadê meu pedido"];
   return !includesAny(text, benignProblem) && includesAny(text, weakComplaint);
+}
+
+// v2.9.6 — Cliente reclama que faltou uma informação (geralmente no anúncio):
+// "faltou o endereço né", "cadê o endereço?", "nem colocaram o horário".
+const LOCATION_TERMS = ["endereco", "localizacao", "onde fica", "onde e", "como chegar", "localidade", "local do", "localizacao"];
+const HOURS_TERMS = ["horario", "que horas", "funcionamento"];
+function missingInfoTopic(text) {
+  const t = normalizeText(text);
+  const missingCue = includesAny(t, [
+    "faltou", "falta o", "falta a", "falta colocar", "faltando", "esqueceu", "esqueceram",
+    "nem colocou", "nem colocaram", "nao colocou", "nao colocaram", "sem o endereco", "sem endereco",
+    "nao tem o endereco", "nao tem endereco", "nao informou", "nao informaram", "nao falou", "nao falaram"
+  ]);
+  if (!missingCue) return null;
+  // Problema real de pedido continua sendo reclamação.
+  if (includesAny(t, ["pedido", "entrega", "entregador", "lanche", "comida", "prato", "bebida", "troco", "molho", "talher"])) return null;
+  if (includesAny(t, LOCATION_TERMS)) return "localizacao";
+  if (includesAny(t, HOURS_TERMS)) return "horario";
+  return null;
+}
+
+// v2.9.6 — Cliente irritado por estar falando com robô ("não sou robô pra trocar msg com robô").
+function isBotFrustration(text) {
+  const t = normalizeText(text);
+  if (includesAny(t, ["robux"])) return false;
+  return includesAnyWord(t, ["robo", "robos", "robozinho", "bot", "chatbot", "maquina", "automatico", "automatica", "resposta automatica", "mensagem automatica", "inteligencia artificial"]) ||
+    includesAny(t, ["falar com gente", "falar com uma pessoa", "falar com pessoa", "quero uma pessoa", "pessoa de verdade", "gente de verdade", "ninguem responde", "ninguem atende", "so resposta pronta", "resposta pronta"]);
+}
+
+// v2.9.6 — Crítica/opinião curta sobre a casa ("o dever é da administração", "falta de atenção").
+function isCriticismFeedback(text) {
+  const t = normalizeText(text);
+  return includesAny(t, [
+    "dever e da", "dever da", "obrigacao de", "obrigacao da", "e obrigacao", "administracao", "gerencia", "falta de atencao",
+    "falta de respeito", "descaso", "amador", "amadorismo", "vergonha", "absurdo", "pessimo", "horrivel", "ridiculo", "falta de profissionalismo",
+    "deveria ter colocado", "deveriam ter colocado", "deveria colocar", "deveriam colocar", "tinha que ter", "tinha que colocar"
+  ]);
+}
+
+function fullAddress(knowledge) {
+  const e = knowledge?.empresa || {};
+  return safeText(e.endereco_completo || "", 300) || "Pátio Limeira Shopping";
+}
+
+function locationFacts(knowledge, links, prefix = "") {
+  const base = knowledge?.respostas_base || {};
+  const core = base.localizacao || `Ficamos no Pátio Limeira Shopping: ${fullAddress(knowledge)}.\n\nRota no Google Maps: ${links.maps}`;
+  return prefix ? `${prefix} ${core}` : core;
+}
+
+function lastWasFallback(context = {}) {
+  const lastIntent = safeText(context?.last_intent, 80);
+  const lastTopic = safeText(context?.last_topic, 120);
+  const lastReply = normalizeText(context?.last_bot_reply || "");
+  return lastIntent === "outro" || lastTopic === "fallback" || lastReply.includes("quero te passar a informacao certa");
 }
 
 function whatsappHandoffReason(resolved, text) {
@@ -1083,7 +1141,8 @@ function contextualCtas(resolved, links) {
   if (intent === "avaliacao_nota" && rating === 5) return one("avaliacao_google", "Avaliar no Google", links.review);
 
   // CTA escolhido pela intenção real da conversa, não por um par fixo de botões.
-  if (intent === "localizacao") return one("localizacao", "Como chegar", links.maps);
+  if (intent === "localizacao" || intent === "feedback_critica_local") return one("localizacao", "Como chegar", links.maps);
+  if (["humano_frustracao", "feedback_critica", "outro_repetido"].includes(intent)) return one("whatsapp", "Falar no WhatsApp", links.whatsapp);
   if (intent === "promocao_chopp") return one("localizacao", "Como chegar", links.maps);
   if (intent === "vaga") return one("rh", "Enviar currículo", links.jobs);
   if (["outro", "sem_mensagem", "erro_seguro"].includes(intent)) return one("whatsapp", "Falar no WhatsApp", links.whatsapp);
@@ -1219,6 +1278,54 @@ function resolveIntent(message, knowledge, context = {}) {
     return makeResolution({ facts: base.despedida || "Foi um prazer te atender. Quando quiser, é só chamar.", intent: "despedida", topic: "relacionamento", lead_temperature: "frio", next_action: "encerrar" });
   }
 
+  // v2.9.6 — "Faltou o endereço né véio" (resposta a anúncio): entrega a informação na hora.
+  const missing = missingInfoTopic(text);
+  if (missing === "localizacao") {
+    return makeResolution({ facts: locationFacts(knowledge, links, "Foi mal, faltou mesmo!"), intent: "localizacao", topic: "localizacao", lead_temperature: "quente", next_action: "visita" });
+  }
+  if (missing === "horario") {
+    return makeResolution({ facts: `Foi mal, faltou mesmo! ${base.horario || knowledge?.horarios?.funcionamento || "Funcionamos todos os dias das 11h às 22h."}`, intent: "horario", topic: "horario", lead_temperature: "quente", next_action: "visita" });
+  }
+
+  // v2.9.6 — Cliente não quer falar com robô: assume, sem repetir o fallback, e passa pra equipe.
+  if (isBotFrustration(text)) {
+    const askingIfBot = /\b(e|eh|sao|voce e|vc e|vcs sao|voces sao|isso e|aqui e|to falando com|estou falando com)\s+(um\s+)?(robo|robos|bot|chatbot|maquina|ia)\b/.test(text) && !includesAny(text, ["nao sou", "trocar msg", "trocar mensagem", "nao quero"]);
+    if (askingIfBot) {
+      return makeResolution({
+        facts: "Aqui é o atendimento automático do Sr. Boteco, mas se preferir falar com uma pessoa da equipe, é só tocar no botão abaixo.",
+        intent: "humano_frustracao",
+        topic: "atendimento_humano",
+        needs_human: true,
+        lead_temperature: "morno",
+        next_action: "whatsapp"
+      });
+    }
+    const annoyed = includesAny(text, ["nao sou", "nao quero", "trocar msg", "trocar mensagem", "ninguem", "resposta pronta", "chato", "saco"]);
+    return makeResolution({
+      facts: (annoyed ? "Justo!" : "Claro!") + " Pra você falar direto com uma pessoa da equipe, é só tocar no botão abaixo que a gente te responde por lá.",
+      intent: "humano_frustracao",
+      topic: "atendimento_humano",
+      needs_human: true,
+      lead_temperature: "quente",
+      next_action: "whatsapp"
+    });
+  }
+
+  // v2.9.6 — Crítica curta ("o dever é da administração"): reconhece, sem empurrar cardápio.
+  if (isCriticismFeedback(text) && !isComplaintText(text)) {
+    const afterLocation = ["localizacao"].includes(safeText(context?.last_topic, 120)) || safeText(context?.last_intent, 80) === "localizacao";
+    return makeResolution({
+      facts: afterLocation
+        ? `Tem razão, e valeu pelo toque, vamos ajustar isso. Pra não ficar dúvida: ${fullAddress(knowledge)}. O botão abaixo abre a rota.`
+        : "Tem razão, e valeu pelo toque. Se quiser falar direto com a equipe, é só tocar no botão abaixo.",
+      intent: afterLocation ? "feedback_critica_local" : "feedback_critica",
+      topic: afterLocation ? "localizacao" : "feedback",
+      needs_human: !afterLocation,
+      lead_temperature: "morno",
+      next_action: afterLocation ? "visita" : "whatsapp"
+    });
+  }
+
   // Reclamação/problema com pedido vence "pedido", "entrega" etc.
   // "meu pedido veio errado" não pode virar convite para fazer um novo pedido.
   if (isComplaintText(text)) {
@@ -1309,8 +1416,8 @@ function resolveIntent(message, knowledge, context = {}) {
     return makeResolution({ facts: p?.regra ? facts : facts, intent: "pagamento", topic: "pagamento", lead_temperature: "morno", next_action: "responder" });
   }
 
-  if (includesAny(text, ["onde fica", "localizacao", "localização", "endereco", "endereço", "shopping", "como chegar"])) {
-    return makeResolution({ facts: base.localizacao || `Ficamos no Pátio Limeira Shopping.\n\nRota no Google Maps: ${links.maps}`, intent: "localizacao", topic: "localizacao", lead_temperature: "quente", next_action: "visita" });
+  if (includesAny(text, ["onde fica", "localizacao", "localização", "endereco", "endereço", "shopping", "como chegar", "onde voces ficam", "qual o local", "rua"])) {
+    return makeResolution({ facts: locationFacts(knowledge, links), intent: "localizacao", topic: "localizacao", lead_temperature: "quente", next_action: "visita" });
   }
 
   if (includesAny(text, ["horario", "horário", "que horas abre", "que horas fecha", "funcionamento", "aberto hoje", "fecha que horas", "cozinha fecha", "abre domingo", "abre sabado", "abre sábado", "abre segunda", "abre hoje", "abre amanha", "abre amanhã", "abre que horas", "que dia abre", "que dias abre", "dias que abre", "ate que horas", "até que horas", "esta aberto", "está aberto", "ta aberto", "tá aberto", "aberto agora", "fecha hoje", "abre feriado", "funciona domingo", "funciona feriado"])) {
@@ -1497,6 +1604,18 @@ function resolveIntent(message, knowledge, context = {}) {
 
   if (includesAny(text, ["tchau", "obrigado", "obrigada", "valeu", "ate mais", "até mais"])) {
     return makeResolution({ facts: base.despedida || "Foi um prazer te atender. Quando quiser, é só chamar.", intent: "despedida", topic: "relacionamento", lead_temperature: "frio", next_action: "encerrar" });
+  }
+
+  // v2.9.6 — Nunca repete o mesmo fallback duas vezes seguidas.
+  if (lastWasFallback(context)) {
+    return makeResolution({
+      facts: "Acho que não peguei direito o que você precisa. Pra não te fazer perder tempo, uma pessoa da equipe te responde pelo botão abaixo.",
+      intent: "outro_repetido",
+      topic: "atendimento_humano",
+      needs_human: true,
+      lead_temperature: "morno",
+      next_action: "whatsapp"
+    });
   }
 
   const contextHint = context?.last_topic || context?.last_intent;
@@ -1941,7 +2060,8 @@ export default async function handler(req, res) {
       "vaga", "item_cardapio", "categoria_cardapio", "opcoes_cardapio", "cardapio_categorias", "almoco",
       "promocoes_ativas", "promocoes_escolher", "promocao_burger", "promocao_burger_recusada", "promocao_chopp",
       "avaliacao_solicitar_nota", "avaliacao_nota", "avaliacao_nota_invalida", "avaliacao_feedback",
-      "comentario_sem_texto", "comentario_social", "comentario_generico", "comentario_valor_sem_item", "comentario_reclamacao"
+      "comentario_sem_texto", "comentario_social", "comentario_generico", "comentario_valor_sem_item", "comentario_reclamacao",
+      "humano_frustracao", "feedback_critica", "feedback_critica_local", "outro_repetido"
     ];
     const shouldHumanizeWithAI = message && !deterministicIntents.includes(resolved.intent);
     const aiReply = shouldHumanizeWithAI ? await callOpenAI({ knowledge, customer, context, message, resolved, eventType }) : null;
