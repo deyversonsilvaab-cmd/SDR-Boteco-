@@ -16,7 +16,7 @@ const OPENAI_TIMEOUT_MS = 10000;
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5.6-luna";
 const DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-4o";
-const APP_VERSION = "2.9.6";
+const APP_VERSION = "2.9.7";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -366,14 +366,18 @@ function isGreetingOnly(text) {
   const normalized = normalizeText(text);
   if (!normalized || normalized.split(" ").length > 7) return false;
 
+  // v2.9.7 — "Oii", "Olaaa", "boa tardee" também são saudação.
+  const collapsed = normalized.replace(/([a-z])\1+/g, "$1");
   const exactGreetings = new Set([
-    "oi", "ola", "bom dia", "boa tarde", "boa noite",
+    "oi", "ola", "bom dia", "boa tarde", "boa noite", "oie", "opa", "eai", "e ai", "salve", "hey", "oi oi",
+    "oi bom dia", "oi boa tarde", "oi boa noite", "ola bom dia", "ola boa tarde", "ola boa noite",
+    "boa tarde tudo bom", "bom dia tudo bom", "boa noite tudo bom", "tudo bem", "tudo bom",
     "tem alguem", "alguem ai", "oi tem alguem", "ola tem alguem",
     "oi tudo bem", "ola tudo bem", "oi tudo bom", "ola tudo bom",
     "bom dia tudo bem", "boa tarde tudo bem", "boa noite tudo bem",
     "oi gente", "ola gente", "oi pessoal", "ola pessoal"
   ]);
-  return exactGreetings.has(normalized);
+  return exactGreetings.has(normalized) || exactGreetings.has(collapsed);
 }
 
 function isPlayfulOffTopic(text) {
@@ -1009,6 +1013,33 @@ function lastWasFallback(context = {}) {
   return lastIntent === "outro" || lastTopic === "fallback" || lastReply.includes("quero te passar a informacao certa");
 }
 
+// v2.9.7 — Pergunta de localização em linguagem de DM:
+// "Ond vcs estão localizados", "Aonde é", "fica onde?", "onde é o boteco", "manda o maps"...
+function isLocationQuestion(text) {
+  const t = normalizeText(text)
+    .replace(/\b(ond|aond|adonde|donde|aondi|ondi)\b/g, "onde")
+    .replace(/\baonde\b/g, "onde")
+    .replace(/\b(vcs|vc|voceis|oces)\b/g, "voces");
+  // "onde peço / onde mando currículo / onde vejo o cardápio" pertencem a outras intenções.
+  if (includesAny(t, ["pedir", "pedido", "cardapio", "menu", "curriculo", "vaga", "trabalhar", "pagar", "pagamento", "ifood", "comprar", "compro", "peco", "reserva", "reservar"])) return false;
+  if (/\bonde\b/.test(t)) {
+    const words = t.split(" ").filter(Boolean);
+    if (words.length <= 3) return true; // "onde?", "aonde é", "fica onde", "onde fica"
+    if (includesAny(t, ["fica", "ficam", "estao", "esta", "localiza", "voces", "boteco", "restaurante", "bar", "loja", "casa", "endereco", "shopping", "e o", "e ai", "e isso", "e esse", "e essa"])) return true;
+  }
+  return includesAny(t, [
+    "localizado", "localizados", "localizada", "localizacao", "localizam", "endereco", "enderco", "endereso",
+    "como chegar", "como chego", "como faco pra chegar", "como faco para chegar", "chegar ai", "chegar la", "chegar ate voces",
+    "google maps", "maps", "waze", "rota", "ponto de referencia", "qual rua", "que rua", "qual a rua", "qual bairro", "que bairro",
+    "qual cidade", "que cidade", "qual shopping", "que shopping", "dentro do shopping", "no shopping", "patio limeira",
+    "perto de onde", "fica perto", "manda a localizacao", "manda o local", "qual o local", "sao de limeira", "ficam em limeira"
+  ]);
+}
+
+function isParkingQuestion(text) {
+  return includesAny(normalizeText(text), ["estacionamento", "estacionar", "onde parar o carro", "vaga pra carro", "vaga para carro", "tem vaga de carro", "manobrista", "valet"]);
+}
+
 function whatsappHandoffReason(resolved, text) {
   if (resolved.intent === "vaga") return null;
   if (isComplaintText(text)) return "reclamacao";
@@ -1141,6 +1172,7 @@ function contextualCtas(resolved, links) {
   if (intent === "avaliacao_nota" && rating === 5) return one("avaliacao_google", "Avaliar no Google", links.review);
 
   // CTA escolhido pela intenção real da conversa, não por um par fixo de botões.
+  if (intent === "localizacao_estacionamento") return many({ type: "localizacao", label: "Como chegar", url: links.maps }, { type: "whatsapp", label: "Falar no WhatsApp", url: links.whatsapp });
   if (intent === "localizacao" || intent === "feedback_critica_local") return one("localizacao", "Como chegar", links.maps);
   if (["humano_frustracao", "feedback_critica", "outro_repetido"].includes(intent)) return one("whatsapp", "Falar no WhatsApp", links.whatsapp);
   if (intent === "promocao_chopp") return one("localizacao", "Como chegar", links.maps);
@@ -1363,6 +1395,25 @@ function resolveIntent(message, knowledge, context = {}) {
       lead_temperature: "morno",
       next_action: "whatsapp_vagas"
     });
+  }
+
+  // v2.9.7 — Estacionamento: endereço + equipe confirma (não há regra validada na base).
+  if (isParkingQuestion(text)) {
+    return makeResolution({
+      facts: `Ficamos dentro do Pátio Limeira Shopping: ${fullAddress(knowledge).replace(/\s*\(Pátio Limeira Shopping\)$/, "")}. Detalhes de estacionamento eu não tenho confirmados aqui, então a equipe te confirma pelo botão abaixo.`,
+      intent: "localizacao_estacionamento",
+      topic: "localizacao",
+      needs_human: true,
+      lead_temperature: "quente",
+      next_action: "visita"
+    });
+  }
+
+  // v2.9.7 — Localização em qualquer formato (com ou sem saudação junto).
+  if (isLocationQuestion(text)) {
+    const wantsHours = includesAny(text, ["horario", "que horas", "abre", "fecha", "funcionamento", "aberto"]);
+    const hours = base.horario || knowledge?.horarios?.funcionamento || "Funcionamos todos os dias das 11h às 22h.";
+    return makeResolution({ facts: wantsHours ? `${locationFacts(knowledge, links)}\n\n${hours}` : locationFacts(knowledge, links), intent: "localizacao", topic: "localizacao", lead_temperature: "quente", next_action: "visita" });
   }
 
   // O cardápio de almoço tem preços próprios e janela própria. Se a pessoa pedir
@@ -2061,7 +2112,7 @@ export default async function handler(req, res) {
       "promocoes_ativas", "promocoes_escolher", "promocao_burger", "promocao_burger_recusada", "promocao_chopp",
       "avaliacao_solicitar_nota", "avaliacao_nota", "avaliacao_nota_invalida", "avaliacao_feedback",
       "comentario_sem_texto", "comentario_social", "comentario_generico", "comentario_valor_sem_item", "comentario_reclamacao",
-      "humano_frustracao", "feedback_critica", "feedback_critica_local", "outro_repetido"
+      "humano_frustracao", "feedback_critica", "feedback_critica_local", "outro_repetido", "localizacao_estacionamento"
     ];
     const shouldHumanizeWithAI = message && !deterministicIntents.includes(resolved.intent);
     const aiReply = shouldHumanizeWithAI ? await callOpenAI({ knowledge, customer, context, message, resolved, eventType }) : null;
