@@ -1,4 +1,4 @@
-// v2.9.9 — Endereço faltando no anúncio, frustração com robô, crítica e anti-repetição.
+// v2.9.10 — Endereço faltando no anúncio, frustração com robô, crítica e anti-repetição.
 import handler from "./api/manychat.js";
 
 let failed = 0;
