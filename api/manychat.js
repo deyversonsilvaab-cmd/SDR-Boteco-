@@ -16,7 +16,7 @@ const OPENAI_TIMEOUT_MS = 10000;
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5.6-luna";
 const DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-4o";
-const APP_VERSION = "2.9.7";
+const APP_VERSION = "2.9.8";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -1040,6 +1040,20 @@ function isParkingQuestion(text) {
   return includesAny(normalizeText(text), ["estacionamento", "estacionar", "onde parar o carro", "vaga pra carro", "vaga para carro", "tem vaga de carro", "manobrista", "valet"]);
 }
 
+// v2.9.8 — Marmita / comida pra levar (resposta oficial do Michel).
+function isMarmitaQuestion(text) {
+  const t = normalizeText(text).replace(/([a-z])\1{2,}/g, "$1");
+  return includesAny(t, [
+    "marmita", "marmitas", "marmitex", "marmitinha", "quentinha", "quentinhas", "quentinha", "prato feito pra levar",
+    "comida pra levar", "comida para levar", "pra viagem", "para viagem", "embalagem pra levar", "vende pra levar",
+    "vendem pra levar", "fazem pra levar", "faz pra levar" 
+  ]);
+}
+
+function isBalcaoQuestion(text) {
+  return includesAny(normalizeText(text), ["retirar no balcao", "retirada no balcao", "pegar no balcao", "buscar no balcao", "retirar no local", "retirar ai", "buscar ai", "pegar ai", "passar ai pra pegar", "passar pra buscar"]);
+}
+
 function whatsappHandoffReason(resolved, text) {
   if (resolved.intent === "vaga") return null;
   if (isComplaintText(text)) return "reclamacao";
@@ -1141,6 +1155,12 @@ function polishInstagramButtonReply(text, resolved) {
   if (intent === "pedido") {
     return "Bora fazer seu pedido? Pelo botão abaixo você escolhe retirada no local ou entrega.";
   }
+  if (intent === "marmita") {
+    return "Fazemos sim! Você pode pedir com entrega pelo iFood ou pelo 99Food, ou fazer o pedido no nosso cardápio digital, finalizar e retirar no nosso balcão, que a gente deixa pronto. É só escolher nos botões abaixo.";
+  }
+  if (intent === "retirada_balcao") {
+    return "Pode sim! Faz o pedido no nosso cardápio digital, finaliza e retira no nosso balcão, que a gente deixa pronto. Se preferir entrega, tem iFood e 99Food nos botões abaixo.";
+  }
   if (intent === "delivery") {
     return "Para pedir com entrega, escolha a opção que preferir nos botões abaixo: pedido direto, iFood ou 99Food.";
   }
@@ -1172,6 +1192,13 @@ function contextualCtas(resolved, links) {
   if (intent === "avaliacao_nota" && rating === 5) return one("avaliacao_google", "Avaliar no Google", links.review);
 
   // CTA escolhido pela intenção real da conversa, não por um par fixo de botões.
+  if (intent === "marmita" || intent === "retirada_balcao") {
+    return many(
+      { type: "pedido", label: "Pedir e retirar", url: links.menu },
+      { type: "ifood", label: "iFood", url: links.ifood },
+      { type: "99food", label: "99Food", url: links.food99 }
+    );
+  }
   if (intent === "localizacao_estacionamento") return many({ type: "localizacao", label: "Como chegar", url: links.maps }, { type: "whatsapp", label: "Falar no WhatsApp", url: links.whatsapp });
   if (intent === "localizacao" || intent === "feedback_critica_local") return one("localizacao", "Como chegar", links.maps);
   if (["humano_frustracao", "feedback_critica", "outro_repetido"].includes(intent)) return one("whatsapp", "Falar no WhatsApp", links.whatsapp);
@@ -1394,6 +1421,27 @@ function resolveIntent(message, knowledge, context = {}) {
       needs_human: true,
       lead_temperature: "morno",
       next_action: "whatsapp_vagas"
+    });
+  }
+
+  // v2.9.8 — "Vocês fazem marmitas?" → sim: iFood, 99Food ou cardápio digital com retirada no balcão.
+  if (isMarmitaQuestion(text)) {
+    return makeResolution({
+      facts: base.marmita || `Fazemos sim! Você pode pedir com entrega pelo iFood ou pelo 99Food, ou fazer o pedido no nosso cardápio digital, finalizar e retirar no nosso balcão, que a gente deixa pronto.\n\nCardápio e pedido para retirada no balcão: ${links.menu}\niFood: ${links.ifood}\n99Food: ${links.food99}`,
+      intent: "marmita",
+      topic: "pedido",
+      lead_temperature: "quente",
+      next_action: "fazer_pedido"
+    });
+  }
+
+  if (isBalcaoQuestion(text)) {
+    return makeResolution({
+      facts: `Pode sim! Faz o pedido no nosso cardápio digital, finaliza e retira no nosso balcão, que a gente deixa pronto.\n\nCardápio e pedido para retirada: ${links.menu}\n\nSe preferir entrega, tem iFood (${links.ifood}) e 99Food (${links.food99}).`,
+      intent: "retirada_balcao",
+      topic: "pedido",
+      lead_temperature: "quente",
+      next_action: "fazer_pedido"
     });
   }
 
@@ -2112,7 +2160,7 @@ export default async function handler(req, res) {
       "promocoes_ativas", "promocoes_escolher", "promocao_burger", "promocao_burger_recusada", "promocao_chopp",
       "avaliacao_solicitar_nota", "avaliacao_nota", "avaliacao_nota_invalida", "avaliacao_feedback",
       "comentario_sem_texto", "comentario_social", "comentario_generico", "comentario_valor_sem_item", "comentario_reclamacao",
-      "humano_frustracao", "feedback_critica", "feedback_critica_local", "outro_repetido", "localizacao_estacionamento"
+      "humano_frustracao", "feedback_critica", "feedback_critica_local", "outro_repetido", "localizacao_estacionamento", "marmita", "retirada_balcao"
     ];
     const shouldHumanizeWithAI = message && !deterministicIntents.includes(resolved.intent);
     const aiReply = shouldHumanizeWithAI ? await callOpenAI({ knowledge, customer, context, message, resolved, eventType }) : null;
