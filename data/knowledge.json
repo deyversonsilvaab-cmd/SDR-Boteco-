@@ -30,6 +30,14 @@
     "google_maps": "https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8",
     "google_avaliacao": "https://search.google.com/local/writereview?placeid=ChIJRVEHZGqByJQRVUe6ZO8Yqz8"
   },
+  "estacionamento": {
+    "fonte": "Tabela oficial do estacionamento do Pátio Limeira Shopping enviada pelo Michel em 24/09/2026.",
+    "carros": { "ate_2h": "R$ 12,00", "hora_adicional": "R$ 4,00", "pernoite": "R$ 60,00" },
+    "motos": { "ate_2h": "R$ 10,00", "hora_adicional": "R$ 4,00", "pernoite": "R$ 60,00" },
+    "perda_ticket": "R$ 40,00",
+    "funcionamento": "Segunda a sexta das 5h às 0h; sábado das 10h às 0h; domingos e feriados das 11h30 às 0h.",
+    "aviso": "As tarifas podem sofrer alterações sem notificação prévia."
+  },
   "pedidos": {
     "orientacao": "Quando o cliente pedir cardápio, preço, comida, pedido, retirada ou entrega, consultar primeiro o catálogo interno. Se o item estiver cadastrado, responder com o nome, valor e descrição validados. Se a pessoa pedir uma categoria, listar as opções e valores dessa categoria. Só enviar para confirmação humana quando o item realmente não estiver na base ou exigir confirmação operacional. Link oficial do cardápio/pedido: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0",
     "retirada": "Use o link de cardápio/pedido e selecione retirada no local quando a opção estiver disponível no checkout.",
