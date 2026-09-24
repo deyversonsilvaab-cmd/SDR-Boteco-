@@ -226,12 +226,12 @@ await test("guardrail da promoção rejeita dia/horário inventado pela IA", asy
     global.fetch = ORIGINAL_FETCH;
   }
 });
-await test("GET health retorna 2.9.8 e os dois canais", async () => {
+await test("GET health retorna 2.9.9 e os dois canais", async () => {
   const req = makeReq({}, "GET");
   const res = makeRes();
   await handler(req, res);
   assert.equal(res.statusCode, 200);
-  assert.equal(res.payload.version, "2.9.8");
+  assert.equal(res.payload.version, "2.9.9");
   assert.deepEqual(res.payload.channels, ["instagram", "whatsapp"]);
 });
 

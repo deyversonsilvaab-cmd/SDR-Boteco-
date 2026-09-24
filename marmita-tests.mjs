@@ -1,4 +1,4 @@
-// v2.9.8 — Marmita / retirada no balcão.
+// v2.9.9 — Marmita / retirada no balcão.
 import handler from "./api/manychat.js";
 
 let failed = 0;

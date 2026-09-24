@@ -1,4 +1,4 @@
-// v2.9.8 — Formatos de pergunta de endereço vistos nas DMs + saudações com letras repetidas.
+// v2.9.9 — Formatos de pergunta de endereço vistos nas DMs + saudações com letras repetidas.
 import handler from "./api/manychat.js";
 
 let failed = 0;
@@ -28,8 +28,15 @@ for (const phrase of locationPhrases) {
 let r = await call("onde fica e que horas abre");
 check("localização + horário na mesma mensagem", r.intent === "localizacao" && r.reply.includes("Carlos Gomes") && r.reply.includes("11h"), r);
 
-r = await call("tem estacionamento?");
-check("estacionamento: endereço + equipe confirma, sem inventar", r.intent === "localizacao_estacionamento" && r.reply.includes("Carlos Gomes") && r.ctas.some((c) => c.type === "whatsapp") && r.ctas.some((c) => c.type === "localizacao"), r);
+// v2.9.9 — Estacionamento com a tabela oficial do shopping.
+for (const phrase of ["tem estacionamento?", "estacionamento é pago?", "onde deixo o carro", "tem onde estacionar?", "quanto é o estacionamento?"]) {
+  r = await call(phrase);
+  check(`estacionamento: "${phrase}"`, r.intent === "localizacao_estacionamento" && r.reply.includes("R$ 12,00") && r.reply.includes("R$ 10,00") && r.reply.includes("R$ 40,00") && r.reply.includes("11h30") && /altera[cç][oõ]es/.test(r.reply) && r.cta_type === "localizacao", r);
+}
+r = await call("e pra moto?", { last_topic: "estacionamento", last_intent: "localizacao_estacionamento" });
+check("estacionamento: follow-up de moto usa contexto", r.intent === "localizacao_estacionamento" && r.reply.includes("Motos"), r);
+r = await call("quanto custa?", { last_topic: "estacionamento", last_intent: "localizacao_estacionamento" });
+check("estacionamento: follow-up de preço usa contexto", r.intent === "localizacao_estacionamento", r);
 
 for (const [phrase, intent] of [["onde posso fazer pedido", "pedido"], ["onde mando curriculo", "vaga"], ["onde vejo o cardapio", "cardapio"]]) {
   r = await call(phrase);
