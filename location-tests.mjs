@@ -1,4 +1,4 @@
-// v2.9.7 — Formatos de pergunta de endereço vistos nas DMs + saudações com letras repetidas.
+// v2.9.8 — Formatos de pergunta de endereço vistos nas DMs + saudações com letras repetidas.
 import handler from "./api/manychat.js";
 
 let failed = 0;
