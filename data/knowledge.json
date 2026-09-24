@@ -36,7 +36,15 @@
     "motos": { "ate_2h": "R$ 10,00", "hora_adicional": "R$ 4,00", "pernoite": "R$ 60,00" },
     "perda_ticket": "R$ 40,00",
     "funcionamento": "Segunda a sexta das 5h às 0h; sábado das 10h às 0h; domingos e feriados das 11h30 às 0h.",
-    "aviso": "As tarifas podem sofrer alterações sem notificação prévia."
+    "aviso": "As tarifas podem sofrer alterações sem notificação prévia.",
+    "cortesia_sr_boteco": {
+      "fonte": "Arte oficial 'Estacionamento Grátis' enviada pelo Michel em 24/09/2026.",
+      "dias": "segunda a sexta",
+      "horario": "das 11h às 14h",
+      "condicao": "consumindo no Sr. Boteco, conforme o regulamento",
+      "chamada": "Seu estacionamento é por nossa conta!",
+      "regulamento": "Consulte o regulamento com a nossa equipe."
+    }
   },
   "pedidos": {
     "orientacao": "Quando o cliente pedir cardápio, preço, comida, pedido, retirada ou entrega, consultar primeiro o catálogo interno. Se o item estiver cadastrado, responder com o nome, valor e descrição validados. Se a pessoa pedir uma categoria, listar as opções e valores dessa categoria. Só enviar para confirmação humana quando o item realmente não estiver na base ou exigir confirmação operacional. Link oficial do cardápio/pedido: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0",
