@@ -1,3 +1,12 @@
+# v2.10.1 — Revisão de funil e captação WhatsApp
+
+- Reserva sem promessa automática; equipe confirma.
+- Bebidas/adicionais não recebem CTA artificial de reserva.
+- Happy hour com contexto, sem falso positivo de `happy birthday`.
+- Horário ganha próximo passo.
+- Captação WhatsApp documentada com Tag/Campo no ManyChat.
+- Versões internas alinhadas e manifesto regenerado.
+
 ## 2.9.2 — IA integrada / Responses API
 
 - Migração da camada de humanização para `POST /v1/responses`.

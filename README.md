@@ -1,6 +1,17 @@
 # SDR Boteco — ManyChat + Instagram + WhatsApp + Vercel
 
-Versão 2.9.2 — IA integrada atualizada para OpenAI Responses API com `gpt-5.6-luna` como modelo padrão, fallback seguro para `gpt-4o`, avaliação 1–5, CTAs limpos no Instagram, Cardápio Fitness, promoções, Pratos do Dia e catálogo completo.
+Versão 2.10.1 — funil revisado com próximo passo comercial, visita confirmada, marmita/retirada, captação de interesse no WhatsApp, CTAs de reserva seguros e IA integrada via OpenAI Responses API.
+
+
+## Funil revisado — v2.10.1
+
+- Mantém as correções da v2.10.0 para visita confirmada, marmita, happy hour e frustração com robô.
+- Remove a promessa `te separo uma mesa`; reserva continua sujeita à confirmação da equipe.
+- Reserva é oferecida apenas para itens de comida compatíveis; bebidas/adicionais recebem Cardápio + Como chegar.
+- `happy birthday` não é mais confundido com happy hour.
+- Horário também oferece próximo passo com Como chegar + Promoções no Whats.
+- Para transformar o interesse no WhatsApp em lista segmentável, usar a automação descrita em `PROMPT_MANYCHAT_CAPTACAO_WHATS_V2.10.1.md`.
+- Testes consolidados: 250 PASS / 0 FAIL.
 
 
 ## IA integrada — v2.9.2

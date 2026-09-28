@@ -70,12 +70,12 @@ await test("localização usa novo Google Maps e não exibe URL no texto", async
   assert(!String(p.reply).includes(WA), p.reply);
 });
 
-await test("promoção de chopp usa CTA Como chegar", async () => {
+await test("promoção de chopp usa Reservar mesa + Como chegar + opt-in (v2.10.1)", async () => {
   const p = await ask("Promoção de chopp");
   assert(p.intent === "promocao_chopp", p.intent);
-  assert(p.cta_type === "localizacao", p.cta_type);
-  assert(p.cta_label === "Como chegar", p.cta_label);
-  assert(p.cta_url === MAPS, p.cta_url);
+  assert(p.cta_1_label === "Reservar mesa", p.cta_1_label);
+  assert(p.cta_2_label === "Como chegar" && p.cta_2_url === MAPS, p.cta_2_label);
+  assert(p.cta_3_type === "whatsapp_optin", p.cta_3_type);
   assert(String(p.reply).includes("R$ 3,99"), p.reply);
   assert(!String(p.reply).includes(MAPS), p.reply);
 });
@@ -117,11 +117,12 @@ await test("vaga usa CTA RH e remove link do currículo do texto", async () => {
   assert(!String(p.reply).includes(RH), p.reply);
 });
 
-await test("horário não força CTA", async () => {
+await test("horário oferece Como chegar + opt-in como próximo passo", async () => {
   const p = await ask("que horas abre?");
   assert(p.intent === "horario", p.intent);
-  assert(p.cta_count === 0, `cta_count=${p.cta_count}`);
-  assert(p.cta_type === "", p.cta_type);
+  assert(p.cta_count === 2, `cta_count=${p.cta_count}`);
+  assert(p.cta_1_type === "localizacao" && p.cta_1_label === "Como chegar", JSON.stringify(p.ctas));
+  assert(p.cta_2_type === "whatsapp_optin", JSON.stringify(p.ctas));
 });
 
 await test("WhatsApp continua com link de rota no texto e sem CTA Instagram", async () => {
@@ -138,10 +139,10 @@ await test("comentário do Instagram preserva lógica sem CTA contextual", async
   assert(String(p.reply).includes(MENU), p.reply);
 });
 
-await test("Dynamic Block usa somente botão contextual de localização", async () => {
+await test("Dynamic Block de localização: Como chegar + opt-in WhatsApp (v2.10.1)", async () => {
   const p = await ask("Endereço", { response_mode:"dynamic_block" });
   const buttons = (p?.content?.messages || []).flatMap((m) => Array.isArray(m?.buttons) ? m.buttons : []);
-  assert(buttons.length === 1, JSON.stringify(buttons));
+  assert(buttons.length === 2 && buttons[1]?.caption === "Promoções no Whats", JSON.stringify(buttons));
   assert(buttons[0]?.caption === "Como chegar", JSON.stringify(buttons));
   assert(buttons[0]?.url === MAPS, JSON.stringify(buttons));
 });
@@ -163,9 +164,9 @@ await test("Dynamic Block de delivery usa Pedido direto, iFood e 99Food", async 
   assert(buttons[2]?.url === FOOD99, JSON.stringify(buttons));
 });
 
-await test("payload informa versão 2.9.10 para diagnóstico", async () => {
+await test("payload informa versão 2.10.1 para diagnóstico", async () => {
   const p = await ask("Oi");
-  assert(p.app_version === "2.9.10", p.app_version);
+  assert(p.app_version === "2.10.1", p.app_version);
 });
 
 if (failed) {

@@ -16,7 +16,7 @@ const OPENAI_TIMEOUT_MS = 10000;
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5.6-luna";
 const DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-4o";
-const APP_VERSION = "2.9.10";
+const APP_VERSION = "2.10.1";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -350,7 +350,10 @@ function getLinks(knowledge) {
     food99: knowledge?.links?.food99 || DEFAULT_99FOOD_LINK,
     jobs: knowledge?.links?.whatsapp_vagas || "https://wa.me/5517996022567",
     maps: knowledge?.links?.google_maps || knowledge?.links?.maps || DEFAULT_MAPS_LINK,
-    review: knowledge?.links?.google_avaliacao || knowledge?.links?.google_review || DEFAULT_GOOGLE_REVIEW_LINK
+    review: knowledge?.links?.google_avaliacao || knowledge?.links?.google_review || DEFAULT_GOOGLE_REVIEW_LINK,
+    // v2.10.1 — links com mensagem pronta de interesse. O ManyChat deve registrar tag/campo quando o inbound chegar.
+    whatsappOptin: knowledge?.links?.whatsapp_optin || "https://wa.me/5519997858351?text=Quero%20receber%20o%20card%C3%A1pio%20e%20as%20promo%C3%A7%C3%B5es%20do%20Sr.%20Boteco%20no%20WhatsApp",
+    whatsappReserva: knowledge?.links?.whatsapp_reserva || "https://wa.me/5519997858351?text=Ol%C3%A1!%20Quero%20reservar%20uma%20mesa%20no%20Sr.%20Boteco"
   };
 }
 
@@ -412,13 +415,32 @@ function burgerPromotionFacts(knowledge, links) {
   return linhas.join("\n");
 }
 
+// v2.10.0 — "vou fazer uma visita", "logo passo aí", "sábado tô aí", "vou conhecer".
+function isVisitIntent(text) {
+  const t = normalizeText(text);
+  if (includesAny(t, ["onde fica", "endereco", "qual cidade", "como chego", "como chegar", "reserva", "reservar", "estacionamento", "cardapio", "quanto", "qual ", "que horas", "horario", "aberto", "abre", "funciona", "tem "])) return false;
+  return /\b(vou|vamos|vo|irei|iremos|logo|amanha|sabado|domingo|sexta|hoje)\b.*\b(visita|visitar|passar|passo|ai|conhecer|colar|aparecer|apareco|ir la|experimentar|provar|saborear|saberear)\b/.test(t)
+    || /\b(to|tou|estou|tamo|estamos) (indo|chegando)\b/.test(t);
+}
+
+function isHappyHourPromotionQuery(text) {
+  const t = normalizeText(text);
+  if (!t) return false;
+  // Evita falso positivo como "happy birthday" / aniversário.
+  if (includesAny(t, ["happy birthday", "happy aniversario", "happy aniversário"])) return false;
+  if (includesAny(t, ["happy hour", "happyhour", "happy hr"])) return true;
+  if (t === "happy" || t === "rapi") return true;
+  const cueBefore = /\b(parou|acabou|terminou|tem|rola|vai ter|ainda tem|continua|ta tendo|esta tendo|hoje tem)\b.*\b(happy|rapi)\b/.test(t);
+  const cueAfter = /\b(happy|rapi)\b.*\b(parou|acabou|terminou|hoje|agora|ainda|continua|rola|tem)\b/.test(t);
+  return cueBefore || cueAfter;
+}
+
 function isChoppPromotionQuery(text, knowledge) {
   const normalized = applyMenuCorrections(text, knowledge).corrected || normalizeText(text);
   const hasChopp = includesAny(normalized, [
     "chopp", "chope", "chopinho", "choppinho", "chopp brahma", "chopp ashby", "ashby", "brahma"
   ]);
-  const hasHappyHour = includesAny(normalized, ["happy hour", "happyhour"]);
-  return hasChopp || hasHappyHour;
+  return hasChopp || isHappyHourPromotionQuery(normalized);
 }
 
 function isGenericPromotionQuery(text, knowledge) {
@@ -1126,7 +1148,7 @@ function stripSalesLinksFromFacts(facts, links) {
 function stripButtonLinks(text, links) {
   // No Instagram DM, estes destinos são apresentados como CTA contextual nativo.
   // iFood/99Food continuam no texto porque não dependem desse botão contextual.
-  const urls = [links?.menu, links?.whatsapp, links?.maps, links?.jobs, links?.ifood, links?.food99, links?.review].filter(Boolean);
+  const urls = [links?.menu, links?.whatsapp, links?.whatsappOptin, links?.whatsappReserva, links?.maps, links?.jobs, links?.ifood, links?.food99, links?.review].filter(Boolean);
   if (!urls.length) return String(text || "");
   let out = String(text || "");
   const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -1204,6 +1226,11 @@ function polishInstagramButtonReply(text, resolved) {
   return out;
 }
 
+function isLowCommitmentMenuTopic(topic) {
+  const t = safeText(topic, 120);
+  return /^(bebida_|cerveja_|chopp_|dose_|suco_|caipirinha_|adicional_|sobremesa_)/.test(t);
+}
+
 function contextualCtas(resolved, links) {
   const intent = safeText(resolved?.intent, 80);
   const nextAction = safeText(resolved?.next_action, 80);
@@ -1224,9 +1251,11 @@ function contextualCtas(resolved, links) {
     );
   }
   if (intent === "localizacao_estacionamento") return many({ type: "whatsapp", label: "Consultar regulamento", url: links.whatsapp }, { type: "localizacao", label: "Como chegar", url: links.maps });
-  if (intent === "localizacao" || intent === "feedback_critica_local") return one("localizacao", "Como chegar", links.maps);
+  if (intent === "visita_confirmada") return many({ type: "localizacao", label: "Como chegar", url: links.maps }, { type: "whatsapp_optin", label: "Promoções no Whats", url: links.whatsappOptin });
+  if (intent === "localizacao") return many({ type: "localizacao", label: "Como chegar", url: links.maps }, { type: "whatsapp_optin", label: "Promoções no Whats", url: links.whatsappOptin });
+  if (intent === "feedback_critica_local") return one("localizacao", "Como chegar", links.maps);
   if (["humano_frustracao", "feedback_critica", "outro_repetido"].includes(intent)) return one("whatsapp", "Falar no WhatsApp", links.whatsapp);
-  if (intent === "promocao_chopp") return one("localizacao", "Como chegar", links.maps);
+  if (intent === "promocao_chopp") return many({ type: "reserva", label: "Reservar mesa", url: links.whatsappReserva }, { type: "localizacao", label: "Como chegar", url: links.maps }, { type: "whatsapp_optin", label: "Promoções no Whats", url: links.whatsappOptin });
   if (intent === "vaga") return one("rh", "Enviar currículo", links.jobs);
   if (["outro", "sem_mensagem", "erro_seguro"].includes(intent)) return one("whatsapp", "Falar no WhatsApp", links.whatsapp);
   if (intent === "humano" || intent === "reserva" || nextAction === "whatsapp") return one("whatsapp", "Falar no WhatsApp", links.whatsapp);
@@ -1238,6 +1267,28 @@ function contextualCtas(resolved, links) {
     );
   }
   if (intent === "pedido") return one("pedido", "Fazer pedido", links.menu);
+  if (intent === "horario") return many(
+    { type: "localizacao", label: "Como chegar", url: links.maps },
+    { type: "whatsapp_optin", label: "Promoções no Whats", url: links.whatsappOptin }
+  );
+  // Prato do almoço: foco em pedido/retirada, não em reserva.
+  if (intent === "item_cardapio" && String(resolved?.topic || "").startsWith("almoco_")) {
+    return many({ type: "cardapio", label: "Cardápio", url: links.menu }, { type: "localizacao", label: "Como chegar", url: links.maps });
+  }
+  // Bebidas, adicionais e sobremesas recebem próximo passo sem empurrar reserva de mesa.
+  if (intent === "item_cardapio" && isLowCommitmentMenuTopic(resolved?.topic)) {
+    return many(
+      { type: "cardapio", label: "Cardápio", url: links.menu },
+      { type: "localizacao", label: "Como chegar", url: links.maps }
+    );
+  }
+  if (intent === "item_cardapio" && nextAction !== "whatsapp") {
+    return many(
+      { type: "reserva", label: "Reservar mesa", url: links.whatsappReserva },
+      { type: "cardapio", label: "Cardápio", url: links.menu },
+      { type: "localizacao", label: "Como chegar", url: links.maps }
+    );
+  }
   if ([
     "cardapio", "item_cardapio", "categoria_cardapio", "opcoes_cardapio",
     "cardapio_categorias", "almoco", "promocao_burger", "feijoada", "item_inativo"
@@ -1359,6 +1410,17 @@ function resolveIntent(message, knowledge, context = {}) {
   // (antes "valeu" virava "Del Valle").
   if (isFarewellOnly(text)) {
     return makeResolution({ facts: base.despedida || "Foi um prazer te atender. Quando quiser, é só chamar.", intent: "despedida", topic: "relacionamento", lead_temperature: "frio", next_action: "encerrar" });
+  }
+
+  // v2.10.0 — Cliente avisando que vai visitar: acolhe, reforça endereço e convida pro WhatsApp.
+  if (isVisitIntent(text)) {
+    return makeResolution({
+      facts: `Oba, vai ser um prazer te receber! 🍻 ${locationFacts(knowledge, links)}\n\nQuer receber o cardápio do almoço e as promoções do fim de semana no WhatsApp? É só escolher um dos botões abaixo.`,
+      intent: "visita_confirmada",
+      topic: "visita",
+      lead_temperature: "quente",
+      next_action: "visita"
+    });
   }
 
   // v2.9.6 — "Faltou o endereço né véio" (resposta a anúncio): entrega a informação na hora.
@@ -2193,7 +2255,7 @@ export default async function handler(req, res) {
     let finalReply = aiReply || resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;
     const allowedUrls = handoff
       ? []
-      : [links.menu, links.whatsapp, links.ifood, links.food99, links.jobs, links.maps, links.review, knowledge?.links?.site_oficial].filter(Boolean);
+      : [links.menu, links.whatsapp, links.whatsappOptin, links.whatsappReserva, links.ifood, links.food99, links.jobs, links.maps, links.review, knowledge?.links?.site_oficial].filter(Boolean);
     if (
       containsInventedPrice(finalReply, allowedPrices) ||
       containsUnapprovedUrl(finalReply, allowedUrls) ||
@@ -2211,6 +2273,10 @@ export default async function handler(req, res) {
     if (!isWhatsapp(customer) && !commentEvent) {
       finalReply = stripButtonLinks(finalReply, links);
       finalReply = polishInstagramButtonReply(finalReply, resolved);
+      // v2.10.1 — depois do preço, sempre um próximo passo sem prometer reserva automática.
+      if (ctas.some((c) => c.type === "reserva") && resolved.intent === "item_cardapio" && !/reservar mesa/i.test(finalReply)) {
+        finalReply = `${finalReply}\n\nBora vir provar? Se quiser reservar uma mesa, toque em "Reservar mesa" e a equipe confirma com você.`;
+      }
     }
 
     finalReply = ensurePersonalized(safeText(finalReply, 2600), customer);

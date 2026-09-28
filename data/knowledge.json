@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "versao": "2.9.2",
-    "revisado_em": "2026-09-20",
+    "versao": "2.10.1",
+    "revisado_em": "2026-09-28",
     "politica": "Base fechada: preço, composição, peso e item do cardápio só podem ser afirmados quando estiverem registrados nesta base.",
     "fonte_cardapio": "Cardápio Sr boteco atual.pdf (9 páginas) enviado em 16/09/2026.",
     "fonte_cardapio_digital": "https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0",
@@ -28,12 +28,22 @@
     "whatsapp": "https://wa.me/5519997858351",
     "whatsapp_vagas": "https://wa.me/5517996022567",
     "google_maps": "https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8",
-    "google_avaliacao": "https://search.google.com/local/writereview?placeid=ChIJRVEHZGqByJQRVUe6ZO8Yqz8"
+    "google_avaliacao": "https://search.google.com/local/writereview?placeid=ChIJRVEHZGqByJQRVUe6ZO8Yqz8",
+    "whatsapp_optin": "https://wa.me/5519997858351?text=Quero%20receber%20o%20card%C3%A1pio%20e%20as%20promo%C3%A7%C3%B5es%20do%20Sr.%20Boteco%20no%20WhatsApp",
+    "whatsapp_reserva": "https://wa.me/5519997858351?text=Ol%C3%A1!%20Quero%20reservar%20uma%20mesa%20no%20Sr.%20Boteco"
   },
   "estacionamento": {
     "fonte": "Tabela oficial do estacionamento do Pátio Limeira Shopping enviada pelo Michel em 24/09/2026.",
-    "carros": { "ate_2h": "R$ 12,00", "hora_adicional": "R$ 4,00", "pernoite": "R$ 60,00" },
-    "motos": { "ate_2h": "R$ 10,00", "hora_adicional": "R$ 4,00", "pernoite": "R$ 60,00" },
+    "carros": {
+      "ate_2h": "R$ 12,00",
+      "hora_adicional": "R$ 4,00",
+      "pernoite": "R$ 60,00"
+    },
+    "motos": {
+      "ate_2h": "R$ 10,00",
+      "hora_adicional": "R$ 4,00",
+      "pernoite": "R$ 60,00"
+    },
     "perda_ticket": "R$ 40,00",
     "funcionamento": "Segunda a sexta das 5h às 0h; sábado das 10h às 0h; domingos e feriados das 11h30 às 0h.",
     "aviso": "As tarifas podem sofrer alterações sem notificação prévia.",

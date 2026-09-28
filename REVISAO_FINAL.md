@@ -1,14 +1,23 @@
-# Revisão final de produção — SDR Boteco v2.9.2
+# Revisão final — SDR Boteco v2.10.1
 
-- Catálogo preservado: 141 itens / 17 categorias.
-- Fitness, Pratos do Dia, Bisteca, promoções, comentários, WhatsApp/handoff e guardrails preservados.
-- Avaliação 1–5 preservada; nota 5 continua gerando CTA Avaliar no Google.
-- URLs de ação permanecem fora do texto das DMs do Instagram e dentro dos botões contextuais.
-- Fallbacks Instagram `outro`, `sem_mensagem` e `erro_seguro` permanecem limpos.
-- IA integrada atualizada para OpenAI Responses API.
-- Modelo padrão `gpt-5.6-luna`; fallback `gpt-4o`; ambos configuráveis por Environment Variables.
-- Falha da OpenAI não derruba o bot: a resposta determinística continua sendo usada.
-- `Olá` é tratado como saudação antes da busca fuzzy de cardápio.
-- `.vercelignore` permanece na raiz para impedir duplicatas antigas dentro de `/api` de virarem Functions no Vercel Hobby.
-- Executar `npm run check` antes do deploy e confirmar GET `version: 2.9.2`, `openai_api: responses` e o modelo esperado.
-- Suíte consolidada final: 156 verificações PASS / 0 FAIL.
+A v2.10.0 foi auditada contra os casos reais informados. As correções centrais foram preservadas e os riscos encontrados foram tratados.
+
+## Corrigido
+
+- marmita/retirada;
+- `Parou o happy?`;
+- visita confirmada;
+- frustração com robô;
+- próximo passo após preço;
+- CTAs de reserva sem prometer confirmação automática;
+- filtro de happy hour;
+- CTAs menos agressivos para bebidas/adicionais;
+- próximo passo após horário;
+- documentação de opt-in/segmentação no ManyChat;
+- versão/manifesto do pacote.
+
+## Validação
+
+`npm run check`: 250 PASS / 0 FAIL.
+
+Antes de disparos promocionais no WhatsApp, reconectar o canal no ManyChat, registrar o opt-in recebido e usar templates aprovados quando exigidos pela plataforma.

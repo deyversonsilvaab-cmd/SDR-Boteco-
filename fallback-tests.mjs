@@ -85,16 +85,16 @@ await test("WhatsApp não recebe a limpeza visual exclusiva do Instagram", async
   assert(String(p.reply).includes(MENU) || String(p.reply).includes(WA), p.reply);
 });
 
-await test("health e payload reportam 2.9.10", async () => {
+await test("health e payload reportam 2.10.1", async () => {
   const res = makeRes();
   await handler({ method: "GET", headers: {}, query: {} }, res);
-  assert(res.payload?.version === "2.9.10", JSON.stringify(res.payload));
+  assert(res.payload?.version === "2.10.1", JSON.stringify(res.payload));
   const p = await ask({ message: "Oi" });
-  assert(p.app_version === "2.9.10", p.app_version);
+  assert(p.app_version === "2.10.1", p.app_version);
 });
 
 if (failed) {
   console.error(`\n${failed} teste(s) de fallback falharam.`);
   process.exit(1);
 }
-console.log("\nFallback Instagram v2.9.10: todos os testes passaram.");
+console.log("\nFallback Instagram v2.10.1: todos os testes passaram.");
