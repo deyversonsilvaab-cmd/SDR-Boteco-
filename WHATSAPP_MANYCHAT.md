@@ -1,4 +1,4 @@
-# WhatsApp no ManyChat — Sr. Boteco Limeira v2.11.1
+# WhatsApp no ManyChat — Sr. Boteco Limeira v2.11.2
 
 ## Princípio do fluxo
 
@@ -44,7 +44,6 @@ Resposta principal:
 - `handoff` → `ai_handoff`
 - `handoff_reason` → `ai_handoff_reason`
 - `next_action` → `ai_next_action`
-- `marcar_conversa_aberta` → `ai_marcar_aberta`
 
 CTAs:
 
@@ -70,7 +69,7 @@ Opt-in existente:
    - `ai_last_bot_reply = {{ai_reply}}`
    - `ai_last_intent = {{ai_intent}}`
    - `ai_last_topic = {{ai_topic}}`
-8. Se `ai_handoff=true` ou `ai_marcar_aberta=true`:
+8. Se `ai_handoff=true`:
    - `atendimento_humano = true`
    - `atendimento_humano_em = agora`
    - marcar conversa como aberta;
@@ -112,7 +111,6 @@ Não manter botões fixos como:
 - Falar no WhatsApp
 - Enviar currículo
 - iFood
-- Avaliar no Google
 - Promoções no Whats
 - Reservar mesa
 
@@ -144,8 +142,15 @@ Quando `atendimento_humano=true`, o bot permanece em silêncio. Se `atendimento_
 - `promoção de chopp?` → resposta, sem botão;
 - `me manda o cardápio` → somente **Ver cardápio**;
 - `onde fica?` → somente **Como chegar**;
-- `quero pedido para retirada` → somente **Fazer pedido para retirada**;
+- `quero pedido para retirada` → somente **Pedir para retirar**;
 - `quero fazer um pedido` → pergunta retirada ou entrega, sem botão;
 - `vocês fazem entrega?` → informa iFood, sem link/botão;
 - reserva/reclamação/vaga/humano/orçamento → `handoff=true`, conversa aberta, sem link/botão;
 - durante `atendimento_humano=true` → silêncio do bot.
+
+
+### Compatibilidade
+O webhook ainda devolve `marcar_conversa_aberta=true` junto de `handoff=true`, mas o campo não precisa ser criado no ManyChat. Use `ai_handoff` como única condição de pausa/atendimento humano.
+
+### Feedback do pedido
+No WhatsApp, o fluxo de feedback não deve adicionar botão ou link de Google Review. Mesmo em nota 5, enviar apenas o agradecimento. O Instagram mantém sua política própria de avaliação.

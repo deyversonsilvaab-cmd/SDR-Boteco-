@@ -1,15 +1,15 @@
 # SDR Boteco — ManyChat + Instagram + WhatsApp + Vercel
 
-Versão 2.11.1 — Instagram preservado + WhatsApp com recepção humanizada, resposta automática quando a informação é conhecida, atendimento humano na mesma conversa quando necessário e CTAs mínimos apenas para cardápio solicitado, localização e pedido explícito para retirada.
+Versão 2.11.2 — Instagram preservado + WhatsApp com recepção humanizada, resposta automática quando a informação é conhecida, atendimento humano na mesma conversa quando necessário e CTAs mínimos apenas para cardápio solicitado, localização e pedido explícito para retirada.
 
 
 
-## WhatsApp — v2.11.1
+## WhatsApp — v2.11.2
 
 - O WhatsApp usa o mesmo webhook, mas com política própria: responde o que sabe e mantém o atendimento na mesma conversa quando precisa de humano.
 - Reserva, reclamação, vaga/currículo, negociação/evento, pedido de pessoa e informação não validada usam `handoff=true` + `marcar_conversa_aberta=true`, sem encaminhar para outro número/canal.
 - URLs não aparecem no texto do WhatsApp.
-- Só existem três CTAs possíveis no WhatsApp: **Ver cardápio** quando o cardápio é pedido, **Como chegar** quando a localização é pedida e **Fazer pedido para retirada** quando a retirada é explícita.
+- Só existem três CTAs possíveis no WhatsApp: **Ver cardápio** quando o cardápio é pedido, **Como chegar** quando a localização é pedida e **Pedir para retirar** quando a retirada é explícita.
 - Preço de item, promoção, horário, pagamento, delivery, avaliação, reserva, reclamação e vaga não recebem botões automáticos.
 - Vaga no WhatsApp não envia mais para o número separado do RH; o currículo pode seguir pela própria conversa.
 - Nova suíte `whatsapp-fluxo-tests.mjs` cobre essa política.
@@ -441,3 +441,10 @@ Antes de publicar qualquer mudança:
 3. adicione/ajuste um teste em `audit-test.mjs`;
 4. execute `npm run check`;
 5. só então faça deploy.
+
+
+## Ajustes v2.11.2
+- Botão de retirada encurtado para **Pedir para retirar** (18 caracteres), compatível com o limite operacional adotado no WhatsApp/ManyChat.
+- `marcar_conversa_aberta` continua no payload somente por compatibilidade; o fluxo novo do ManyChat usa `ai_handoff` como fonte única para pausar o bot e abrir atendimento humano.
+- Feedback/agendamento do WhatsApp não deve exibir botão **Avaliar no Google**. A política de CTA do WhatsApp permanece restrita a Cardápio, Como chegar e retirada explícita.
+- Recomenda-se desativar a tradução automática do Chrome durante a configuração do ManyChat para evitar confusão visual nos nomes dos campos.

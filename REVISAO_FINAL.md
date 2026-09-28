@@ -1,4 +1,4 @@
-# Revisão final de produção — SDR Boteco v2.11.1
+# Revisão final de produção — SDR Boteco v2.11.2
 
 - Instagram preservado, sem mudança na lógica de CTAs já existente.
 - WhatsApp atualizado para atendimento em um único canal: informação conhecida é respondida; casos humanos permanecem na mesma conversa.
@@ -16,3 +16,7 @@
 - `APP_VERSION`, `package.json` e `knowledge._meta.versao` alinhados em `2.11.1`.
 - `npm run check`: 281 linhas PASS / 0 FAIL na validação consolidada.
 - `.vercelignore` preservado para deploy Hobby.
+
+- Botão de retirada agora é `Pedir para retirar` (18 caracteres).
+- ManyChat não precisa criar/mapear `ai_marcar_aberta`; `ai_handoff` é a condição única do atendimento humano.
+- Feedback do pedido no WhatsApp não deve exibir CTA Google Review.

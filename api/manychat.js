@@ -16,7 +16,7 @@ const OPENAI_TIMEOUT_MS = 10000;
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5.6-luna";
 const DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-4o";
-const APP_VERSION = "2.11.1";
+const APP_VERSION = "2.11.2";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -1109,7 +1109,7 @@ function whatsappHandoffReason(resolved, text) {
 }
 
 function whatsappHandoffFacts(reason, resolved, knowledge) {
-  // v2.11.1 — Todo atendimento humano permanece NESTA conversa do WhatsApp.
+  // v2.11.2 — Todo atendimento humano permanece NESTA conversa do WhatsApp.
   // Nunca encaminha para outro número, página, app ou canal.
   const base = knowledge?.respostas_base || {};
   const generic = base.whatsapp_aguardar || "Não tenho essa informação confirmada aqui e não quero te passar algo errado. Se tiver mais algum detalhe, me conta por aqui que a gente segue daqui.";
@@ -1135,7 +1135,7 @@ function whatsappHandoffFacts(reason, resolved, knowledge) {
   return generic;
 }
 
-// v2.11.1 — frases proibidas no WhatsApp: atendimento permanece nesta conversa.
+// v2.11.2 — frases proibidas no WhatsApp: atendimento permanece nesta conversa.
 const WHATSAPP_FORBIDDEN = /(direcion|encaminh|transfer|repass|vou chamar|chamar (algu[eé]m|a equipe|o time)|passar (voc[eê] )?(pra|para) (a )?equipe|te passo pra|atendente|pessoa da equipe|algu[eé]m (da equipe|do time)|nossa equipe (vai|ir[aá])|a equipe (vai|ir[aá]) te|pelo bot[aã]o|bot[aã]o abaixo)/i;
 
 function sanitizeWhatsappText(text, links) {
@@ -1157,7 +1157,7 @@ function sanitizeWhatsappText(text, links) {
   return out;
 }
 
-// v2.11.1 — No WhatsApp, URLs ficam fora do texto. Somente três ações podem virar CTA:
+// v2.11.2 — No WhatsApp, URLs ficam fora do texto. Somente três ações podem virar CTA:
 // cardápio solicitado, rota/localização solicitada e pedido explícito para retirada.
 function stripWhatsappActionLinks(text, links) {
   const urls = [
@@ -1207,7 +1207,7 @@ function whatsappContextualCtas(resolved, links, message, handoff = false) {
     return [{ type: "localizacao", label: "Como chegar", url: links.maps }];
   }
   if (wantsWhatsappPickupButton(message, resolved) && links?.menu) {
-    return [{ type: "pedido_retirada", label: "Fazer pedido para retirada", url: links.menu }];
+    return [{ type: "pedido_retirada", label: "Pedir para retirar", url: links.menu }];
   }
   return [];
 }
@@ -2418,7 +2418,7 @@ export default async function handler(req, res) {
       finalReply = resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;
     }
 
-    // v2.11.1 — WhatsApp: atendimento fica nesta conversa. URLs saem do texto e
+    // v2.11.2 — WhatsApp: atendimento fica nesta conversa. URLs saem do texto e
     // somente cardápio solicitado, localização e retirada podem gerar CTA.
     if (isWhatsapp(customer)) {
       finalReply = sanitizeWhatsappText(finalReply, links);

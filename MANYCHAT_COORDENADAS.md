@@ -1,4 +1,4 @@
-# ManyChat — coordenadas atuais v2.11.1
+# ManyChat — coordenadas atuais v2.11.2
 
 ## Instagram
 
@@ -10,7 +10,7 @@ Para histórico/estrutura completa do Instagram, os prompts anteriores permanece
 
 Usar o fluxo descrito em:
 
-`PROMPT_EXECUCAO_MANYCHAT_WHATSAPP_V2.11.1.md`
+`PROMPT_EXECUCAO_MANYCHAT_WHATSAPP_V2.11.2.md`
 
 Princípios:
 

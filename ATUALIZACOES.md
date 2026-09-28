@@ -1,3 +1,9 @@
+## v2.11.2 — Compatibilidade WhatsApp e simplificação do handoff
+- Botão de retirada encurtado de `Fazer pedido para retirada` para `Pedir para retirar` (18 caracteres).
+- O fluxo ManyChat passa a usar apenas `ai_handoff`; `marcar_conversa_aberta` fica somente no payload por compatibilidade.
+- Feedback agendado no WhatsApp não deve mostrar botão/link `Avaliar no Google`, preservando a política de apenas três CTAs: cardápio solicitado, localização solicitada e retirada explícita.
+- Testes novos garantem limite de 20 caracteres nos CTAs do WhatsApp e ausência de CTA Google na avaliação 5 do canal WhatsApp.
+
 
 ## v2.11.1 — WhatsApp humano sem redirecionamento
 

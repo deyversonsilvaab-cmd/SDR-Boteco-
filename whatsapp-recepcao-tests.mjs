@@ -67,4 +67,4 @@ r = await wa("oi", { atendimento_humano: "true" });
 check("pausa humana sem data continua valendo", r.intent === "humano_ativo", r);
 
 if (failed) { console.log(`${failed} teste(s) de recepção WhatsApp falharam`); process.exit(1); }
-console.log("Recepção WhatsApp v2.11.1: todos os testes passaram");
+console.log("Recepção WhatsApp v2.11.2: todos os testes passaram");

@@ -86,16 +86,16 @@ await test("WhatsApp também mantém fallback sem links externos", async () => {
   assert(p.cta_count === 0, `cta_count=${p.cta_count}`);
 });
 
-await test("health e payload reportam 2.11.1", async () => {
+await test("health e payload reportam 2.11.2", async () => {
   const res = makeRes();
   await handler({ method: "GET", headers: {}, query: {} }, res);
-  assert(res.payload?.version === "2.11.1", JSON.stringify(res.payload));
+  assert(res.payload?.version === "2.11.2", JSON.stringify(res.payload));
   const p = await ask({ message: "Oi" });
-  assert(p.app_version === "2.11.1", p.app_version);
+  assert(p.app_version === "2.11.2", p.app_version);
 });
 
 if (failed) {
   console.error(`\n${failed} teste(s) de fallback falharam.`);
   process.exit(1);
 }
-console.log("\nFallback Instagram + regressão v2.11.1: todos os testes passaram.");
+console.log("\nFallback Instagram + regressão v2.11.2: todos os testes passaram.");

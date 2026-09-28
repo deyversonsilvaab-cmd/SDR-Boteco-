@@ -1,4 +1,4 @@
-// v2.11.1 — Fluxo WhatsApp humano, sem redirecionamento e CTAs mínimos.
+// v2.11.2 — Fluxo WhatsApp humano, sem redirecionamento e CTAs mínimos.
 import handler from "./api/manychat.js";
 
 const MENU = "https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0";
@@ -68,6 +68,8 @@ await test("pedido para retirada recebe só botão de retirada", async()=>{
   assert(["pedido","retirada_balcao"].includes(p.intent), p.intent);
   assert(p.cta_count===1, `cta_count=${p.cta_count}`);
   assert(p.cta_1_type==="pedido_retirada" && p.cta_1_url===MENU, JSON.stringify(p.ctas));
+  assert(p.cta_1_label==="Pedir para retirar", `label=${p.cta_1_label}`);
+  assert(String(p.cta_1_label||"").length <= 20, `botão excede 20 caracteres: ${p.cta_1_label}`);
   assert(p.cardapio_link === MENU && p.localizacao_link === "", JSON.stringify({cardapio:p.cardapio_link,maps:p.localizacao_link}));
   assert(noUrl(p), p.reply);
 });
@@ -113,6 +115,23 @@ await test("assunto desconhecido abre conversa humana na mesma conversa", async(
   assert(noCta(p) && noUrl(p), JSON.stringify(p.ctas));
 });
 
+await test("avaliação 5 no WhatsApp não cria botão de Google", async()=>{
+  const p=await ask("5", { avaliacao_pendente:true, last_intent:"avaliacao_solicitar_nota" });
+  assert(p.intent==="avaliacao_nota", p.intent);
+  assert(String(p.avaliacao_nota)==="5", String(p.avaliacao_nota));
+  assert(noCta(p) && noUrl(p), JSON.stringify(p.ctas));
+  assert(p.google_review_link === "", `google_review_link=${p.google_review_link}`);
+});
+
+await test("todos os botões liberados no WhatsApp respeitam limite de 20 caracteres", async()=>{
+  for (const msg of ["me manda o cardápio", "onde fica?", "quero fazer um pedido para retirada"]) {
+    const p=await ask(msg);
+    for (const cta of (p.ctas||[])) {
+      assert(String(cta.label||"").length <= 20, `${msg}: ${cta.label}`);
+    }
+  }
+});
+
 await test("erro no WhatsApp abre conversa humana sem destino externo", async()=>{
   const req={ method:"POST", headers:{}, query:{} };
   Object.defineProperty(req,"body",{get(){ throw new Error("erro controlado"); }});
@@ -124,4 +143,4 @@ await test("erro no WhatsApp abre conversa humana sem destino externo", async()=
 });
 
 if (failed) { console.error(`\n${failed} teste(s) do fluxo WhatsApp falharam.`); process.exit(1); }
-console.log("\nFluxo WhatsApp v2.11.1: todos os testes passaram.");
+console.log("\nFluxo WhatsApp v2.11.2: todos os testes passaram.");
