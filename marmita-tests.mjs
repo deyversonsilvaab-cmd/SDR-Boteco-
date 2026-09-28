@@ -13,7 +13,7 @@ function check(name, cond, out) {
   if (cond) console.log(`PASS | ${name}`);
   else { failed++; console.log(`FAIL | ${name}\n  -> ${JSON.stringify({ intent: out?.intent, ctas: out?.ctas, reply: out?.reply })}`); }
 }
-const hasAllCtas = (r) => ["pedido", "ifood", "99food"].every((t) => (r.ctas || []).some((c) => c.type === t));
+const hasAllCtas = (r) => ["pedido", "ifood"].every((t) => (r.ctas || []).some((c) => c.type === t)) && !(r.ctas || []).some((c) => c.type === "99food") && !/99\s?food/i.test(r.reply);
 
 for (const phrase of ["Bommmm diaaaa🙏Vocês fazem marmitas?", "vcs tem marmitex?", "fazem quentinha?", "tem marmita hoje?", "vcs vendem pra viagem?"]) {
   const r = await call(phrase);
@@ -23,10 +23,16 @@ let r = await call("posso pegar no balcão?");
 check("retirada no balcão", r.intent === "retirada_balcao" && /Pode sim/.test(r.reply) && hasAllCtas(r), r);
 
 r = await call("vocês fazem marmitas?", { channel: "whatsapp" });
-check("WhatsApp: marmita com links no texto", r.intent === "marmita" && r.reply.includes("saipos.com") && r.reply.includes("ifood") && !r.handoff, r);
+check("WhatsApp: marmita responde sem link e sem botão automático", r.intent === "marmita" && /Fazemos sim/.test(r.reply) && !/https?:\/\//i.test(r.reply) && r.cta_count === 0 && !r.handoff, r);
+
+r = await call("quero uma marmita para retirar no balcão", { channel: "whatsapp" });
+check("WhatsApp: retirada explícita recebe somente botão de pedido para retirada", r.intent === "marmita" && r.cta_count === 1 && r.cta_1_type === "pedido_retirada" && !/https?:\/\//i.test(r.reply), r);
 
 r = await call("Bommmm diaaaa");
 check("Bommmm diaaaa é saudação", r.intent === "saudacao", r);
+
+r = await call("tem no 99food?");
+check("99Food ainda não está no ar", r.intent === "food99_indisponivel" && /Ainda não estamos no 99Food/.test(r.reply) && !(r.ctas || []).some((c) => c.type === "99food"), r);
 
 if (failed) { console.log(`${failed} teste(s) falharam`); process.exit(1); }
 console.log("Todos os testes de marmita passaram");

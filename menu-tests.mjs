@@ -80,7 +80,8 @@ await test("Item realmente não encontrado lista categorias e não gera handoff"
   const wa = await ask("qual o valor da pizza?", { channel: "whatsapp" });
   assert(wa.intent === "cardapio_categorias", wa.intent);
   assert(wa.handoff === false, `handoff=${wa.handoff}`);
-  assert(wa.reply.includes(MENU), wa.reply);
+  assert(!wa.reply.includes(MENU), wa.reply);
+  assert(wa.cta_count === 0, `cta_count=${wa.cta_count}`);
 });
 
 await test("kibe corrige para Quibe Frito e responde preço", async () => {

@@ -16,7 +16,7 @@ const OPENAI_TIMEOUT_MS = 10000;
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5.6-luna";
 const DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-4o";
-const APP_VERSION = "2.10.1";
+const APP_VERSION = "2.11.1";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -306,7 +306,15 @@ function isTruthyFlag(value) {
 
 function humanIsHandling(body) {
   const v = body?.atendimento_humano ?? body?.bot_pausado ?? body?.custom_fields?.atendimento_humano ?? body?.custom_fields?.bot_pausado;
-  return isTruthyFlag(v);
+  if (!isTruthyFlag(v)) return false;
+  // v2.11.0 — pausa humana expira sozinha (padrão 12h) se o ManyChat mandar atendimento_humano_em.
+  const since = body?.atendimento_humano_em ?? body?.custom_fields?.atendimento_humano_em;
+  const hours = Number(process.env.HUMAN_PAUSE_HOURS || 12);
+  if (since && Number.isFinite(hours) && hours > 0) {
+    const t = Date.parse(String(since));
+    if (Number.isFinite(t) && Date.now() - t > hours * 3600 * 1000) return false;
+  }
+  return true;
 }
 
 function extractConversationContext(body) {
@@ -335,7 +343,7 @@ async function loadKnowledge() {
     console.error("KNOWLEDGE_LOAD_ERROR", error?.message || error);
     return {
       empresa: { nome: process.env.BUSINESS_NAME || "Sr. Boteco Limeira", whatsapp_link: DEFAULT_WHATSAPP_LINK, endereco: "Pátio Limeira Shopping" },
-      links: { cardapio_pedido: DEFAULT_MENU_LINK, whatsapp: DEFAULT_WHATSAPP_LINK, ifood: DEFAULT_IFOOD_LINK, food99: DEFAULT_99FOOD_LINK, google_maps: DEFAULT_MAPS_LINK, google_avaliacao: DEFAULT_GOOGLE_REVIEW_LINK },
+      links: { cardapio_pedido: DEFAULT_MENU_LINK, whatsapp: DEFAULT_WHATSAPP_LINK, ifood: DEFAULT_IFOOD_LINK, google_maps: DEFAULT_MAPS_LINK, google_avaliacao: DEFAULT_GOOGLE_REVIEW_LINK },
       respostas_base: { fallback: DEFAULT_FALLBACK },
       catalogo: []
     };
@@ -347,11 +355,12 @@ function getLinks(knowledge) {
     menu: knowledge?.links?.cardapio_pedido || DEFAULT_MENU_LINK,
     whatsapp: knowledge?.links?.whatsapp || knowledge?.empresa?.whatsapp_link || DEFAULT_WHATSAPP_LINK,
     ifood: knowledge?.links?.ifood || DEFAULT_IFOOD_LINK,
-    food99: knowledge?.links?.food99 || DEFAULT_99FOOD_LINK,
+    // v2.10.1 — 99Food ainda não está no ar: só volta se links.food99 for cadastrado no knowledge.json.
+    food99: knowledge?.links?.food99 || "",
     jobs: knowledge?.links?.whatsapp_vagas || "https://wa.me/5517996022567",
     maps: knowledge?.links?.google_maps || knowledge?.links?.maps || DEFAULT_MAPS_LINK,
     review: knowledge?.links?.google_avaliacao || knowledge?.links?.google_review || DEFAULT_GOOGLE_REVIEW_LINK,
-    // v2.10.1 — links com mensagem pronta de interesse. O ManyChat deve registrar tag/campo quando o inbound chegar.
+    // v2.10.0 — links com mensagem pronta: o cliente dá opt-in ao mandar a mensagem no WhatsApp.
     whatsappOptin: knowledge?.links?.whatsapp_optin || "https://wa.me/5519997858351?text=Quero%20receber%20o%20card%C3%A1pio%20e%20as%20promo%C3%A7%C3%B5es%20do%20Sr.%20Boteco%20no%20WhatsApp",
     whatsappReserva: knowledge?.links?.whatsapp_reserva || "https://wa.me/5519997858351?text=Ol%C3%A1!%20Quero%20reservar%20uma%20mesa%20no%20Sr.%20Boteco"
   };
@@ -423,24 +432,13 @@ function isVisitIntent(text) {
     || /\b(to|tou|estou|tamo|estamos) (indo|chegando)\b/.test(t);
 }
 
-function isHappyHourPromotionQuery(text) {
-  const t = normalizeText(text);
-  if (!t) return false;
-  // Evita falso positivo como "happy birthday" / aniversário.
-  if (includesAny(t, ["happy birthday", "happy aniversario", "happy aniversário"])) return false;
-  if (includesAny(t, ["happy hour", "happyhour", "happy hr"])) return true;
-  if (t === "happy" || t === "rapi") return true;
-  const cueBefore = /\b(parou|acabou|terminou|tem|rola|vai ter|ainda tem|continua|ta tendo|esta tendo|hoje tem)\b.*\b(happy|rapi)\b/.test(t);
-  const cueAfter = /\b(happy|rapi)\b.*\b(parou|acabou|terminou|hoje|agora|ainda|continua|rola|tem)\b/.test(t);
-  return cueBefore || cueAfter;
-}
-
 function isChoppPromotionQuery(text, knowledge) {
   const normalized = applyMenuCorrections(text, knowledge).corrected || normalizeText(text);
   const hasChopp = includesAny(normalized, [
     "chopp", "chope", "chopinho", "choppinho", "chopp brahma", "chopp ashby", "ashby", "brahma"
   ]);
-  return hasChopp || isHappyHourPromotionQuery(normalized);
+  const hasHappyHour = includesAny(normalized, ["happy hour", "happyhour"]) || includesAnyWord(normalized, ["happy", "rapi", "happy hr"]);
+  return hasChopp || hasHappyHour;
 }
 
 function isGenericPromotionQuery(text, knowledge) {
@@ -1101,35 +1099,192 @@ function formatParking(knowledge) {
 }
 
 function whatsappHandoffReason(resolved, text) {
-  if (resolved.intent === "vaga") return null;
   if (isComplaintText(text)) return "reclamacao";
 
-  if (includesAny(text, ["orcamento", "encomenda", "fechar pedido", "negociar", "desconto", "atacado", "grande quantidade", "festa", "buffet", "evento corporativo", "fornecedor"])) return "negociacao";
-  if (["reserva", "humano", "item_inativo", "item_nao_encontrado", "outro"].includes(resolved.intent)) return resolved.intent;
+  if (includesAny(text, ["orcamento", "encomenda", "fechar pedido", "negociar", "desconto", "atacado", "grande quantidade", "festa", "buffet", "evento corporativo", "pedido corporativo", "fornecedor"])) return "negociacao";
+  if (["humano", "humano_frustracao", "outro_repetido"].includes(resolved.intent)) return "humano";
+  if (["reserva", "vaga", "item_inativo", "item_nao_encontrado", "outro"].includes(resolved.intent)) return resolved.intent;
   if (resolved.needs_human) return "confirmar_com_equipe";
   return null;
 }
 
 function whatsappHandoffFacts(reason, resolved, knowledge) {
+  // v2.11.1 — Todo atendimento humano permanece NESTA conversa do WhatsApp.
+  // Nunca encaminha para outro número, página, app ou canal.
   const base = knowledge?.respostas_base || {};
-  const generic = base.handoff_humano || "Vou chamar alguém da equipe pra continuar seu atendimento por aqui.";
+  const generic = base.whatsapp_aguardar || "Não tenho essa informação confirmada aqui e não quero te passar algo errado. Se tiver mais algum detalhe, me conta por aqui que a gente segue daqui.";
 
   if (reason === "reclamacao") {
-    return "Entendi. Vou chamar alguém da equipe pra continuar seu atendimento por aqui e cuidar disso certinho.";
+    return "Poxa, sinto muito por isso. Me conta o que aconteceu e, se foi sobre um pedido, o dia e o horário. A gente segue por aqui.";
   }
   if (reason === "negociacao") {
-    return "Certo. Esse tipo de pedido precisa ser alinhado com a equipe. Vou chamar alguém do time pra continuar com você por aqui.";
+    return "Claro! Me passa os detalhes por aqui — data, quantidade de pessoas e o que você está pensando — pra gente seguir com isso.";
   }
   if (reason === "humano") {
-    return "Claro. Vou chamar alguém da equipe pra continuar seu atendimento por aqui.";
+    return "Claro. Pode me contar por aqui o que você precisa.";
   }
   if (reason === "reserva") {
-    return "Para adiantar a reserva, me passe nome, dia/data, horário e quantas pessoas, se ainda não informou. Vou chamar alguém da equipe pra fazer a confirmação final.";
+    return "Claro! Me passa seu nome, o dia, o horário e quantas pessoas vêm. A confirmação da mesa continua por aqui.";
+  }
+  if (reason === "vaga") {
+    return "Claro! Pode enviar seu currículo por aqui e me dizer qual função você procura. A conversa continua por aqui.";
   }
   if (["item_inativo", "item_nao_encontrado", "confirmar_com_equipe", "outro"].includes(reason)) {
-    return `Esse detalhe precisa de confirmação pra eu não te passar nada errado. ${generic}`;
+    return generic;
   }
   return generic;
+}
+
+// v2.11.1 — frases proibidas no WhatsApp: atendimento permanece nesta conversa.
+const WHATSAPP_FORBIDDEN = /(direcion|encaminh|transfer|repass|vou chamar|chamar (algu[eé]m|a equipe|o time)|passar (voc[eê] )?(pra|para) (a )?equipe|te passo pra|atendente|pessoa da equipe|algu[eé]m (da equipe|do time)|nossa equipe (vai|ir[aá])|a equipe (vai|ir[aá]) te|pelo bot[aã]o|bot[aã]o abaixo)/i;
+
+function sanitizeWhatsappText(text, links) {
+  let out = String(text || "");
+  const wa = links?.whatsapp || "";
+  if (wa) {
+    out = out.split(wa).join("");
+  }
+  out = out
+    .replace(/,?\s*ou fale (direto )?com a equipe( pelo bot[aã]o abaixo)?\s*[:：]?\s*/gi, " ")
+    .replace(/\s*Se preferir,? fale (direto )?com a equipe\s*[:：]?\s*\.?/gi, "")
+    .replace(/\s*fale (direto )?com a equipe( pelo bot[aã]o abaixo)?\s*[:：]?\s*\.?/gi, "")
+    .replace(/\s*pelo bot[aã]o abaixo/gi, "")
+    .replace(/[^.!?\n]*\bbot[aã]o\b[^.!?\n]*[.!?]?/gi, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\s+([.,!?])/g, "$1")
+    .trim();
+  return out;
+}
+
+// v2.11.1 — No WhatsApp, URLs ficam fora do texto. Somente três ações podem virar CTA:
+// cardápio solicitado, rota/localização solicitada e pedido explícito para retirada.
+function stripWhatsappActionLinks(text, links) {
+  const urls = [
+    links?.menu, links?.whatsapp, links?.whatsappOptin, links?.whatsappReserva,
+    links?.maps, links?.jobs, links?.ifood, links?.food99, links?.review
+  ].filter(Boolean);
+  let out = String(text || "");
+  const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  for (const url of urls) {
+    const markdown = new RegExp(`\\[([^\\]]+)\\]\\(${escapeRegExp(url)}\\)`, "gi");
+    out = out.replace(markdown, "$1");
+    out = out.split(url).join("");
+  }
+  return out
+    .split("\n")
+    .map((line) => String(line || "")
+      .replace(/\s{2,}/g, " ")
+      .replace(/\s+([.,!?;])/g, "$1")
+      .replace(/[\s:：–—-]+$/g, "")
+      .trimEnd())
+    .filter((line) => !/^(card[aá]pio( digital)?(\/pedido)?|pedido direto|card[aá]pio e pedido( para retirada( no balc[aã]o)?)?|ifood|99food|whatsapp|rota no google maps|google maps|enviar curr[ií]culo|avaliar no google)\s*$/i.test(line.trim()))
+    .filter((line, i, arr) => !(line.trim() === "" && (i === 0 || arr[i - 1].trim() === "")))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function wantsWhatsappMenuButton(text, resolved) {
+  const t = normalizeText(text);
+  if (!includesAny(t, ["cardapio", "menu"])) return false;
+  return ["cardapio", "categoria_cardapio", "almoco", "cardapio_categorias", "opcoes_cardapio"].includes(safeText(resolved?.intent, 80));
+}
+
+function wantsWhatsappPickupButton(text, resolved) {
+  const t = normalizeText(text);
+  const pickupWords = ["retirada", "retirar", "retirar no local", "retirar no balcao", "buscar no balcao", "pegar no balcao", "pedido para retirar", "pedir para retirar", "vou buscar", "passar pra buscar"];
+  return ["pedido", "retirada_balcao", "marmita"].includes(safeText(resolved?.intent, 80)) && includesAny(t, pickupWords);
+}
+
+function whatsappContextualCtas(resolved, links, message, handoff = false) {
+  if (handoff) return [];
+  const intent = safeText(resolved?.intent, 80);
+  if (wantsWhatsappMenuButton(message, resolved) && links?.menu) {
+    return [{ type: "cardapio", label: "Ver cardápio", url: links.menu }];
+  }
+  if (intent === "localizacao" && isLocationQuestion(normalizeText(message)) && links?.maps) {
+    return [{ type: "localizacao", label: "Como chegar", url: links.maps }];
+  }
+  if (wantsWhatsappPickupButton(message, resolved) && links?.menu) {
+    return [{ type: "pedido_retirada", label: "Fazer pedido para retirada", url: links.menu }];
+  }
+  return [];
+}
+
+function polishWhatsappReply(text, resolved, message) {
+  const intent = safeText(resolved?.intent, 80);
+  const t = normalizeText(message);
+  let out = String(text || "").replace(/\n{3,}/g, "\n\n").trim();
+
+  if (intent === "saudacao") {
+    return "Oi! Que bom ter você por aqui 😊 Me conta o que você precisa.";
+  }
+  if (intent === "cardapio") {
+    return "Claro! Te deixo o cardápio aqui pra você conferir com calma.";
+  }
+  if (intent === "categoria_cardapio" && includesAny(t, ["cardapio", "menu"])) {
+    return out || "Claro! Te deixo o cardápio aqui pra você conferir as opções.";
+  }
+  if (intent === "pedido") {
+    if (wantsWhatsappPickupButton(message, resolved)) {
+      return "Pode sim! Você faz o pedido pelo cardápio digital e retira no nosso balcão. Deixei o acesso para o pedido aqui.";
+    }
+    return "Claro! Você quer retirar no balcão ou está procurando entrega?";
+  }
+  if (intent === "retirada_balcao") {
+    return "Pode sim! Você faz o pedido pelo cardápio digital e retira no nosso balcão. Deixei o acesso para o pedido aqui.";
+  }
+  if (intent === "localizacao") {
+    return out || "Ficamos no Pátio Limeira Shopping, no Centro de Limeira. Deixei a rota aqui pra você.";
+  }
+  if (intent === "delivery") {
+    return "Fazemos entrega pelo iFood. Se sua dúvida for sobre um pedido ou sobre alguma opção do cardápio, pode me falar por aqui.";
+  }
+  if (intent === "food99_indisponivel") {
+    return "Ainda não estamos no 99Food. Para entrega, trabalhamos pelo iFood; para retirada, dá pra fazer o pedido pelo nosso cardápio digital.";
+  }
+  if (intent === "marmita" && !wantsWhatsappPickupButton(message, resolved)) {
+    return "Fazemos sim! Você pode pedir para retirada no balcão ou, para entrega, pelo iFood.";
+  }
+  return out;
+}
+
+// v2.11.0 — mensagens que chegam no WhatsApp vindas dos botões do Instagram e opt-in/opt-out de promoções.
+function resolveWhatsappSpecial(message, knowledge, links) {
+  const text = normalizeText(message);
+  const trimmed = text.trim();
+  const optOutExact = ["parar", "sair", "pare", "stop", "parar promocoes", "cancelar promocoes", "cancelar", "descadastrar", "remover", "nao quero mais", "nao quero mais promocoes", "nao quero receber", "nao quero receber mais", "parar de receber"];
+  if (optOutExact.includes(trimmed) || includesAny(text, ["parar promocoes", "cancelar promocoes", "nao quero mais receber", "nao quero receber mais", "parar de receber", "sair da lista", "me tira da lista", "descadastrar"])) {
+    return makeResolution({
+      facts: "Pronto, não vou mais te enviar promoções por aqui. Se precisar de algo do Sr. Boteco, é só chamar. 😉",
+      intent: "optout_promocoes",
+      topic: "promocoes_whatsapp",
+      lead_temperature: "frio",
+      next_action: "encerrar",
+      extra: { optin_promocoes: "false" }
+    });
+  }
+  if (includesAny(text, ["receber o cardapio e as promocoes", "quero receber as promocoes", "quero receber promocoes", "receber as promocoes", "quero receber o cardapio"])) {
+    return makeResolution({
+      facts: "Fechado! Vou deixar seu contato marcado para receber cardápio e promoções do Sr. Boteco por aqui. Se quiser parar de receber, é só pedir.",
+      intent: "optin_promocoes",
+      topic: "promocoes_whatsapp",
+      lead_temperature: "quente",
+      next_action: "encerrar",
+      extra: { optin_promocoes: "true", optin_origem: "instagram_cta" }
+    });
+  }
+  if (includesAny(text, ["vim do instagram", "vi no instagram", "vi no insta", "vim pelo instagram", "vim pelo insta", "vi voces no instagram", "vi o anuncio", "vi o post"]) && trimmed.split(" ").length <= 12) {
+    return makeResolution({
+      facts: "Que bom te ver por aqui! 😊 Me conta o que você precisa que eu já te ajudo.",
+      intent: "recepcao_instagram",
+      topic: "inicio",
+      lead_temperature: "morno",
+      next_action: "descobrir_interesse"
+    });
+  }
+  return null;
 }
 
 function stripSalesLinksFromFacts(facts, links) {
@@ -1148,7 +1303,7 @@ function stripSalesLinksFromFacts(facts, links) {
 function stripButtonLinks(text, links) {
   // No Instagram DM, estes destinos são apresentados como CTA contextual nativo.
   // iFood/99Food continuam no texto porque não dependem desse botão contextual.
-  const urls = [links?.menu, links?.whatsapp, links?.whatsappOptin, links?.whatsappReserva, links?.maps, links?.jobs, links?.ifood, links?.food99, links?.review].filter(Boolean);
+  const urls = [links?.menu, links?.whatsapp, links?.maps, links?.jobs, links?.ifood, links?.food99, links?.review].filter(Boolean);
   if (!urls.length) return String(text || "");
   let out = String(text || "");
   const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -1202,13 +1357,16 @@ function polishInstagramButtonReply(text, resolved) {
     return "Bora fazer seu pedido? Pelo botão abaixo você escolhe retirada no local ou entrega.";
   }
   if (intent === "marmita") {
-    return "Fazemos sim! Você pode pedir com entrega pelo iFood ou pelo 99Food, ou fazer o pedido no nosso cardápio digital, finalizar e retirar no nosso balcão, que a gente deixa pronto. É só escolher nos botões abaixo.";
+    return "Fazemos sim! Você pode pedir com entrega pelo iFood, ou fazer o pedido no nosso cardápio digital, finalizar e retirar no nosso balcão, que a gente deixa pronto. É só escolher nos botões abaixo.";
   }
   if (intent === "retirada_balcao") {
-    return "Pode sim! Faz o pedido no nosso cardápio digital, finaliza e retira no nosso balcão, que a gente deixa pronto. Se preferir entrega, tem iFood e 99Food nos botões abaixo.";
+    return "Pode sim! Faz o pedido no nosso cardápio digital, finaliza e retira no nosso balcão, que a gente deixa pronto. Se preferir entrega, tem iFood no botão abaixo.";
   }
   if (intent === "delivery") {
-    return "Para pedir com entrega, escolha a opção que preferir nos botões abaixo: pedido direto, iFood ou 99Food.";
+    return "Para pedir com entrega, escolha a opção que preferir nos botões abaixo: pedido direto ou iFood.";
+  }
+  if (intent === "food99_indisponivel") {
+    return "Ainda não estamos no 99Food. Por enquanto, dá pra pedir com entrega pelo iFood ou fazer o pedido no nosso cardápio digital e retirar no balcão. É só escolher nos botões abaixo.";
   }
   if (intent === "humano") {
     return "Claro. Para falar direto com a equipe e resolver mais rápido, é só tocar no botão abaixo.";
@@ -1226,11 +1384,6 @@ function polishInstagramButtonReply(text, resolved) {
   return out;
 }
 
-function isLowCommitmentMenuTopic(topic) {
-  const t = safeText(topic, 120);
-  return /^(bebida_|cerveja_|chopp_|dose_|suco_|caipirinha_|adicional_|sobremesa_)/.test(t);
-}
-
 function contextualCtas(resolved, links) {
   const intent = safeText(resolved?.intent, 80);
   const nextAction = safeText(resolved?.next_action, 80);
@@ -1246,8 +1399,7 @@ function contextualCtas(resolved, links) {
   if (intent === "marmita" || intent === "retirada_balcao") {
     return many(
       { type: "pedido", label: "Pedir e retirar", url: links.menu },
-      { type: "ifood", label: "iFood", url: links.ifood },
-      { type: "99food", label: "99Food", url: links.food99 }
+      { type: "ifood", label: "iFood", url: links.ifood }
     );
   }
   if (intent === "localizacao_estacionamento") return many({ type: "whatsapp", label: "Consultar regulamento", url: links.whatsapp }, { type: "localizacao", label: "Como chegar", url: links.maps });
@@ -1259,28 +1411,16 @@ function contextualCtas(resolved, links) {
   if (intent === "vaga") return one("rh", "Enviar currículo", links.jobs);
   if (["outro", "sem_mensagem", "erro_seguro"].includes(intent)) return one("whatsapp", "Falar no WhatsApp", links.whatsapp);
   if (intent === "humano" || intent === "reserva" || nextAction === "whatsapp") return one("whatsapp", "Falar no WhatsApp", links.whatsapp);
-  if (intent === "delivery") {
+  if (intent === "delivery" || intent === "food99_indisponivel") {
     return many(
       { type: "pedido", label: "Pedido direto", url: links.menu },
-      { type: "ifood", label: "iFood", url: links.ifood },
-      { type: "99food", label: "99Food", url: links.food99 }
+      { type: "ifood", label: "iFood", url: links.ifood }
     );
   }
   if (intent === "pedido") return one("pedido", "Fazer pedido", links.menu);
-  if (intent === "horario") return many(
-    { type: "localizacao", label: "Como chegar", url: links.maps },
-    { type: "whatsapp_optin", label: "Promoções no Whats", url: links.whatsappOptin }
-  );
   // Prato do almoço: foco em pedido/retirada, não em reserva.
   if (intent === "item_cardapio" && String(resolved?.topic || "").startsWith("almoco_")) {
     return many({ type: "cardapio", label: "Cardápio", url: links.menu }, { type: "localizacao", label: "Como chegar", url: links.maps });
-  }
-  // Bebidas, adicionais e sobremesas recebem próximo passo sem empurrar reserva de mesa.
-  if (intent === "item_cardapio" && isLowCommitmentMenuTopic(resolved?.topic)) {
-    return many(
-      { type: "cardapio", label: "Cardápio", url: links.menu },
-      { type: "localizacao", label: "Como chegar", url: links.maps }
-    );
   }
   if (intent === "item_cardapio" && nextAction !== "whatsapp") {
     return many(
@@ -1415,7 +1555,7 @@ function resolveIntent(message, knowledge, context = {}) {
   // v2.10.0 — Cliente avisando que vai visitar: acolhe, reforça endereço e convida pro WhatsApp.
   if (isVisitIntent(text)) {
     return makeResolution({
-      facts: `Oba, vai ser um prazer te receber! 🍻 ${locationFacts(knowledge, links)}\n\nQuer receber o cardápio do almoço e as promoções do fim de semana no WhatsApp? É só escolher um dos botões abaixo.`,
+      facts: `Oba, vai ser um prazer te receber! 🍻 ${locationFacts(knowledge, links)}\n\nQuer receber o cardápio do almoço e as promoções do fim de semana no WhatsApp? É só tocar no botão abaixo.`,
       intent: "visita_confirmada",
       topic: "visita",
       lead_temperature: "quente",
@@ -1495,7 +1635,7 @@ function resolveIntent(message, knowledge, context = {}) {
     });
   }
 
-  if (includesAny(text, ["falar com atendente", "atendente humano", "falar com alguem", "falar com alguém", "humano", "pessoa da equipe", "chamar atendente"])) {
+  if (includesAny(text, ["falar com atendente", "atendente humano", "falar com alguem", "falar com alguém", "humano", "pessoa da equipe", "chamar atendente", "falar com um atendente", "falar com uma pessoa", "falar com o gerente", "falar com o dono", "falar com o responsavel"]) || includesAnyWord(text, ["atendente"])) {
     return makeResolution({ facts: base.humano || `Claro. Fale direto com a equipe: ${links.whatsapp}`, intent: "humano", topic: "atendimento_humano", needs_human: true, lead_temperature: "quente", next_action: "whatsapp" });
   }
 
@@ -1510,10 +1650,10 @@ function resolveIntent(message, knowledge, context = {}) {
     });
   }
 
-  // v2.9.8 — "Vocês fazem marmitas?" → sim: iFood, 99Food ou cardápio digital com retirada no balcão.
+  // v2.9.8 — "Vocês fazem marmitas?" → sim: iFood ou cardápio digital com retirada no balcão.
   if (isMarmitaQuestion(text)) {
     return makeResolution({
-      facts: base.marmita || `Fazemos sim! Você pode pedir com entrega pelo iFood ou pelo 99Food, ou fazer o pedido no nosso cardápio digital, finalizar e retirar no nosso balcão, que a gente deixa pronto.\n\nCardápio e pedido para retirada no balcão: ${links.menu}\niFood: ${links.ifood}\n99Food: ${links.food99}`,
+      facts: base.marmita || `Fazemos sim! Você pode pedir com entrega pelo iFood, ou fazer o pedido no nosso cardápio digital, finalizar e retirar no nosso balcão, que a gente deixa pronto.\n\nCardápio e pedido para retirada no balcão: ${links.menu}\niFood: ${links.ifood}`,
       intent: "marmita",
       topic: "pedido",
       lead_temperature: "quente",
@@ -1523,7 +1663,7 @@ function resolveIntent(message, knowledge, context = {}) {
 
   if (isBalcaoQuestion(text)) {
     return makeResolution({
-      facts: `Pode sim! Faz o pedido no nosso cardápio digital, finaliza e retira no nosso balcão, que a gente deixa pronto.\n\nCardápio e pedido para retirada: ${links.menu}\n\nSe preferir entrega, tem iFood (${links.ifood}) e 99Food (${links.food99}).`,
+      facts: `Pode sim! Faz o pedido no nosso cardápio digital, finaliza e retira no nosso balcão, que a gente deixa pronto.\n\nCardápio e pedido para retirada: ${links.menu}\n\nSe preferir entrega, tem iFood (${links.ifood}).`,
       intent: "retirada_balcao",
       topic: "pedido",
       lead_temperature: "quente",
@@ -1580,8 +1720,12 @@ function resolveIntent(message, knowledge, context = {}) {
     return makeResolution({ facts: base.pedido || `Faça seu pedido por aqui: ${links.menu}`, intent: "pedido", topic: "pedido", lead_temperature: "quente", next_action: "fazer_pedido" });
   }
 
+  // v2.10.1 — 99Food ainda não está no ar.
+  if (includesAny(text, ["99food", "99 food", "noventa e nove food"])) {
+    return makeResolution({ facts: `Ainda não estamos no 99Food. Por enquanto, você pode pedir com entrega pelo iFood ou fazer o pedido no nosso cardápio digital e retirar no balcão.\n\nCardápio e pedido: ${links.menu}\niFood: ${links.ifood}`, intent: "food99_indisponivel", topic: "pedido", lead_temperature: "quente", next_action: "delivery" });
+  }
   if (includesAny(text, ["delivery", "entrega", "ifood", "i food", "99food", "99 food", "entregam", "faz entrega", "pedir em casa"])) {
-    return makeResolution({ facts: base.delivery || `Pedido direto: ${links.menu}\niFood: ${links.ifood}\n99Food: ${links.food99}`, intent: "delivery", topic: "pedido", lead_temperature: "quente", next_action: "delivery" });
+    return makeResolution({ facts: base.delivery || `Pedido direto: ${links.menu}\niFood: ${links.ifood}`, intent: "delivery", topic: "pedido", lead_temperature: "quente", next_action: "delivery" });
   }
 
   if (includesAnyWord(text, ["reservar", "reserva", "reservas", "mesa", "mesas", "aniversario", "aniversário", "grupo", "evento", "confraternizacao", "confraternização"])) {
@@ -1882,6 +2026,9 @@ function containsUnsupportedObjectiveFact(reply, allowedFacts) {
 }
 
 function ensurePersonalized(reply, customer) {
+  // No WhatsApp, não prefixa o nome mecanicamente em toda mensagem. Isso evita
+  // respostas artificiais como "Ana, Claro!". A IA pode usar o nome quando soar natural.
+  if (normalizeChannel(customer?.channel) === "whatsapp") return reply;
   const name = safeText(customer?.first_name || "", 50);
   if (!name) return reply;
   const nReply = normalizeText(reply);
@@ -2050,6 +2197,9 @@ export function splitForChannel(text, channel) {
 function buildStandardPayload({ reply, resolved, links, requestId, customer, handoff = false, handoffReason = "", ctas = [] }) {
   const parts = splitForChannel(reply, customer?.channel);
   const primary = ctas[0] || {};
+  const whatsappChannel = normalizeChannel(customer?.channel) === "whatsapp";
+  const whatsappCardapioLiberado = ctas.some((cta) => ["cardapio", "pedido_retirada"].includes(cta?.type));
+  const whatsappMapsLiberado = ctas.some((cta) => cta?.type === "localizacao");
   return {
     ok: true,
     app_version: APP_VERSION,
@@ -2070,15 +2220,21 @@ function buildStandardPayload({ reply, resolved, links, requestId, customer, han
     avaliacao_nota: resolved.avaliacao_nota ?? "",
     avaliacao_feedback_pendente: Boolean(resolved.avaliacao_feedback_pendente),
     avaliacao_feedback: safeText(resolved.avaliacao_feedback || "", 1800),
-    cardapio_link: links.menu,
-    whatsapp_link: links.whatsapp,
-    whatsapp_vagas_link: links.jobs,
-    localizacao_link: links.maps,
-    maps_link: links.maps,
-    google_avaliacao_link: links.review,
-    google_review_link: links.review,
-    ifood_link: links.ifood,
-    food99_link: links.food99,
+    // v2.11.0 — WhatsApp: opt-in de promoções e conversa aberta para resposta humana.
+    optin_promocoes: safeText(resolved.optin_promocoes || "", 5),
+    optin_origem: safeText(resolved.optin_origem || "", 40),
+    marcar_conversa_aberta: Boolean(handoff),
+    // No WhatsApp, só Cardápio/Retirada e Localização ficam disponíveis como destinos de ação.
+    // Demais links são zerados para impedir botão antigo/fixo no ManyChat.
+    cardapio_link: whatsappChannel ? (whatsappCardapioLiberado ? links.menu : "") : links.menu,
+    whatsapp_link: whatsappChannel ? "" : links.whatsapp,
+    whatsapp_vagas_link: whatsappChannel ? "" : links.jobs,
+    localizacao_link: whatsappChannel ? (whatsappMapsLiberado ? links.maps : "") : links.maps,
+    maps_link: whatsappChannel ? (whatsappMapsLiberado ? links.maps : "") : links.maps,
+    google_avaliacao_link: whatsappChannel ? "" : links.review,
+    google_review_link: whatsappChannel ? "" : links.review,
+    ifood_link: whatsappChannel ? "" : links.ifood,
+    food99_link: whatsappChannel ? "" : links.food99,
     cta_count: ctas.length,
     cta_type: primary.type || "",
     cta_label: primary.label || "",
@@ -2199,7 +2355,8 @@ export default async function handler(req, res) {
     const commentEvent = isInstagramCommentEvent(eventType) && !isWhatsapp(customer);
     const message = (commentEvent ? extractCommentMessage(body) : extractMessage(body)) || inferMessageFromEvent(body);
 
-    const resolved = commentEvent
+    const whatsappSpecial = (isWhatsapp(customer) && message) ? resolveWhatsappSpecial(message, knowledge, links) : null;
+    const resolved = whatsappSpecial || (commentEvent
       ? resolveInstagramComment(message, knowledge, context)
       : message
         ? resolveIntent(message, knowledge, context)
@@ -2210,17 +2367,12 @@ export default async function handler(req, res) {
             needs_human: false,
             lead_temperature: "morno",
             next_action: "descobrir_interesse"
-          });
+          }));
 
     let handoff = false;
     let handoffReason = "";
     if (isWhatsapp(customer)) {
-      if (resolved.intent === "vaga") {
-        // No WhatsApp, vaga é resolvida pelo link dedicado do RH e não entra na fila do atendimento geral.
-        resolved.needs_human = false;
-      }
-
-      const reason = whatsappHandoffReason(resolved, normalizeText(message));
+      const reason = ["optin_promocoes", "optout_promocoes", "recepcao_instagram"].includes(resolved.intent) ? null : whatsappHandoffReason(resolved, normalizeText(message));
       if (reason) {
         handoff = true;
         handoffReason = reason;
@@ -2247,7 +2399,8 @@ export default async function handler(req, res) {
       "promocoes_ativas", "promocoes_escolher", "promocao_burger", "promocao_burger_recusada", "promocao_chopp",
       "avaliacao_solicitar_nota", "avaliacao_nota", "avaliacao_nota_invalida", "avaliacao_feedback",
       "comentario_sem_texto", "comentario_social", "comentario_generico", "comentario_valor_sem_item", "comentario_reclamacao",
-      "humano_frustracao", "feedback_critica", "feedback_critica_local", "outro_repetido", "localizacao_estacionamento", "marmita", "retirada_balcao"
+      "humano_frustracao", "feedback_critica", "feedback_critica_local", "outro_repetido", "localizacao_estacionamento", "marmita", "retirada_balcao", "food99_indisponivel",
+      "optin_promocoes", "optout_promocoes", "recepcao_instagram"
     ];
     const shouldHumanizeWithAI = message && !deterministicIntents.includes(resolved.intent);
     const aiReply = shouldHumanizeWithAI ? await callOpenAI({ knowledge, customer, context, message, resolved, eventType }) : null;
@@ -2255,7 +2408,7 @@ export default async function handler(req, res) {
     let finalReply = aiReply || resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;
     const allowedUrls = handoff
       ? []
-      : [links.menu, links.whatsapp, links.whatsappOptin, links.whatsappReserva, links.ifood, links.food99, links.jobs, links.maps, links.review, knowledge?.links?.site_oficial].filter(Boolean);
+      : [links.menu, links.whatsapp, links.ifood, links.food99, links.jobs, links.maps, links.review, knowledge?.links?.site_oficial].filter(Boolean);
     if (
       containsInventedPrice(finalReply, allowedPrices) ||
       containsUnapprovedUrl(finalReply, allowedUrls) ||
@@ -2265,17 +2418,35 @@ export default async function handler(req, res) {
       finalReply = resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;
     }
 
+    // v2.11.1 — WhatsApp: atendimento fica nesta conversa. URLs saem do texto e
+    // somente cardápio solicitado, localização e retirada podem gerar CTA.
+    if (isWhatsapp(customer)) {
+      finalReply = sanitizeWhatsappText(finalReply, links);
+      finalReply = stripWhatsappActionLinks(finalReply, links);
+      finalReply = polishWhatsappReply(finalReply, resolved, message);
+      if (WHATSAPP_FORBIDDEN.test(finalReply)) {
+        finalReply = stripWhatsappActionLinks(sanitizeWhatsappText(resolved.facts || "", links), links);
+        finalReply = polishWhatsappReply(finalReply, resolved, message);
+      }
+      if (!finalReply || WHATSAPP_FORBIDDEN.test(finalReply)) {
+        finalReply = handoff ? whatsappHandoffFacts(handoffReason, resolved, knowledge) : "Não tenho essa informação confirmada aqui. Me conta só mais um detalhe, se tiver, e a gente segue por aqui.";
+        if (!handoff) { handoff = true; handoffReason = "confirmar_com_equipe"; resolved.needs_human = true; resolved.next_action = "handoff_humano"; }
+      }
+    }
+
     // Nas DMs do Instagram, todos os destinos de ação ficam escondidos nos botões
-    // contextuais: Cardápio, pedido direto, iFood, 99Food, WhatsApp, RH, Maps e Google Review.
+    // contextuais: Cardápio, pedido direto, iFood, WhatsApp, RH, Maps e Google Review.
     // Comentários continuam em fluxo separado para não retirar um link sem haver botão configurado.
-    const ctas = (!isWhatsapp(customer) && !commentEvent) ? contextualCtas(resolved, links) : [];
+    const ctas = isWhatsapp(customer)
+      ? whatsappContextualCtas(resolved, links, message, handoff)
+      : (!commentEvent ? contextualCtas(resolved, links) : []);
 
     if (!isWhatsapp(customer) && !commentEvent) {
       finalReply = stripButtonLinks(finalReply, links);
       finalReply = polishInstagramButtonReply(finalReply, resolved);
-      // v2.10.1 — depois do preço, sempre um próximo passo sem prometer reserva automática.
+      // v2.10.0 — depois do preço, sempre um próximo passo (antes a conversa morria no valor).
       if (ctas.some((c) => c.type === "reserva") && resolved.intent === "item_cardapio" && !/reservar mesa/i.test(finalReply)) {
-        finalReply = `${finalReply}\n\nBora vir provar? Se quiser reservar uma mesa, toque em "Reservar mesa" e a equipe confirma com você.`;
+        finalReply = `${finalReply}\n\nBora vir provar? Te separo uma mesa: é só tocar em "Reservar mesa" 👇`;
       }
     }
 
@@ -2293,13 +2464,15 @@ export default async function handler(req, res) {
       menu: DEFAULT_MENU_LINK,
       whatsapp: DEFAULT_WHATSAPP_LINK,
       ifood: DEFAULT_IFOOD_LINK,
-      food99: DEFAULT_99FOOD_LINK,
+      food99: "",
       jobs: "https://wa.me/5517996022567",
       maps: DEFAULT_MAPS_LINK
     };
     let fallback = `Não quero te passar nenhuma informação errada. Confira o cardápio em ${DEFAULT_MENU_LINK} ou fale com a equipe: ${DEFAULT_WHATSAPP_LINK}`;
     const ctas = channel === "instagram" ? [{ type: "whatsapp", label: "Falar no WhatsApp", url: DEFAULT_WHATSAPP_LINK }] : [];
     if (channel === "instagram") fallback = "Tive uma instabilidade rápida aqui. Pode repetir sua mensagem? Se preferir, fale com a equipe pelo botão abaixo.";
+    if (channel === "whatsapp") fallback = "Tive uma instabilidade rápida aqui. Me manda sua mensagem de novo e a gente segue por aqui.";
+    const errorHandoff = channel === "whatsapp";
     const parts = splitForChannel(fallback, channel);
     const primary = ctas[0] || {};
     return send(res, 200, {
@@ -2307,8 +2480,8 @@ export default async function handler(req, res) {
       app_version: APP_VERSION,
       request_id: requestId,
       channel,
-      handoff: false,
-      handoff_reason: "",
+      handoff: errorHandoff,
+      handoff_reason: errorHandoff ? "erro_temporario" : "",
       reply: fallback,
       intent: "erro_seguro",
       topic: "fallback",
@@ -2316,12 +2489,15 @@ export default async function handler(req, res) {
       needs_human: true,
       lead_temperature: "quente",
       missing_fields: ["erro_temporario"],
-      next_action: "whatsapp",
+      next_action: errorHandoff ? "handoff_humano" : "whatsapp",
       avaliacao_pendente: false,
       avaliacao_salva: false,
       avaliacao_nota: "",
       avaliacao_feedback_pendente: false,
       avaliacao_feedback: "",
+      optin_promocoes: "",
+      optin_origem: "",
+      marcar_conversa_aberta: errorHandoff,
       cardapio_link: DEFAULT_MENU_LINK,
       whatsapp_link: DEFAULT_WHATSAPP_LINK,
       whatsapp_vagas_link: fallbackLinks.jobs,

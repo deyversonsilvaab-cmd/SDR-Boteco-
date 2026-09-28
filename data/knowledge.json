@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "versao": "2.10.1",
-    "revisado_em": "2026-09-28",
+    "versao": "2.11.1",
+    "revisado_em": "2026-09-20",
     "politica": "Base fechada: preço, composição, peso e item do cardápio só podem ser afirmados quando estiverem registrados nesta base.",
     "fonte_cardapio": "Cardápio Sr boteco atual.pdf (9 páginas) enviado em 16/09/2026.",
     "fonte_cardapio_digital": "https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0",
@@ -24,7 +24,6 @@
     "cardapio_pedido": "https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0",
     "site_oficial": "https://srboteco.com.br/",
     "ifood": "https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72",
-    "food99": "https://oia.99app.com/dlp9/bSSJXQ?area=BR",
     "whatsapp": "https://wa.me/5519997858351",
     "whatsapp_vagas": "https://wa.me/5517996022567",
     "google_maps": "https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8",
@@ -59,8 +58,7 @@
   "pedidos": {
     "orientacao": "Quando o cliente pedir cardápio, preço, comida, pedido, retirada ou entrega, consultar primeiro o catálogo interno. Se o item estiver cadastrado, responder com o nome, valor e descrição validados. Se a pessoa pedir uma categoria, listar as opções e valores dessa categoria. Só enviar para confirmação humana quando o item realmente não estiver na base ou exigir confirmação operacional. Link oficial do cardápio/pedido: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0",
     "retirada": "Use o link de cardápio/pedido e selecione retirada no local quando a opção estiver disponível no checkout.",
-    "entrega_direta": "Use o link de cardápio/pedido e selecione entrega quando a opção estiver disponível no checkout.",
-    "food99": "Link oficial da loja Sr. Boteco no 99Food: https://oia.99app.com/dlp9/bSSJXQ?area=BR"
+    "entrega_direta": "Use o link de cardápio/pedido e selecione entrega quando a opção estiver disponível no checkout."
   },
   "horarios": {
     "funcionamento": "Funcionamos todos os dias das 11h às 22h.",
@@ -2039,9 +2037,9 @@
   },
   "respostas_base": {
     "saudacao": "Que bom falar com você. Posso te ajudar com cardápio, pedido, reserva, horário, localização ou alguma dúvida sobre um item.",
-    "cardapio": "Aqui está nosso cardápio digital atualizado: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0\n\nPor esse link você pode conferir as opções e fazer o pedido para retirada no local ou entrega conforme aparecer no checkout.\n\niFood: https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72\n99Food: https://oia.99app.com/dlp9/bSSJXQ?area=BR",
-    "pedido": "Você pode fazer seu pedido pelo nosso cardápio digital: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0\n\nEscolha retirada no local ou entrega conforme as opções disponíveis no checkout.\n\niFood: https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72\n99Food: https://oia.99app.com/dlp9/bSSJXQ?area=BR",
-    "delivery": "Para pedir com entrega, você pode usar nosso cardápio digital: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0\n\niFood: https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72\n\n99Food: https://oia.99app.com/dlp9/bSSJXQ?area=BR",
+    "cardapio": "Aqui está nosso cardápio digital atualizado: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0\n\nPor esse link você pode conferir as opções e fazer o pedido para retirada no local ou entrega conforme aparecer no checkout.\n\niFood: https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72",
+    "pedido": "Você pode fazer seu pedido pelo nosso cardápio digital: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0\n\nEscolha retirada no local ou entrega conforme as opções disponíveis no checkout.\n\niFood: https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72",
+    "delivery": "Para pedir com entrega, você pode usar nosso cardápio digital: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0\n\niFood: https://www.ifood.com.br/delivery/limeira-sp/sr-boteco-shopping-patio-limeita-centro/c318d733-afe4-4098-80af-296be4eb0c72",
     "humano": "Claro. Para falar direto com a equipe e resolver mais rápido, acesse nosso WhatsApp: https://wa.me/5519997858351",
     "item_nao_encontrado": "Não encontrei esse item com segurança no cardápio atual. Posso tentar pelo nome aproximado, pela categoria ou você pode conferir o cardápio completo aqui: https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0. Se ainda assim não aparecer, confirmo com a equipe pelo WhatsApp: https://wa.me/5519997858351",
     "localizacao": "Ficamos no Pátio Limeira Shopping: R. Carlos Gomes, 1321 - Centro, Limeira - SP.\n\nRota no Google Maps: https://maps.app.goo.gl/sr7PgRhUxaNuzg8e8",
@@ -2062,7 +2060,7 @@
     "Usar o primeiro nome real do cliente quando ele vier do ManyChat. Se não houver nome, não inventar nem usar placeholders.",
     "Toda pergunta deve receber uma resposta útil. Nunca deixar a conversa sem saída: responder com o fato validado, o cardápio/pedido ou o WhatsApp da equipe.",
     "Se o cliente pedir cardápio ou houver oportunidade natural de enviá-lo, usar https://botequimpatiolimeira.saipos.com/home e explicar retirada/entrega conforme as opções do checkout.",
-    "Se o cliente pedir delivery, oferecer o link direto, iFood e 99Food. No 99Food, usar sempre o link oficial da loja cadastrado em links.food99.",
+    "Se o cliente pedir delivery, oferecer o link direto e o iFood. O Sr. Boteco ainda não está no 99Food: nunca oferecer 99Food.",
     "Se um item não estiver no catálogo ou estiver sem preço/composição/porção confirmados, dizer com transparência que a informação não está validada e enviar cardápio e WhatsApp.",
     "Não fornecer informação sobre produtos ou campanhas removidos da base. Se o cliente insistir em algo não ativo, responder apenas que a condição/opção não está nas informações ativas e direcionar para cardápio/WhatsApp.",
     "Aceitamos dinheiro, cartão de crédito, cartão de débito, Pix e vale refeição Alelo, Pluxee, VR e Ticket. Não aceitamos vale alimentação.",
@@ -2072,7 +2070,7 @@
     "O tom deve ser de venda humanizada: cordial, específico, consultivo e objetivo, com no máximo um convite comercial claro por resposta. Evitar texto genérico, excesso de emojis e frases repetidas.",
     "Os Pratos do Dia são exclusivos do almoço, de segunda a sexta-feira, das 11h às 15h. Nunca afirmar disponibilidade desses preços fora dessa janela. Se houver prato com versão de almoço e versão Executiva, diferenciar as duas e mostrar os respectivos valores em vez de escolher um preço arbitrariamente.",
     "Nos Pratos do Dia, existe adicional opcional de bebida por +R$ 5,00: 1 suco de limão ou laranja (300 ml) ou Coca-Cola KS (290 ml). Só informar esse adicional quando o assunto for Pratos do Dia/almoço ou quando o cliente perguntar por bebida/acompanhamento.",
-    "No Instagram, URLs de ação (cardápio, pedido direto, iFood, 99Food, WhatsApp, RH, Google Maps e avaliação Google) devem ficar fora do texto e ser entregues por botões contextuais. No WhatsApp, os links podem permanecer no texto.",
+    "No Instagram, URLs de ação (cardápio, pedido direto, iFood, WhatsApp, RH, Google Maps e avaliação Google) devem ficar fora do texto e ser entregues por botões contextuais. No WhatsApp, os links podem permanecer no texto.",
     "Avaliações de 1 a 5 só devem ser interpretadas como nota quando houver estado de avaliação pendente, evento de avaliação ou contexto explícito da pergunta. Nota 5 pode receber CTA opcional para avaliação no Google; notas 1 a 4 devem receber resposta e podem coletar feedback."
   ],
   "aliases_categorias": {

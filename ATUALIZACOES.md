@@ -1,11 +1,13 @@
-# v2.10.1 — Revisão de funil e captação WhatsApp
 
-- Reserva sem promessa automática; equipe confirma.
-- Bebidas/adicionais não recebem CTA artificial de reserva.
-- Happy hour com contexto, sem falso positivo de `happy birthday`.
-- Horário ganha próximo passo.
-- Captação WhatsApp documentada com Tag/Campo no ManyChat.
-- Versões internas alinhadas e manifesto regenerado.
+## v2.11.1 — WhatsApp humano sem redirecionamento
+
+- Atendimento humano permanece no mesmo WhatsApp; vaga/currículo também deixa de mandar para outro número.
+- URLs removidas do texto do WhatsApp.
+- CTAs do WhatsApp restritos a: cardápio solicitado, Como chegar e pedido explícito para retirada.
+- Pedido genérico pergunta retirada ou entrega antes de oferecer ação.
+- Delivery informa iFood sem botão/link automático.
+- Links não permitidos são zerados no payload do canal WhatsApp para evitar botões antigos no ManyChat.
+- Nova suíte `whatsapp-fluxo-tests.mjs`.
 
 ## 2.9.2 — IA integrada / Responses API
 

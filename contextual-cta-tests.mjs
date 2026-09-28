@@ -70,7 +70,7 @@ await test("localização usa novo Google Maps e não exibe URL no texto", async
   assert(!String(p.reply).includes(WA), p.reply);
 });
 
-await test("promoção de chopp usa Reservar mesa + Como chegar + opt-in (v2.10.1)", async () => {
+await test("promoção de chopp usa Reservar mesa + Como chegar + opt-in (v2.10.0)", async () => {
   const p = await ask("Promoção de chopp");
   assert(p.intent === "promocao_chopp", p.intent);
   assert(p.cta_1_label === "Reservar mesa", p.cta_1_label);
@@ -88,14 +88,14 @@ await test("promoção genérica reúne ofertas e não força um CTA único", as
   assert(String(p.reply).includes("Promoção de Chopp"), p.reply);
 });
 
-await test("delivery usa três CTAs e não expõe URLs no texto", async () => {
+await test("delivery usa Pedido direto + iFood (sem 99Food) e não expõe URLs no texto", async () => {
   const p = await ask("Entrega ?");
   const reply = String(p.reply || "");
   assert(p.intent === "delivery", p.intent);
-  assert(p.cta_count === 3, JSON.stringify(p.ctas));
+  assert(p.cta_count === 2, JSON.stringify(p.ctas));
   assert(p.cta_1_label === "Pedido direto" && p.cta_1_url === MENU, JSON.stringify(p.ctas));
   assert(p.cta_2_label === "iFood" && p.cta_2_url === IFOOD, JSON.stringify(p.ctas));
-  assert(p.cta_3_label === "99Food" && p.cta_3_url === FOOD99, JSON.stringify(p.ctas));
+  assert(!p.cta_3_label && !/99\s?food/i.test(reply), JSON.stringify(p.ctas));
   for (const url of [MENU, IFOOD, FOOD99, WA]) assert(!reply.includes(url), reply);
 });
 
@@ -117,19 +117,20 @@ await test("vaga usa CTA RH e remove link do currículo do texto", async () => {
   assert(!String(p.reply).includes(RH), p.reply);
 });
 
-await test("horário oferece Como chegar + opt-in como próximo passo", async () => {
+await test("horário não força CTA", async () => {
   const p = await ask("que horas abre?");
   assert(p.intent === "horario", p.intent);
-  assert(p.cta_count === 2, `cta_count=${p.cta_count}`);
-  assert(p.cta_1_type === "localizacao" && p.cta_1_label === "Como chegar", JSON.stringify(p.ctas));
-  assert(p.cta_2_type === "whatsapp_optin", JSON.stringify(p.ctas));
+  assert(p.cta_count === 0, `cta_count=${p.cta_count}`);
+  assert(p.cta_type === "", p.cta_type);
 });
 
-await test("WhatsApp continua com link de rota no texto e sem CTA Instagram", async () => {
+await test("WhatsApp endereço mantém texto limpo e usa somente Como chegar", async () => {
   const p = await ask("Endereço", { channel:"whatsapp" });
   assert(p.channel === "whatsapp", p.channel);
-  assert(String(p.reply).includes(MAPS), p.reply);
-  assert(p.cta_count === 0, `cta_count=${p.cta_count}`);
+  assert(!String(p.reply).includes(MAPS), p.reply);
+  assert(!/https?:\/\//i.test(String(p.reply)), p.reply);
+  assert(p.cta_count === 1, `cta_count=${p.cta_count}`);
+  assert(p.cta_1_type === "localizacao" && p.cta_1_label === "Como chegar" && p.cta_1_url === MAPS, JSON.stringify(p.ctas));
 });
 
 await test("comentário do Instagram preserva lógica sem CTA contextual", async () => {
@@ -139,7 +140,7 @@ await test("comentário do Instagram preserva lógica sem CTA contextual", async
   assert(String(p.reply).includes(MENU), p.reply);
 });
 
-await test("Dynamic Block de localização: Como chegar + opt-in WhatsApp (v2.10.1)", async () => {
+await test("Dynamic Block de localização: Como chegar + opt-in WhatsApp (v2.10.0)", async () => {
   const p = await ask("Endereço", { response_mode:"dynamic_block" });
   const buttons = (p?.content?.messages || []).flatMap((m) => Array.isArray(m?.buttons) ? m.buttons : []);
   assert(buttons.length === 2 && buttons[1]?.caption === "Promoções no Whats", JSON.stringify(buttons));
@@ -155,18 +156,17 @@ await test("Dynamic Block de pedido usa somente Fazer pedido", async () => {
   assert(buttons[0]?.url === MENU, JSON.stringify(buttons));
 });
 
-await test("Dynamic Block de delivery usa Pedido direto, iFood e 99Food", async () => {
+await test("Dynamic Block de delivery usa Pedido direto e iFood", async () => {
   const p = await ask("Entrega", { response_mode:"dynamic_block" });
   const buttons = (p?.content?.messages || []).flatMap((m) => Array.isArray(m?.buttons) ? m.buttons : []);
-  assert(buttons.length === 3, JSON.stringify(buttons));
+  assert(buttons.length === 2, JSON.stringify(buttons));
   assert(buttons[0]?.url === MENU, JSON.stringify(buttons));
   assert(buttons[1]?.url === IFOOD, JSON.stringify(buttons));
-  assert(buttons[2]?.url === FOOD99, JSON.stringify(buttons));
 });
 
-await test("payload informa versão 2.10.1 para diagnóstico", async () => {
+await test("payload informa versão 2.11.1 para diagnóstico", async () => {
   const p = await ask("Oi");
-  assert(p.app_version === "2.10.1", p.app_version);
+  assert(p.app_version === "2.11.1", p.app_version);
 });
 
 if (failed) {

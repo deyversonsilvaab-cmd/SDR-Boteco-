@@ -45,7 +45,7 @@ const cases = [
   { message: "Foundie", intent: "outro", forbidden: ["R$ 99,90"] },
   { message: "Consegue me doar robux?", intent: "fora_contexto", must: ["Robux", "brincadeira"], forbidden: ["saipos.com", "wa.me", "Faça o seu pedido"] },
   { message: "Olá boa noite, queria fazer um pedido", intent: "pedido", must: ["retirada", "entrega"], forbidden: ["saipos.com", "wa.me/5519997858351", "ifood.com", "99app.com"] },
-  { message: "tem delivery?", intent: "delivery", must: ["iFood", "99Food"], forbidden: ["saipos.com", "wa.me/5519997858351", "ifood.com", "99app.com"] },
+  { message: "tem delivery?", intent: "delivery", must: ["iFood"], forbidden: ["99Food", "saipos.com", "wa.me/5519997858351", "ifood.com", "99app.com"] },
   { message: "qual o valor da bisteca?", intent: "item_cardapio", must: ["Bisteca", "R$ 19,90", "segunda a sexta-feira", "11h às 15h"], forbidden: ["saipos.com", "wa.me/5519997858351"] },
   { message: "qual valor do Burger Bacon?", intent: "item_cardapio", must: ["R$ 33,90", "hambúrguer 160g"] },
   { message: "heineken zero valor", intent: "item_cardapio", must: ["R$ 18,60"] },

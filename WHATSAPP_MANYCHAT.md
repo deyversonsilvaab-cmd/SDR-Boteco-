@@ -1,18 +1,18 @@
-# WhatsApp no ManyChat — Sr. Boteco Limeira v2.1.1
+# WhatsApp no ManyChat — Sr. Boteco Limeira v2.11.1
 
-Este documento descreve como ligar o canal WhatsApp ao mesmo webhook já usado pelo Instagram, mantendo os fluxos separados.
+## Princípio do fluxo
+
+O WhatsApp é um canal único de atendimento. O bot recebe, entende e responde o que sabe. Quando a informação não estiver validada ou o assunto exigir uma pessoa, a conversa é aberta para atendimento humano **no mesmo WhatsApp**.
+
+Nunca encaminhe o cliente para outro número, outro WhatsApp, site, app, perfil ou canal para resolver um atendimento humano.
 
 ## Endpoint
 
-```text
-POST https://sdr-boteco.vercel.app/api/manychat
-```
+`POST https://sdr-boteco.vercel.app/api/manychat`
 
-Header obrigatório em produção (`WEBHOOK_SECRET` deve estar configurado na Vercel):
+Header de produção:
 
-```text
-x-webhook-secret: <seu segredo>
-```
+`x-webhook-secret: <WEBHOOK_SECRET já configurado>`
 
 ## Body recomendado
 
@@ -27,79 +27,125 @@ x-webhook-secret: <seu segredo>
   "last_bot_reply": "{{ai_last_bot_reply}}",
   "channel": "whatsapp",
   "event_type": "direct",
-  "atendimento_humano": "{{atendimento_humano}}"
+  "atendimento_humano": "{{atendimento_humano}}",
+  "atendimento_humano_em": "{{atendimento_humano_em}}"
 }
 ```
 
-O campo `atendimento_humano` deve ser um campo de usuário booleano no ManyChat. O webhook também aceita `bot_pausado` com a mesma função. Para tolerar variações do ManyChat, valores `true`, `1`, `yes`, `sim` e `on` também são reconhecidos como ativo.
+Use as variáveis reais disponíveis no seletor do ManyChat; não cole placeholders como texto literal.
 
-## Campos de resposta para mapear
+## Campos para mapear
+
+Resposta principal:
 
 - `reply` → `ai_reply`
 - `intent` → `ai_intent`
 - `topic` → `ai_topic`
-- `needs_human` → `ai_needs_human`
 - `handoff` → `ai_handoff`
 - `handoff_reason` → `ai_handoff_reason`
 - `next_action` → `ai_next_action`
+- `marcar_conversa_aberta` → `ai_marcar_aberta`
 
-Depois da chamada, salve também:
+CTAs:
 
-```text
-ai_last_bot_reply = {{ai_reply}}
-```
+- `cta_count` → `ai_cta_count`
+- `cta_1_type` → `ai_cta_1_type`
+- `cta_1_label` → `ai_cta_1_label`
+- `cta_1_url` → `ai_cta_1_url`
 
-## Fluxo recomendado
+Opt-in existente:
 
-1. Gatilho: usuário envia mensagem no WhatsApp, configurado para executar toda vez.
-2. External Request: envie o body acima para `/api/manychat`.
-3. Salve `ai_last_bot_reply`.
-4. Se `ai_next_action = silencio_humano`, encerre o fluxo sem enviar mensagem.
-5. Se `ai_handoff = true`:
-   - envie `{{ai_reply}}`;
-   - defina `atendimento_humano = true`;
-   - atribua/notifique um atendente;
-   - opcionalmente aplique a tag `lead_handoff`.
-6. Caso contrário, envie `{{ai_reply}}` e mantenha a conversa normal com o bot.
+- `optin_promocoes` → `ai_optin_promocoes`
+- `optin_origem` → `ai_optin_origem`
 
-## Quando há handoff
+## Ordem do fluxo
 
-O WhatsApp passa para a equipe quando houver, entre outros. Na v2.1.1, termos fortes de reclamação vencem saudações/despedidas; por exemplo, `oi quero estorno` e `obrigado quero reembolso` fazem handoff. Expressões benignas como `sem problema, valeu` não fazem handoff:
+1. Trigger: WhatsApp → usuário envia uma mensagem, executar sempre.
+2. Se `atendimento_humano=true`, o webhook retorna `next_action="silencio_humano"`; encerre sem enviar nada.
+3. Faça a External Request.
+4. Salve os campos retornados.
+5. Se `ai_next_action = silencio_humano`, encerre.
+6. Envie **somente** `{{ai_reply}}`.
+7. Salve memória:
+   - `ai_last_bot_reply = {{ai_reply}}`
+   - `ai_last_intent = {{ai_intent}}`
+   - `ai_last_topic = {{ai_topic}}`
+8. Se `ai_handoff=true` ou `ai_marcar_aberta=true`:
+   - `atendimento_humano = true`
+   - `atendimento_humano_em = agora`
+   - marcar conversa como aberta;
+   - notificar/atribuir internamente o responsável;
+   - **não adicionar botão ou link**.
+9. Se não houver handoff, avaliar CTA permitido.
 
-- reserva, aniversário, grupo ou evento;
-- reclamação, atraso, erro, cancelamento, estorno, reembolso ou cobrança indevida;
-- orçamento, encomenda, negociação, desconto, grande quantidade, buffet ou evento corporativo;
-- pedido explícito para falar com atendente;
-- item não encontrado ou informação que precise ser confirmada pela equipe.
+## CTAs permitidos no WhatsApp
 
-O bot **não** faz handoff geral para vaga de emprego. Nesse caso ele envia o WhatsApp exclusivo do RH.
+Só renderize URL button quando `ai_cta_count = 1` E o tipo for um destes:
 
-## Silêncio durante atendimento humano
+### Cardápio
 
-Quando `atendimento_humano=true` ou `bot_pausado=true`, a resposta é um no-op:
+`ai_cta_1_type = cardapio`
 
-```json
-{
-  "reply": "",
-  "handoff": true,
-  "needs_human": true,
-  "next_action": "silencio_humano",
-  "messages": []
-}
-```
+Botão: `{{ai_cta_1_label}}`
+URL: `{{ai_cta_1_url}}`
 
-Enquanto esse campo estiver verdadeiro, o bot não responde naquela conversa. Ao encerrar o atendimento humano, altere `atendimento_humano` para `false` para devolver a conversa ao bot.
+### Localização
 
-## Formatação por canal
+`ai_cta_1_type = localizacao`
 
-- WhatsApp: uma única mensagem, em `reply_part_1`; `reply_part_2` e `reply_part_3` ficam vazios.
-- Instagram: mantém a lógica existente de até três partes.
+Botão: `{{ai_cta_1_label}}`
+URL: `{{ai_cta_1_url}}`
 
-## Checklist pós-deploy
+### Pedido para retirada
 
-1. `GET /api/manychat` deve retornar `version: "2.1.1"` e `channels: ["instagram","whatsapp"]`.
-2. Instagram: teste uma DM pedindo o cardápio e confirme que o comportamento continua igual.
-3. WhatsApp: `me manda o cardápio` → sem handoff.
-4. WhatsApp: `quero reservar mesa pra 8` → handoff humano.
-5. WhatsApp com `atendimento_humano=true` → nenhuma mensagem enviada pelo bot.
-6. Antes de publicar qualquer alteração futura, rode `npm run check`.
+`ai_cta_1_type = pedido_retirada`
+
+Botão: `{{ai_cta_1_label}}`
+URL: `{{ai_cta_1_url}}`
+
+Para qualquer outro `cta_type`, não renderize botão no WhatsApp.
+
+## Proibido no fluxo do WhatsApp
+
+Não manter botões fixos como:
+
+- Falar no WhatsApp
+- Enviar currículo
+- iFood
+- Avaliar no Google
+- Promoções no Whats
+- Reservar mesa
+
+Não usar `whatsapp_link`, `whatsapp_vagas_link`, `ifood_link`, `google_review_link` ou outros links para montar botões no WhatsApp.
+
+Não usar IA nativa/AI Step do ManyChat. Toda inteligência permanece no webhook da Vercel.
+
+## Handoff humano
+
+Exemplos que devem abrir a conversa humana no mesmo WhatsApp:
+
+- "quero reservar uma mesa"
+- "meu pedido veio errado"
+- "quero falar com uma pessoa"
+- "quero mandar currículo"
+- "preciso de orçamento para um evento"
+- assunto desconhecido ou informação não validada
+
+O cliente recebe uma resposta acolhedora e a conversa fica aberta. Não é enviado para outro destino.
+
+## Pausa humana
+
+Quando `atendimento_humano=true`, o bot permanece em silêncio. Se `atendimento_humano_em` for enviado, a pausa pode expirar conforme `HUMAN_PAUSE_HOURS` (padrão 12h). Para devolver antes, limpe `atendimento_humano`.
+
+## Testes de aceite
+
+- `oi` → recepção humana, sem botão;
+- `qual valor da Tábua Mista?` → preço, sem botão;
+- `promoção de chopp?` → resposta, sem botão;
+- `me manda o cardápio` → somente **Ver cardápio**;
+- `onde fica?` → somente **Como chegar**;
+- `quero pedido para retirada` → somente **Fazer pedido para retirada**;
+- `quero fazer um pedido` → pergunta retirada ou entrega, sem botão;
+- `vocês fazem entrega?` → informa iFood, sem link/botão;
+- reserva/reclamação/vaga/humano/orçamento → `handoff=true`, conversa aberta, sem link/botão;
+- durante `atendimento_humano=true` → silêncio do bot.

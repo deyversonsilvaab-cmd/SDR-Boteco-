@@ -1,7 +1,21 @@
-# Nota v2.9.2 — ManyChat
+# ManyChat — coordenadas atuais v2.11.1
 
-A v2.9.2 atualiza a IA integrada no webhook/Vercel e preserva a estrutura do ManyChat da v2.9.1.
+## Instagram
 
-Para revisão completa dos fluxos, use `PROMPT_EXECUCAO_MANYCHAT_COMPLETO_V2.9.2.md`.
+Preservar os fluxos atuais e os CTAs contextuais existentes. Não ativar AI Step; a inteligência continua no webhook da Vercel.
 
-Não ativar AI Step do ManyChat. A inteligência continua no webhook.
+Para histórico/estrutura completa do Instagram, os prompts anteriores permanecem no pacote.
+
+## WhatsApp
+
+Usar o fluxo descrito em:
+
+`PROMPT_EXECUCAO_MANYCHAT_WHATSAPP_V2.11.1.md`
+
+Princípios:
+
+- responde automaticamente quando a informação está validada;
+- quando precisa de humano, mantém a conversa aberta no mesmo WhatsApp;
+- não encaminha para outro número/canal;
+- não usa botões fixos;
+- únicos CTAs permitidos: Cardápio solicitado, Como chegar e Pedido para retirada explícito.

@@ -1,18 +1,18 @@
 # SDR Boteco — ManyChat + Instagram + WhatsApp + Vercel
 
-Versão 2.10.1 — funil revisado com próximo passo comercial, visita confirmada, marmita/retirada, captação de interesse no WhatsApp, CTAs de reserva seguros e IA integrada via OpenAI Responses API.
+Versão 2.11.1 — Instagram preservado + WhatsApp com recepção humanizada, resposta automática quando a informação é conhecida, atendimento humano na mesma conversa quando necessário e CTAs mínimos apenas para cardápio solicitado, localização e pedido explícito para retirada.
 
 
-## Funil revisado — v2.10.1
 
-- Mantém as correções da v2.10.0 para visita confirmada, marmita, happy hour e frustração com robô.
-- Remove a promessa `te separo uma mesa`; reserva continua sujeita à confirmação da equipe.
-- Reserva é oferecida apenas para itens de comida compatíveis; bebidas/adicionais recebem Cardápio + Como chegar.
-- `happy birthday` não é mais confundido com happy hour.
-- Horário também oferece próximo passo com Como chegar + Promoções no Whats.
-- Para transformar o interesse no WhatsApp em lista segmentável, usar a automação descrita em `PROMPT_MANYCHAT_CAPTACAO_WHATS_V2.10.1.md`.
-- Testes consolidados: 250 PASS / 0 FAIL.
+## WhatsApp — v2.11.1
 
+- O WhatsApp usa o mesmo webhook, mas com política própria: responde o que sabe e mantém o atendimento na mesma conversa quando precisa de humano.
+- Reserva, reclamação, vaga/currículo, negociação/evento, pedido de pessoa e informação não validada usam `handoff=true` + `marcar_conversa_aberta=true`, sem encaminhar para outro número/canal.
+- URLs não aparecem no texto do WhatsApp.
+- Só existem três CTAs possíveis no WhatsApp: **Ver cardápio** quando o cardápio é pedido, **Como chegar** quando a localização é pedida e **Fazer pedido para retirada** quando a retirada é explícita.
+- Preço de item, promoção, horário, pagamento, delivery, avaliação, reserva, reclamação e vaga não recebem botões automáticos.
+- Vaga no WhatsApp não envia mais para o número separado do RH; o currículo pode seguir pela própria conversa.
+- Nova suíte `whatsapp-fluxo-tests.mjs` cobre essa política.
 
 ## IA integrada — v2.9.2
 
@@ -126,9 +126,9 @@ Este projeto é o webhook de atendimento do **Sr. Boteco Limeira**. Ele foi estr
 - O atendimento continua funcionando mesmo sem OpenAI: a camada determinística é a fonte da verdade; a IA é usada apenas para humanizar a redação quando configurada.
 - Existe resposta segura mesmo se ocorrer um erro interno no webhook.
 - O endpoint pode responder no formato JSON tradicional ou no formato **Dynamic Block v2** do ManyChat.
-- O WhatsApp usa a mesma base e o mesmo endpoint, com recepção automatizada, handoff para a equipe e silêncio quando um humano assume.
+- O WhatsApp usa a mesma base e o mesmo endpoint, com recepção automatizada, handoff interno na própria conversa e silêncio quando um humano assume.
 - O comportamento do Instagram permanece isolado do ramo específico de WhatsApp.
-- Reclamações e negociações no WhatsApp recebem resposta específica de handoff, sem cardápio/iFood antes da equipe.
+- Reclamações, reservas, vagas, negociações e assuntos não validados permanecem no mesmo WhatsApp; não há redirecionamento externo.
 - Em produção, `WEBHOOK_SECRET` é obrigatório; sem ele o POST falha fechado com 401.
 - A camada de IA usa temperatura baixa e uma validação adicional para horários, números e outros marcadores objetivos não autorizados.
 - Comentários do Instagram que abrem o Direct são tratados sem placeholders, sem CTA forçado e com fallback seguro quando o texto real do comentário não chega.
@@ -291,11 +291,11 @@ Se o workspace não disponibilizar o texto do comentário, deixe `comment_text` 
 
 ## WhatsApp e handoff humano
 
-No WhatsApp, o bot resolve sozinho saudações, cardápio, horário, localização, pagamentos, delivery e itens validados. Assuntos particulares — como reserva, reclamação, negociação, pedido especial, item não validado ou pedido explícito por atendente — retornam `handoff: true` e `next_action: "handoff_humano"`.
+No WhatsApp, o bot resolve sozinho saudações, cardápio, horário, localização, pagamentos, delivery e itens validados. Quando não sabe ou quando o assunto exige uma pessoa — reserva, reclamação, negociação, vaga, pedido especial, informação não validada ou pedido explícito de atendimento — retorna `handoff: true`, `marcar_conversa_aberta: true` e `next_action: "handoff_humano"`. O humano continua na própria conversa; não há envio para outro número ou canal.
 
-Quando o ManyChat enviar `atendimento_humano: true` (ou `bot_pausado: true`), o webhook retorna `reply: ""`, `messages: []` e `next_action: "silencio_humano"`. Assim, o bot não responde por cima da equipe.
+Quando o ManyChat enviar `atendimento_humano: true` (ou `bot_pausado: true`), o webhook retorna `reply: ""`, `messages: []` e `next_action: "silencio_humano"`. Assim, o bot não responde por cima do atendimento humano.
 
-As respostas do WhatsApp são entregues em uma única mensagem (`reply_part_1`); `reply_part_2` e `reply_part_3` ficam vazios. Consulte `WHATSAPP_MANYCHAT.md` para montar o fluxo separado no ManyChat.
+No WhatsApp, URLs são retiradas do texto. Os únicos CTAs permitidos são Cardápio solicitado, Como chegar e Pedido para retirada explícito. As respostas são entregues em uma única mensagem (`reply_part_1`); `reply_part_2` e `reply_part_3` ficam vazios. Consulte `WHATSAPP_MANYCHAT.md`.
 
 ## Dynamic Block v2 — opcional
 

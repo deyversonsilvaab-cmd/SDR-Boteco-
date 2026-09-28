@@ -1,4 +1,4 @@
-// Testes do envelope "Full Contact Data" do ManyChat (v2.10.1)
+// Testes do envelope "Full Contact Data" do ManyChat (v2.9.4)
 import handler from "./api/manychat.js";
 
 let failures = 0;
@@ -18,7 +18,7 @@ const contact = (last_input_text, custom_fields = {}) => ({
 let p = await run(contact("Boa tarde", { ai_last_bot_reply: "Eng, Tábua Mista\n\n2 gomos \"de\" linguiça", ai_last_intent: "item_cardapio" }));
 check("envelope: 'Boa tarde' com memória multilinha vira saudacao", p.intent === "saudacao");
 check("envelope: nome do contato usado", p.reply.startsWith("Teste"));
-check("envelope: app_version 2.10.1", p.app_version === "2.10.1");
+check("envelope: app_version 2.11.1", p.app_version === "2.11.1");
 
 p = await run(contact("Qurero saber sobre quibe"));
 check("envelope: quibe vira item_cardapio", p.intent === "item_cardapio" && /quibe/i.test(p.reply));

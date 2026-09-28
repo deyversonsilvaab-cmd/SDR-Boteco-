@@ -76,25 +76,26 @@ await test("erro fatal retorna texto limpo e CTA WhatsApp", async () => {
   assert(p.cta_url === WA, p.cta_url);
 });
 
-await test("WhatsApp não recebe a limpeza visual exclusiva do Instagram", async () => {
+await test("WhatsApp também mantém fallback sem links externos", async () => {
   const res = makeRes();
   await handler({ method: "POST", headers: {}, query: {}, body: { message: "", first_name: "Teste", subscriber_id: "fallback-wa", channel: "whatsapp" } }, res);
   const p = res.payload;
   assert(p.channel === "whatsapp", p.channel);
   assert(p.intent === "sem_mensagem", p.intent);
-  assert(String(p.reply).includes(MENU) || String(p.reply).includes(WA), p.reply);
+  assert(!/https?:\/\//i.test(String(p.reply || "")), p.reply);
+  assert(p.cta_count === 0, `cta_count=${p.cta_count}`);
 });
 
-await test("health e payload reportam 2.10.1", async () => {
+await test("health e payload reportam 2.11.1", async () => {
   const res = makeRes();
   await handler({ method: "GET", headers: {}, query: {} }, res);
-  assert(res.payload?.version === "2.10.1", JSON.stringify(res.payload));
+  assert(res.payload?.version === "2.11.1", JSON.stringify(res.payload));
   const p = await ask({ message: "Oi" });
-  assert(p.app_version === "2.10.1", p.app_version);
+  assert(p.app_version === "2.11.1", p.app_version);
 });
 
 if (failed) {
   console.error(`\n${failed} teste(s) de fallback falharam.`);
   process.exit(1);
 }
-console.log("\nFallback Instagram v2.10.1: todos os testes passaram.");
+console.log("\nFallback Instagram + regressão v2.11.1: todos os testes passaram.");

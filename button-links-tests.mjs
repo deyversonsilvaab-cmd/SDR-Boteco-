@@ -32,10 +32,10 @@ await test("Delivery no Instagram esconde todos os links de ação no texto", as
   const p = await ask("vocês fazem entrega?");
   const reply = String(p.reply || "");
   for (const url of [MENU, WA, IFOOD, FOOD99]) assert(!reply.includes(url), reply);
-  assert(p.cta_count===3, JSON.stringify(p.ctas));
+  assert(p.cta_count===2, JSON.stringify(p.ctas));
   assert(p.cta_1_url===MENU, p.cta_1_url);
   assert(p.cta_2_url===IFOOD, p.cta_2_url);
-  assert(p.cta_3_url===FOOD99, p.cta_3_url);
+  assert(!p.cta_3_url && !/99\s?food/i.test(reply), JSON.stringify(p.ctas)); // v2.10.1: 99Food fora do ar
 });
 
 await test("Item não encontrado no Instagram não exibe link do cardápio no texto", async () => {
@@ -55,10 +55,12 @@ await test("Pedido de atendente no Instagram remove URL do WhatsApp do texto", a
   assert(p.whatsapp_link === WA, p.whatsapp_link);
 });
 
-await test("Canal WhatsApp não é afetado e mantém link de cardápio no texto", async () => {
+await test("WhatsApp esconde URL e usa CTA somente quando cardápio é solicitado", async () => {
   const p = await ask("Queria o cardápio", { channel:"whatsapp" });
-  assert(String(p.reply).includes(MENU), p.reply);
+  assert(!String(p.reply).includes(MENU), p.reply);
+  assert(!/https?:\/\//i.test(String(p.reply)), p.reply);
   assert(p.channel === "whatsapp", p.channel);
+  assert(p.cta_count === 1 && p.cta_1_type === "cardapio" && p.cta_1_url === MENU, JSON.stringify(p.ctas));
 });
 
 await test("Instagram comment não é afetado pela limpeza de links", async () => {

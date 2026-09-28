@@ -66,12 +66,12 @@ async function test(name, fn) {
   }
 }
 
-await test("GET health v2.10.1 + canais", async () => {
+await test("GET health v2.11.1 + canais", async () => {
   const req = makeReq("", {}, "GET");
   const res = makeRes();
   await handler(req, res);
   assert(res.statusCode === 200, `status=${res.statusCode}`);
-  assert(res.payload?.version === "2.10.1", `version=${res.payload?.version}`);
+  assert(res.payload?.version === "2.11.1", `version=${res.payload?.version}`);
   assert(JSON.stringify(res.payload?.channels) === JSON.stringify(["instagram", "whatsapp"]), `channels=${JSON.stringify(res.payload?.channels)}`);
 });
 
@@ -83,7 +83,8 @@ await test("WhatsApp reserva gera handoff sem CTA comercial", async () => {
   assert(payload?.handoff_reason === "reserva", `handoff_reason=${payload?.handoff_reason}`);
   assert(payload?.next_action === "handoff_humano", `next_action=${payload?.next_action}`);
   assert(payload?.needs_human === true, `needs_human=${payload?.needs_human}`);
-  assert(String(payload?.reply || "").toLowerCase().includes("equipe"), "reply não avisa handoff para equipe");
+  // v2.11.0: nunca fala em direcionar/equipe; faz a recepção e deixa a conversa aberta.
+  assert(!/(equipe|direcion|encaminh|atendente|bot[aã]o)/i.test(String(payload?.reply || "")) && /por aqui/i.test(String(payload?.reply || "")), `reply de handoff fora da regra: ${payload?.reply}`);
   assert(!hasSalesLink(payload), "reserva em handoff não deve oferecer link comercial");
 });
 
@@ -147,11 +148,15 @@ await test("Negociação vence intenção de pedido e não envia checkout antes 
   assert(!hasSalesLink(payload), `negociação recebeu CTA comercial: ${payload?.reply}`);
 });
 
-await test("WhatsApp cardápio resolve sem handoff", async () => {
+await test("WhatsApp cardápio resolve sem handoff e usa só CTA solicitado", async () => {
   const { payload } = await call("me manda o cardápio", { channel: "whatsapp" });
   assert(payload?.handoff === false, `handoff=${payload?.handoff}`);
   assert(payload?.next_action === "abrir_cardapio", `next_action=${payload?.next_action}`);
-  assert(String(payload?.reply || "").includes("https://botequimpatiolimeira.saipos.com/home"), "link do cardápio ausente");
+  assert(!/https?:\/\//i.test(String(payload?.reply || "")), `URL visível no texto: ${payload?.reply}`);
+  assert(payload?.cta_count === 1, `cta_count=${payload?.cta_count}`);
+  assert(payload?.cta_1_type === "cardapio", payload?.cta_1_type);
+  assert(payload?.cta_1_label === "Ver cardápio", payload?.cta_1_label);
+  assert(String(payload?.cta_1_url || "").includes("saipos.com"), payload?.cta_1_url);
   assert(payload?.reply_part_2 === "", "WhatsApp não deveria preencher reply_part_2");
   assert(Array.isArray(payload?.messages) && payload.messages.length === 1, `messages=${payload?.messages?.length}`);
 });
@@ -177,13 +182,17 @@ await test("Alias WhatsApp Business é normalizado para whatsapp", async () => {
   assert(payload?.handoff === false, `handoff=${payload?.handoff}`);
 });
 
-await test("WhatsApp vaga vai para RH sem handoff geral", async () => {
+await test("WhatsApp vaga permanece na mesma conversa e abre atendimento humano", async () => {
   const { payload } = await call("quero mandar currículo", { channel: "whatsapp" });
   assert(payload?.intent === "vaga", `intent=${payload?.intent}`);
-  assert(payload?.handoff === false, `handoff=${payload?.handoff}`);
-  assert(payload?.needs_human === false, `needs_human=${payload?.needs_human}`);
-  assert(payload?.next_action === "whatsapp_vagas", `next_action=${payload?.next_action}`);
-  assert(String(payload?.reply || "").includes("https://wa.me/5517996022567"), "link do RH ausente");
+  assert(payload?.handoff === true, `handoff=${payload?.handoff}`);
+  assert(payload?.handoff_reason === "vaga", `handoff_reason=${payload?.handoff_reason}`);
+  assert(payload?.needs_human === true, `needs_human=${payload?.needs_human}`);
+  assert(payload?.next_action === "handoff_humano", `next_action=${payload?.next_action}`);
+  assert(payload?.marcar_conversa_aberta === true, `marcar=${payload?.marcar_conversa_aberta}`);
+  assert(payload?.cta_count === 0, `cta_count=${payload?.cta_count}`);
+  assert(!/https?:\/\//i.test(String(payload?.reply || "")), `link externo indevido: ${payload?.reply}`);
+  assert(/currículo|curriculo/i.test(String(payload?.reply || "")), payload?.reply);
 });
 
 await test("Formatação por canal: WhatsApp uma parte, Instagram mantém split", async () => {
@@ -252,7 +261,7 @@ await test("Guardrail de handoff rejeita até link comercial oficial injetado pe
     const { payload } = await call("tive um problema com meu pedido", { channel: "whatsapp" });
     assert(payload?.handoff === true, `handoff=${payload?.handoff}`);
     assert(!hasSalesLink(payload), `link comercial passou no handoff: ${payload?.reply}`);
-    assert(String(payload?.reply || "").toLowerCase().includes("equipe"), `fallback de handoff não aplicado: ${payload?.reply}`);
+    assert(!/(equipe|direcion|encaminh|atendente|bot[aã]o)/i.test(String(payload?.reply || "")) && /por aqui/i.test(String(payload?.reply || "")), `fallback de handoff não aplicado: ${payload?.reply}`);
   } finally {
     delete process.env.OPENAI_API_KEY;
     global.fetch = ORIGINAL_FETCH;
