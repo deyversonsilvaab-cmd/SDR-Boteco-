@@ -264,6 +264,39 @@ await test("health informa o modo do ambiente e o orçamento da IA", async () =>
   assert(p.version === "2.12.0" && p.modo_humano_ambiente === false && p.ai_budget_ms === 6500, JSON.stringify(p));
 });
 
+await test("humano WhatsApp: promoção de chopp com forma nova, mesmos fatos, sem URL e sem botão", async () => {
+  const p = await humano({ channel: "whatsapp", message: "tem chopp em promoção?" });
+  for (const f of ["R$ 9,90", "R$ 3,99", "16h", "20h", "340 ml", "disponibilidade"]) assert(p.reply.includes(f), `faltou ${f}: ${p.reply}`);
+  assert(!/Nossa promoção de chopp funciona assim/.test(p.reply), p.reply);
+  assert(!/https?:\/\//.test(p.reply) && p.cta_count === 0, p.reply);
+});
+
+await test("humano WhatsApp: promoção de burger não deixa o rótulo solto 'Cardápio completo/pedido'", async () => {
+  const legado = await ask({ channel: "whatsapp", message: "promoção de burger" });
+  assert(/Cardápio completo\/pedido/.test(legado.reply), "o legado tem o rótulo solto (referência)");
+  const p = await humano({ channel: "whatsapp", message: "promoção de burger" });
+  assert(!/Cardápio completo\/pedido/.test(p.reply), p.reply);
+  assert(p.reply.includes("R$ 33,90") && p.reply.includes("16h"), p.reply);
+});
+
+await test("humano WhatsApp: horário, endereço e preço de item mantêm os fatos", async () => {
+  const h = await humano({ channel: "whatsapp", message: "qual horario" });
+  assert(/11h/.test(h.reply) && /22h/.test(h.reply), h.reply);
+  const l = await humano({ channel: "whatsapp", message: "onde fica vcs" });
+  assert(/Carlos Gomes, 1321/.test(l.reply) && l.cta_type === "localizacao", l.reply);
+  const i = await humano({ channel: "whatsapp", message: "quanto é o burguer bacon" });
+  assert(/sai por R\$ 33,90/.test(i.reply) && !/https?:\/\//.test(i.reply), i.reply);
+});
+
+await test("humano WhatsApp: recepção, reclamação e reserva ficam idênticas à v2.11.2", async () => {
+  for (const message of ["oi", "quero fazer uma reclamação, o atendimento foi péssimo", "quero reservar uma mesa"]) {
+    const a = await ask({ channel: "whatsapp", message });
+    const b = await humano({ channel: "whatsapp", message });
+    assert(a.reply === b.reply, `${message}\n legado: ${a.reply}\n humano: ${b.reply}`);
+    assert(a.handoff === b.handoff && a.cta_count === b.cta_count, `${message} handoff/cta divergiram`);
+  }
+});
+
 // ---------- IA simulada ----------
 
 const realFetch = globalThis.fetch;
