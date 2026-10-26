@@ -2489,6 +2489,21 @@ export default async function handler(req, res) {
         finalReply = handoff ? whatsappHandoffFacts(handoffReason, resolved, knowledge) : "Não tenho essa informação confirmada aqui. Me conta só mais um detalhe, se tiver, e a gente segue por aqui.";
         if (!handoff) { handoff = true; handoffReason = "confirmar_com_equipe"; resolved.needs_human = true; resolved.next_action = "handoff_humano"; }
       }
+      // v2.12.0 — WhatsApp no modo humano: só a forma das respostas fixas de informação muda; a recepção, o handoff e as regras do canal seguem iguais.
+      if (humano && !aiReply && !handoff) {
+        const candidato = humanizeFixedReply({
+          reply: finalReply,
+          intent: resolved.intent,
+          saudacao: humanoCtx.saudacao_horario,
+          retornante: humanoCtx.retornante,
+          tom: humanoCtx.tom_cliente,
+          firstName: "",
+          seed: `${customer.id || "anon"}|${Math.floor(agora.getTime() / (30 * 60 * 1000))}`,
+          lastBotReply: context.last_bot_reply,
+          channel: "whatsapp"
+        });
+        if (candidato && !WHATSAPP_FORBIDDEN.test(candidato) && !/https?:\/\//i.test(candidato)) finalReply = candidato;
+      }
     }
 
     // Nas DMs do Instagram, todos os destinos de ação ficam escondidos nos botões
