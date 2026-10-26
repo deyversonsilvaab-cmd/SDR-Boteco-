@@ -49,10 +49,10 @@ async function test(name, fn) {
 
 const originalFetch = globalThis.fetch;
 
-await test("health informa Responses API, v2.11.2 e modelo Luna por padrão", async () => {
+await test("health informa Responses API, v2.12.0 e modelo Luna por padrão", async () => {
   const res = makeRes();
   await handler({ method: "GET", headers: {}, query: {} }, res);
-  assert(res.payload?.version === "2.11.2", JSON.stringify(res.payload));
+  assert(res.payload?.version === "2.12.0", JSON.stringify(res.payload));
   assert(res.payload?.model === "gpt-5.6-luna", JSON.stringify(res.payload));
   assert(res.payload?.fallback_model === "gpt-4o", JSON.stringify(res.payload));
   assert(res.payload?.openai_api === "responses", JSON.stringify(res.payload));

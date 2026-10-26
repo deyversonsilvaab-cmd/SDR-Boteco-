@@ -1,5 +1,13 @@
 # SDR Boteco — ManyChat + Instagram + WhatsApp + Vercel
 
+Versão 2.12.0 — Modo humano (opt-in). Respostas fixas com forma mais natural, saudação pelo horário, cliente que volta não é cumprimentado de novo, nome só na saudação, memória curta da conversa (ai_resumo), validador de tom nas respostas da IA e orçamento total de tempo para a IA. Sem modo_humano=true (ou HUMAN_TONE=on) o comportamento é exatamente o da v2.11.2.
+
+Modo humano — v2.12.0
+Liga por contato: o ManyChat envia "modo_humano": true no External Request do fluxo novo. Guia de configuração: MANYCHAT_HUMANO_V2.12.0.md. Resumo técnico: ATUALIZACAO_V2.12.0.md.
+Nunca altera fato comercial: preço, horário, promoção e endereço continuam vindo de data/knowledge.json. Toda reescrita de resposta fixa passa por uma trava que exige os mesmos números e URLs do texto original.
+Novo módulo lib/humano.js; nova suíte humano-tests.mjs; npm run check inclui a suíte.
+Orçamento de tempo da IA (vale também sem modo humano): AI_BUDGET_MS (padrão 6500 ms) limita a soma de todas as tentativas, para o webhook responder antes do limite do External Request do ManyChat.
+
 Versão 2.11.2 — Instagram preservado + WhatsApp com recepção humanizada, resposta automática quando a informação é conhecida, atendimento humano na mesma conversa quando necessário e CTAs mínimos apenas para cardápio solicitado, localização e pedido explícito para retirada.
 
 
