@@ -2,6 +2,10 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import { buildSystemPrompt } from "../lib/persona.js";
+import {
+  isHumanMode, saudacaoHorario, saudacaoDoCliente, isRetornante, tomCliente, buildResumo,
+  validateHumanReply, humanizeFixedReply
+} from "../lib/humano.js";
 
 const DEFAULT_WHATSAPP_LINK = "https://wa.me/5519997858351";
 const DEFAULT_MENU_LINK = "https://botequimpatiolimeira.saipos.com/home?utm_id=97757_v0_s00_e0_tv0";
@@ -13,10 +17,14 @@ const DEFAULT_FALLBACK = `Quero te passar a informação certa. Confira o cardá
 const INSTAGRAM_MAX_MESSAGE_LENGTH = 900;
 const INSTAGRAM_MAX_MESSAGE_PARTS = 3;
 const OPENAI_TIMEOUT_MS = 10000;
+// v2.12.0 — orçamento TOTAL de tempo da IA por mensagem (todas as tentativas somadas).
+// O External Request do ManyChat desiste em cerca de 10 s; sem isso, modelo principal + reserva podiam passar de 20 s.
+const DEFAULT_AI_BUDGET_MS = 6500;
+const MIN_AI_ATTEMPT_MS = 1200;
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const DEFAULT_OPENAI_MODEL = "gpt-5.6-luna";
 const DEFAULT_OPENAI_FALLBACK_MODEL = "gpt-4o";
-const APP_VERSION = "2.11.2";
+const APP_VERSION = "2.12.0";
 
 function setJsonHeaders(res) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -331,7 +339,10 @@ function extractConversationContext(body) {
     avaliacao_pendente: isTruthyFlag(body?.avaliacao_pendente ?? body?.custom_fields?.avaliacao_pendente),
     avaliacao_feedback_pendente: isTruthyFlag(body?.avaliacao_feedback_pendente ?? body?.custom_fields?.avaliacao_feedback_pendente),
     avaliacao_nota: safeText(body?.avaliacao_nota ?? body?.custom_fields?.avaliacao_nota ?? "", 10),
-    event_type: safeText(body?.event_type || body?.custom_fields?.event_type || "", 50).toLowerCase()
+    event_type: safeText(body?.event_type || body?.custom_fields?.event_type || "", 50).toLowerCase(),
+    // v2.12.0 — memória curta e retorno do cliente (enviados de volta pelo ManyChat).
+    ai_resumo: safeText(body?.ai_resumo || body?.custom_fields?.ai_resumo || "", 300),
+    ai_ultima_interacao: safeText(body?.ai_ultima_interacao || body?.custom_fields?.ai_ultima_interacao || "", 40)
   };
 }
 
@@ -2083,14 +2094,14 @@ function supportsReasoningEffort(model) {
   return /^gpt-5(?:[.\-]|$)/i.test(String(model || ""));
 }
 
-async function requestOpenAIResponse({ model, customer, context, message, resolved, eventType }) {
+async function requestOpenAIResponse({ model, customer, context, message, resolved, eventType, humano = false, timeoutMs = OPENAI_TIMEOUT_MS }) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const payload = {
       model,
-      instructions: buildSystemPrompt({ eventType, channel: customer.channel }),
+      instructions: buildSystemPrompt({ eventType, channel: customer.channel, humano }),
       input: JSON.stringify({
         cliente: customer,
         contexto: context,
@@ -2139,12 +2150,20 @@ async function requestOpenAIResponse({ model, customer, context, message, resolv
   }
 }
 
-async function callOpenAI({ knowledge, customer, context, message, resolved, eventType }) {
+async function callOpenAI({ knowledge, customer, context, message, resolved, eventType, humano = false }) {
   if (!process.env.OPENAI_API_KEY) return null;
 
+  const budget = Number(process.env.AI_BUDGET_MS || DEFAULT_AI_BUDGET_MS);
+  const started = Date.now();
   const models = openAIModelCandidates();
   for (const model of models) {
-    const result = await requestOpenAIResponse({ model, customer, context, message, resolved, eventType });
+    const remaining = budget - (Date.now() - started);
+    if (remaining < MIN_AI_ATTEMPT_MS) {
+      console.warn("OPENAI_BUDGET_ESGOTADO", { model, budget_ms: budget });
+      break;
+    }
+    const timeoutMs = Math.min(OPENAI_TIMEOUT_MS, remaining);
+    const result = await requestOpenAIResponse({ model, customer, context, message, resolved, eventType, humano, timeoutMs });
     if (result.ok) {
       console.log("OPENAI_REPLY_OK", { model, api: "responses" });
       return result.reply;
@@ -2310,7 +2329,9 @@ export default async function handler(req, res) {
         openai_configured: Boolean(process.env.OPENAI_API_KEY),
         model: process.env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL,
         fallback_model: process.env.OPENAI_FALLBACK_MODEL || DEFAULT_OPENAI_FALLBACK_MODEL,
-        openai_api: "responses"
+        openai_api: "responses",
+        modo_humano_ambiente: isHumanMode({}),
+        ai_budget_ms: Number(process.env.AI_BUDGET_MS || DEFAULT_AI_BUDGET_MS)
       });
     }
 
@@ -2354,6 +2375,30 @@ export default async function handler(req, res) {
     const eventType = safeText(body?.event_type || body?.custom_fields?.event_type || "direct", 50).toLowerCase() || "direct";
     const commentEvent = isInstagramCommentEvent(eventType) && !isWhatsapp(customer);
     const message = (commentEvent ? extractCommentMessage(body) : extractMessage(body)) || inferMessageFromEvent(body);
+
+    // v2.12.0 — modo humano (opt-in por modo_humano=true no corpo ou HUMAN_TONE=on no ambiente).
+    const humano = isHumanMode(body);
+    const agora = new Date();
+    const humanoCtx = humano ? {
+      saudacao_horario: saudacaoDoCliente(message) || saudacaoHorario(agora),
+      retornante: isRetornante(context.ai_ultima_interacao, agora),
+      tom_cliente: tomCliente(message),
+      resumo: context.ai_resumo || "",
+      ultima_resposta_bot: context.last_bot_reply || ""
+    } : null;
+
+    // Mensagem sem texto (áudio, figurinha, imagem) no WhatsApp: não responde por cima, deixa a conversa aberta.
+    if (humano && isWhatsapp(customer) && !message) {
+      const semTexto = makeResolution({
+        facts: "", intent: "sem_texto", topic: "sem_texto", needs_human: true,
+        lead_temperature: "morno", next_action: "handoff_humano"
+      });
+      const semTextoPayload = buildStandardPayload({
+        reply: "", resolved: semTexto, links, requestId, customer,
+        handoff: true, handoffReason: "sem_texto", ctas: []
+      });
+      return send(res, 200, { ...semTextoPayload, modo_humano: true, ai_ultima_interacao: agora.toISOString(), ai_resumo: context.ai_resumo || "" });
+    }
 
     const whatsappSpecial = (isWhatsapp(customer) && message) ? resolveWhatsappSpecial(message, knowledge, links) : null;
     const resolved = whatsappSpecial || (commentEvent
@@ -2403,7 +2448,19 @@ export default async function handler(req, res) {
       "optin_promocoes", "optout_promocoes", "recepcao_instagram"
     ];
     const shouldHumanizeWithAI = message && !deterministicIntents.includes(resolved.intent);
-    const aiReply = shouldHumanizeWithAI ? await callOpenAI({ knowledge, customer, context, message, resolved, eventType }) : null;
+    const customerForAI = humano && humanoCtx.retornante ? { ...customer, first_name: "" } : customer;
+    const contextForAI = humano ? { ...context, ...humanoCtx } : context;
+    let aiReply = shouldHumanizeWithAI ? await callOpenAI({ knowledge, customer: customerForAI, context: contextForAI, message, resolved, eventType, humano }) : null;
+
+    // v2.12.0 — validador de tom: resposta de IA com frase de central de atendimento, emoji demais,
+    // nome repetido ou mesma abertura da última resposta é descartada e vale o texto determinístico.
+    if (humano && aiReply) {
+      const check = validateHumanReply(aiReply, { channel: customer.channel, firstName: customerForAI.first_name, lastBotReply: context.last_bot_reply });
+      if (!check.ok) {
+        console.warn("HUMANO_RESPOSTA_REJEITADA", { intent: resolved.intent, reasons: check.reasons });
+        aiReply = null;
+      }
+    }
 
     let finalReply = aiReply || resolved.facts || knowledge?.respostas_base?.fallback || DEFAULT_FALLBACK;
     const allowedUrls = handoff
@@ -2444,19 +2501,44 @@ export default async function handler(req, res) {
     if (!isWhatsapp(customer) && !commentEvent) {
       finalReply = stripButtonLinks(finalReply, links);
       finalReply = polishInstagramButtonReply(finalReply, resolved);
+      // v2.12.0 — só reescreve a forma (nunca os fatos) das respostas fixas; números e URLs precisam sobreviver iguais.
+      if (humano && !aiReply) {
+        finalReply = humanizeFixedReply({
+          reply: finalReply,
+          intent: resolved.intent,
+          saudacao: humanoCtx.saudacao_horario,
+          retornante: humanoCtx.retornante,
+          tom: humanoCtx.tom_cliente,
+          firstName: humanoCtx.retornante ? "" : customer.first_name,
+          seed: `${customer.id || "anon"}|${Math.floor(agora.getTime() / (30 * 60 * 1000))}`,
+          lastBotReply: context.last_bot_reply
+        });
+      }
       // v2.10.0 — depois do preço, sempre um próximo passo (antes a conversa morria no valor).
       if (ctas.some((c) => c.type === "reserva") && resolved.intent === "item_cardapio" && !/reservar mesa/i.test(finalReply)) {
         finalReply = `${finalReply}\n\nBora vir provar? Te separo uma mesa: é só tocar em "Reservar mesa" 👇`;
       }
     }
 
-    finalReply = ensurePersonalized(safeText(finalReply, 2600), customer);
+    // v2.12.0 — no modo humano o nome entra só na saudação; o prefixo "Nome," em toda resposta foi removido.
+    finalReply = humano ? safeText(finalReply, 2600) : ensurePersonalized(safeText(finalReply, 2600), customer);
 
     if (!isWhatsapp(customer) && wantsDynamicMode(req, body)) {
       return send(res, 200, buildDynamicBlock({ reply: finalReply, resolved, links, ctas }));
     }
 
-    return send(res, 200, buildStandardPayload({ reply: finalReply, resolved, links, requestId, customer, handoff, handoffReason, ctas }));
+    const standardPayload = buildStandardPayload({ reply: finalReply, resolved, links, requestId, customer, handoff, handoffReason, ctas });
+    if (humano) {
+      Object.assign(standardPayload, {
+        modo_humano: true,
+        saudacao_horario: humanoCtx.saudacao_horario,
+        retornante: humanoCtx.retornante,
+        tom_cliente: humanoCtx.tom_cliente,
+        ai_ultima_interacao: agora.toISOString(),
+        ai_resumo: buildResumo(context.ai_resumo, { intent: resolved.intent, topic: resolved.topic, message })
+      });
+    }
+    return send(res, 200, standardPayload);
   } catch (error) {
     console.error("BOT_FATAL_ERROR", requestId, error);
     const channel = normalizeChannel(customer?.channel || "instagram");
